@@ -238,8 +238,6 @@
       let toastTimer;
 
       const $ = id => document.getElementById(id);
-      const tiers = ['High', 'Middle', 'Low'];
-      const tierClass = t => t.toLowerCase();
       const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
 
       function toast(msg) {
@@ -261,10 +259,6 @@
 
       function current() {
         return db.classes.find(c => c.id === db.activeId) || null;
-      }
-
-      function normalizeName(s) {
-        return s.trim().replace(/\s+/g, ' ').toLocaleLowerCase();
       }
 
       function makeClass(name) {
@@ -376,6 +370,29 @@
         }
       }
 
+      // --- Navigation Tab Switchers ---
+      $('teacherTab').addEventListener('click', () => {
+        $('teacherTab').classList.add('active');
+        $('groupsTab').classList.remove('active');
+        $('teacherPage').classList.add('active');
+        $('groupsPage').classList.remove('active');
+      });
+
+      $('groupsTab').addEventListener('click', () => {
+        $('groupsTab').classList.add('active');
+        $('teacherTab').classList.remove('active');
+        $('groupsPage').classList.add('active');
+        $('teacherPage').classList.remove('active');
+      });
+
+      $('teacherGoGroupsBtn').addEventListener('click', () => {
+        $('groupsTab').click();
+      });
+
+      $('backTeacherBtn').addEventListener('click', () => {
+        $('teacherTab').click();
+      });
+
       // Toggle input view based on rule type selection
       $('avoidType').addEventListener('change', (e) => {
         const isGroup = e.target.value === 'group';
@@ -402,7 +419,7 @@
           }
           c.avoidPairs.push([a, b]);
         } else {
-          // Multi-student group rule: separate every pair within the selected set
+          // Multi-student group rule
           const selectedOptions = Array.from($('avoidGroupSelect').selectedOptions).map(o => o.value);
           if (selectedOptions.length < 3) {
             toast('Please select at least 3 students for a group rule.');
@@ -433,5 +450,3 @@
   </script>
 </body>
 </html>
-
-```
