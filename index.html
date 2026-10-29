@@ -173,7 +173,6 @@
             <h2>4. Group roles</h2>
             <p class="help">Customize the role titles shown in each student's badge. Roles are randomly assigned within each group.</p>
             <div id="roleList" class="role-list"></div>
-            <p class="help">The three role titles can be renamed, but roles cannot be added or removed. In pairs, the first student gets Role 1 and the second student does both Roles 2 and 3.</p>
 
             <div class="divider"></div>
 
@@ -182,7 +181,6 @@
               <button class="secondary" id="importBtn">Import backup</button>
               <input id="importFile" type="file" accept="application/json,.json" class="hidden">
             </div>
-            <p class="notice">Your classes are saved in this browser on this device. Clearing browser data or switching browsers may erase them, so export a backup occasionally.</p>
           </aside>
 
           <section class="panel">
@@ -192,7 +190,6 @@
               <button class="primary" id="teacherGenerateBtn">Randomize and view groups</button>
               <button class="secondary" id="teacherGoGroupsBtn">Open group display</button>
             </div>
-            <p class="notice">Use the Display Groups tab when projecting groups for students.</p>
           </section>
         </div>
       </section>
@@ -210,11 +207,9 @@
                 <option value="">Select a class</option>
               </select>
               <button class="secondary" id="backTeacherBtn">Teacher Setup</button>
-              <button class="secondary" id="printBtn">Print groups</button>
               <button class="primary" id="generateBtn">⤨ Randomize groups</button>
             </div>
           </div>
-          <div class="notice" id="balanceNote">Groups of three are used whenever possible; pairs are used only when needed.</div>
           <div id="groupsArea">
             <div class="empty">
               <div class="empty-icon">♧</div>
@@ -225,7 +220,6 @@
         </main>
       </section>
     </div>
-    <div class="footer">Made for classroom collaboration</div>
   </div>
 
   <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
@@ -277,16 +271,6 @@
         return c;
       }
 
-      function load() {
-        try {
-          const raw = localStorage.getItem(KEY);
-          if (raw) db = JSON.parse(raw);
-        } catch (e) {}
-        if (!Array.isArray(db.classes)) db.classes = [];
-        if (!db.classes.length) makeClass('Period 1');
-        if (!db.classes.some(c => c.id === db.activeId)) db.activeId = db.classes[0].id;
-      }
-
       function render() {
         const c = current();
 
@@ -310,7 +294,7 @@
 
         if (!c) return;
 
-        // Student counts & lists
+        // Student counts
         $('rosterCount').textContent = `${c.students.length} students`;
         const highC = c.students.filter(s => s.tier === 'High').length;
         const midC = c.students.filter(s => s.tier === 'Middle').length;
@@ -319,7 +303,51 @@
         $('midCount').textContent = midC;
         $('lowCount').textContent = lowC;
 
-        // Pair separation dropdowns
+        // Render Student Roster
+        const studentList = $('studentList');
+        if (studentList) {
+          studentList.innerHTML = '';
+          c.students.forEach((st, idx) => {
+            const div = document.createElement('div');
+            div.className = 'student-item';
+            
+            const nameSpan = document.createElement('span');
+            nameSpan.textContent = st.name;
+            div.append(nameSpan);
+
+            const select = document.createElement('select');
+            select.style.width = 'auto';
+            ['High', 'Middle', 'Low'].forEach(t => {
+              const opt = document.createElement('option');
+              opt.value = t;
+              opt.textContent = t;
+              if (st.tier === t) opt.selected = true;
+              select.append(opt);
+            });
+            select.onchange = (e) => {
+              st.tier = e.target.value;
+              save();
+              render();
+            };
+            div.append(select);
+
+            const delBtn = document.createElement('button');
+            delBtn.className = 'danger';
+            delBtn.textContent = '✕';
+            delBtn.onclick = () => {
+              c.students.splice(idx, 1);
+              c.avoidPairs = c.avoidPairs.filter(pair => !pair.includes(st.id));
+              groups = [];
+              save();
+              render();
+            };
+            div.append(delBtn);
+
+            studentList.append(div);
+          });
+        }
+
+        // Dropdowns for Pair Avoidance
         const selA = $('avoidStudentA');
         const selB = $('avoidStudentB');
         selA.innerHTML = '';
@@ -332,7 +360,7 @@
           selB.append(o1.cloneNode(true));
         });
 
-        // Group separation dropdown
+        // Dropdown for Group Avoidance
         const groupSelect = $('avoidGroupSelect');
         if (groupSelect) {
           groupSelect.innerHTML = '';
@@ -370,7 +398,30 @@
         }
       }
 
-      // --- Navigation Tab Switchers ---
+      // Add Roster Event
+      $('addNamesBtn').addEventListener('click', () => {
+        const c = current();
+        if (!c) return;
+        const text = $('bulkNames').value;
+        const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+        let added = 0;
+        lines.forEach(name => {
+          if (!c.students.some(s => s.name.toLowerCase() === name.toLowerCase())) {
+            c.students.push({ id: uid(), name, tier: 'Middle' });
+            added++;
+          }
+        });
+        if (added > 0) {
+          $('bulkNames').value = '';
+          toast(`Added ${added} student(s).`);
+          save();
+          render();
+        } else {
+          toast('No new unique names to add.');
+        }
+      });
+
+      // Navigation Switches
       $('teacherTab').addEventListener('click', () => {
         $('teacherTab').classList.add('active');
         $('groupsTab').classList.remove('active');
@@ -393,14 +444,14 @@
         $('teacherTab').click();
       });
 
-      // Toggle input view based on rule type selection
+      // Avoid Type Switcher
       $('avoidType').addEventListener('change', (e) => {
         const isGroup = e.target.value === 'group';
         $('pairAvoidFields').classList.toggle('hidden', isGroup);
         $('groupAvoidFields').classList.toggle('hidden', !isGroup);
       });
 
-      // Add Separation Rule Event Handler
+      // Add Separation Rule
       $('addAvoidBtn').addEventListener('click', () => {
         const c = current();
         if (!c) return;
@@ -419,7 +470,6 @@
           }
           c.avoidPairs.push([a, b]);
         } else {
-          // Multi-student group rule
           const selectedOptions = Array.from($('avoidGroupSelect').selectedOptions).map(o => o.value);
           if (selectedOptions.length < 3) {
             toast('Please select at least 3 students for a group rule.');
@@ -444,7 +494,8 @@
       });
 
       // Init
-      load();
+      if (!db.classes.length) makeClass('Period 1');
+      if (!db.classes.some(c => c.id === db.activeId)) db.activeId = db.classes[0].id;
       render();
     })();
   </script>
