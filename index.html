@@ -67,6 +67,69 @@ textarea { resize:vertical; min-height:90px; }
 .member { display:flex; gap:10px; align-items:center; padding:10px; border:1px solid var(--line); border-radius:10px; min-width:0; }
 .avatar { min-width:34px; max-width:116px; min-height:34px; padding:5px 8px; border-radius:10px; display:grid; place-items:center; text-align:center; font-weight:800; font-size:10px; line-height:1.15; overflow-wrap:anywhere; background:#e8edf5; color:#243b5a; }
 .member-name { font-weight:700; overflow-wrap:anywhere; }
+.member { cursor:pointer; }
+.member:hover { border-color:var(--red); background:#fff8f8; }
+/* Fullscreen group display */
+#groupsPage:fullscreen {
+  display: block !important;
+  width: 100vw;
+  height: 100vh;
+  overflow: auto;
+  background: white;
+  padding: 18px;
+}
+#groupsPage:fullscreen > main.panel {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 18px 22px;
+}
+#groupsPage:fullscreen .groups {
+  grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
+  gap: 18px;
+  margin-top: 22px;
+}
+#groupsPage:fullscreen .group-card {
+  border-width: 2px;
+}
+#groupsPage:fullscreen .group-title {
+  font-size: clamp(20px, 2vw, 30px);
+  padding: 16px 18px;
+}
+#groupsPage:fullscreen .group-title small {
+  font-size: clamp(14px, 1.3vw, 20px);
+}
+#groupsPage:fullscreen .members {
+  padding: 14px;
+  gap: 12px;
+}
+#groupsPage:fullscreen .member {
+  padding: 14px;
+  gap: 14px;
+  border-radius: 12px;
+}
+#groupsPage:fullscreen .member-name {
+  font-size: clamp(22px, 2.3vw, 36px);
+  line-height: 1.2;
+}
+#groupsPage:fullscreen .avatar {
+  min-width: 54px;
+  min-height: 54px;
+  max-width: 150px;
+  font-size: clamp(12px, 1.1vw, 18px);
+  padding: 8px 10px;
+}
+#groupsPage:fullscreen .groups-page-head h2 {
+  font-size: clamp(24px, 2.5vw, 36px);
+}
+#groupsPage:fullscreen .subline {
+  font-size: clamp(15px, 1.3vw, 20px);
+}
+.random-result { margin-top:18px; padding:24px; border:2px dashed #cfd7e3; border-radius:14px; text-align:center; background:#f8faff; }
+.random-result strong { display:block; font-size:clamp(24px,4vw,36px); color:var(--navy); margin-top:8px; }
 .empty { padding:50px 20px; text-align:center; color:var(--muted); border:2px dashed #d5deea; border-radius:15px; margin-top:18px; }
 .toast { position:fixed; bottom:18px; left:50%; transform:translateX(-50%); background:#182230; color:white; padding:10px 16px; border-radius:10px; z-index:10; max-width:90vw; text-align:center; }
 .footer { font-size:12px; color:var(--muted); text-align:center; padding:24px 0 8px; }
@@ -94,6 +157,7 @@ textarea { resize:vertical; min-height:90px; }
 <nav class="page-nav">
   <button class="secondary active" id="teacherTab">Teacher Setup</button>
   <button class="secondary" id="groupsTab">Display Groups</button>
+  <button class="secondary" id="randomStudentTab">Random Student</button>
 </nav>
 
 <div class="wrap">
@@ -209,6 +273,7 @@ textarea { resize:vertical; min-height:90px; }
     <select id="displayClassSelect" style="width:auto;min-width:170px;max-width:240px"></select>
     <button class="secondary" id="backTeacherBtn">Teacher Setup</button>
     <button class="secondary" id="printBtn">Print groups</button>
+    <button class="secondary" id="fullscreenBtn">⛶ Full screen</button>
     <button class="primary" id="generateBtn">⤨ Randomize groups</button>
   </div>
 </div>
@@ -217,6 +282,26 @@ textarea { resize:vertical; min-height:90px; }
   <div class="empty">Your groups will appear here.</div>
 </div>
 </main>
+</section>
+
+<section class="page" id="randomStudentPage">
+  <main class="panel">
+    <div class="groups-page-head">
+      <div>
+        <h2>Random Student Picker</h2>
+        <div class="subline">Select a student at random from the selected class roster.</div>
+      </div>
+      <div class="btnrow actions">
+        <label for="randomClassSelect">Class</label>
+        <select id="randomClassSelect" style="width:auto;min-width:170px;max-width:240px"></select>
+        <button class="secondary" id="randomBackTeacherBtn">Teacher Setup</button>
+      </div>
+    </div>
+    <button class="primary" id="pickRandomStudentBtn">Pick a random student</button>
+    <div class="random-result" id="randomStudentResult" aria-live="polite">
+      Click “Pick a random student” to choose a name.
+    </div>
+  </main>
 </section>
 
 </div>
@@ -230,6 +315,7 @@ textarea { resize:vertical; min-height:90px; }
 const KEY = 'balancedGroupRandomizer.v1';
 let db = {classes:[], activeId:null};
 let groups = [];
+let absentIds = new Set();
 let toastTimer;
 const $ = id => document.getElementById(id);
 const tiers = ['High','Middle','Low'];
@@ -268,7 +354,7 @@ function makeClass(name) {
   return c;
 }
 function syncClassDropdowns() {
-  ['classSelect','displayClassSelect'].forEach(id => {
+  ['classSelect','displayClassSelect','randomClassSelect'].forEach(id => {
     const select = $(id);
     const prior = select.value;
     select.innerHTML = '';
@@ -550,6 +636,7 @@ function arrangementScore(arr,c) {
 function generate() {
   const c = current();
   if (!c || c.students.length < 2) return;
+  absentIds = new Set();
   const sizes = createGroupSizes(c.students.length);
   let best = null, bestScore = -Infinity;
   const attempts = Math.min(5000,Math.max(800,c.students.length*120));
@@ -597,6 +684,142 @@ function generate() {
   toast(violations ? 'Warning: some separation rules could not be satisfied.' : 'New groups generated.');
 }
 
+
+function markStudentAbsent(studentId) {
+  if (absentIds.has(studentId)) return;
+
+  const c = current();
+  const student = c?.students.find(s => s.id === studentId);
+  if (!student) return;
+
+  const roles = c.roles || defaultRoles;
+
+  // Find the exact group containing the absent student.
+  const affectedGroup = groups.find(g =>
+    g.some(s => s.id === studentId)
+  );
+
+  if (!affectedGroup) return;
+
+  // Mark absent and remove only this student from their group.
+  absentIds.add(studentId);
+
+  const remainingMembers = affectedGroup.filter(s =>
+    s.id !== studentId
+  );
+
+  // Helper: assign roles to a group of two.
+  function assignPairRoles(group) {
+    return group.map((s, i) => ({
+      ...s,
+      role: i === 0
+        ? roles[0]
+        : `${roles[1]} + ${roles[2]}`
+    }));
+  }
+
+  // Helper: assign roles to a group of three.
+  function assignTripleRoles(group) {
+    return group.map((s, i) => ({
+      ...s,
+      role: roles[i]
+    }));
+  }
+
+  // CASE 1:
+  // A group of three becomes a pair.
+  // Leave every other group untouched.
+  if (remainingMembers.length === 2) {
+    const updatedPair = assignPairRoles(remainingMembers);
+
+    const groupIndex = groups.indexOf(affectedGroup);
+    groups[groupIndex] = updatedPair;
+
+    renderGroups();
+    toast(`${student.name} marked absent. Only their group was adjusted.`);
+    return;
+  }
+
+  // CASE 2:
+  // A group of two becomes a group of one.
+  const survivor = remainingMembers[0];
+
+  if (!survivor) {
+    groups = groups.filter(g => g.length > 0);
+    renderGroups();
+    toast(`${student.name} marked absent.`);
+    return;
+  }
+
+  // First, look for another existing pair to absorb the survivor.
+  const otherPair = groups.find(g =>
+    g !== affectedGroup && g.length === 2
+  );
+
+  if (otherPair) {
+    // Survivor becomes facilitator in the new group of three.
+    const mergedGroup = assignTripleRoles([
+      survivor,
+      ...otherPair
+    ]);
+
+    const survivorGroupIndex = groups.indexOf(affectedGroup);
+    const pairGroupIndex = groups.indexOf(otherPair);
+
+    groups[survivorGroupIndex] = mergedGroup;
+    groups[pairGroupIndex] = [];
+
+    // Remove the now-empty group.
+    groups = groups.filter(g => g.length > 0);
+
+    renderGroups();
+    toast(`${student.name} marked absent. The remaining student joined another pair as facilitator.`);
+    return;
+  }
+
+  // CASE 3:
+  // No other pair exists.
+  // Take one student from a group of three to create two pairs.
+  const donorGroup = groups.find(g =>
+    g !== affectedGroup && g.length === 3
+  );
+
+  if (donorGroup) {
+    // Move the third student from the donor group.
+    const donor = donorGroup[2];
+
+    const donorPair = assignPairRoles([
+      donorGroup[0],
+      donorGroup[1]
+    ]);
+
+    // Survivor becomes facilitator in the new pair.
+    const survivorPair = assignPairRoles([
+      survivor,
+      donor
+    ]);
+
+    const survivorGroupIndex = groups.indexOf(affectedGroup);
+    const donorGroupIndex = groups.indexOf(donorGroup);
+
+    groups[survivorGroupIndex] = survivorPair;
+    groups[donorGroupIndex] = donorPair;
+
+    groups = groups.filter(g => g.length > 0);
+
+    renderGroups();
+    toast(`${student.name} marked absent. One student moved to repair the groups.`);
+    return;
+  }
+
+  // Fallback: retain the survivor in their own group if no
+  // other group can be repaired without a broader reshuffle.
+  groups = groups.filter(g => g.length > 0);
+
+  renderGroups();
+  toast(`${student.name} marked absent. Groups updated.`);
+}
+
 function renderGroups() {
   const area = $('groupsArea');
   area.innerHTML = '';
@@ -621,8 +844,17 @@ function renderGroups() {
     const members = document.createElement('div');
     members.className = 'members';
     g.forEach(s => {
+      if (absentIds.has(s.id)) return;
       const m = document.createElement('div');
       m.className = 'member';
+      m.title = `Click to mark ${s.name} absent and rebalance groups`;
+      m.setAttribute('role','button');
+      m.setAttribute('tabindex','0');
+      const markAbsent = () => markStudentAbsent(s.id);
+      m.addEventListener('click',markAbsent);
+      m.addEventListener('keydown',e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); markAbsent(); }
+      });
       const avatar = document.createElement('div');
       avatar.className = 'avatar';
       avatar.textContent = s.role || 'Role';
@@ -644,14 +876,20 @@ function renderGroups() {
 
 function showPage(which) {
   const teacher = which === 'teacher';
+  const groupDisplay = which === 'groups';
+  const randomStudent = which === 'randomStudent';
   $('teacherPage').classList.toggle('active',teacher);
-  $('groupsPage').classList.toggle('active',!teacher);
+  $('groupsPage').classList.toggle('active',groupDisplay);
+  $('randomStudentPage').classList.toggle('active',randomStudent);
   $('teacherTab').classList.toggle('active',teacher);
-  $('groupsTab').classList.toggle('active',!teacher);
+  $('groupsTab').classList.toggle('active',groupDisplay);
+  $('randomStudentTab').classList.toggle('active',randomStudent);
 }
 
 $('teacherTab').addEventListener('click',() => showPage('teacher'));
 $('groupsTab').addEventListener('click',() => showPage('groups'));
+$('randomStudentTab').addEventListener('click',() => showPage('randomStudent'));
+$('randomBackTeacherBtn').addEventListener('click',() => showPage('teacher'));
 $('backTeacherBtn').addEventListener('click',() => showPage('teacher'));
 $('teacherGoGroupsBtn').addEventListener('click',() => showPage('groups'));
 $('teacherGenerateBtn').addEventListener('click',() => {
@@ -682,6 +920,7 @@ $('newClassName').addEventListener('keydown',e => {
 function switchClass(id) {
   db.activeId = id;
   groups = [];
+  absentIds = new Set();
   save();
   render();
 }
@@ -753,9 +992,50 @@ $('addAvoidGroupBtn').addEventListener('click',() => {
 });
 
 $('generateBtn').addEventListener('click',generate);
+const fullscreenBtn = $('fullscreenBtn');
+async function toggleGroupFullscreen() {
+  try {
+    if (document.fullscreenElement === $('groupsPage')) {
+      await document.exitFullscreen();
+    } else {
+      await $('groupsPage').requestFullscreen();
+    }
+  } catch (err) {
+    toast('Full screen is not available in this browser.');
+  }
+}
+function syncFullscreenButton() {
+  const isFullscreen = document.fullscreenElement === $('groupsPage');
+  fullscreenBtn.textContent = isFullscreen
+    ? '⤢ Exit full screen'
+    : '⛶ Full screen';
+  fullscreenBtn.setAttribute(
+    'aria-label',
+    isFullscreen ? 'Exit full screen' : 'Make group display fullscreen'
+  );
+}
+fullscreenBtn.addEventListener('click', toggleGroupFullscreen);
+document.addEventListener('fullscreenchange', syncFullscreenButton);
 $('printBtn').addEventListener('click',() => {
   if (!groups.length) { toast('Generate groups before printing.'); return; }
   window.print();
+});
+
+$('pickRandomStudentBtn').addEventListener('click',() => {
+  const c = current();
+  const result = $('randomStudentResult');
+  if (!c || !c.students.length) {
+    result.textContent = 'Add students to this class roster first.';
+    toast('This class has no students.');
+    return;
+  }
+  const picked = c.students[Math.floor(Math.random() * c.students.length)];
+  result.innerHTML = '';
+  const label = document.createElement('div');
+  label.textContent = 'Randomly selected student:';
+  const name = document.createElement('strong');
+  name.textContent = picked.name;
+  result.append(label,name);
 });
 
 $('exportBtn').addEventListener('click',() => {
