@@ -181,7 +181,7 @@ textarea { resize:vertical; min-height:90px; }
 .desk-group.dragging { cursor:grabbing; z-index:20; box-shadow:0 10px 25px #18223035; }
 .desk { width:70px; height:43px; min-height:43px; padding:4px; border:1px solid #9daec4;
   border-radius:8px; background:white; display:flex; align-items:center; justify-content:center;
-  text-align:center; overflow-wrap:anywhere; font-size:10px; line-height:1.1; font-weight:700; }
+  text-align:center; white-space:nowrap; overflow:hidden; font-size:10px; line-height:1.1; font-weight:700; }
 .desk.empty-seat { color:#98a2b3; font-weight:400; }
 .desk-group .desk-delete { position:absolute; right:-7px; top:-9px; width:20px; height:20px;
   border-radius:50%; padding:0; background:#c63b46; color:white; z-index:2; }
@@ -251,6 +251,8 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
   <div class="row">
     <select class="grow" id="classSelect"></select>
     <button class="secondary" id="newClassBtn">＋</button>
+    <button class="secondary" id="renameClassBtn" title="Rename selected class">Rename</button>
+    <button class="secondary" id="deleteClassBtn" title="Delete selected class" style="color:#c63b46">Delete</button>
   </div>
 </div>
 <div class="row">
@@ -1005,6 +1007,38 @@ $('teacherGenerateBtn').addEventListener('click',() => {
   showPage('groups');
 });
 
+$('renameClassBtn').addEventListener('click',() => {
+  const c = current();
+  if (!c) { toast('Choose a class first.'); return; }
+  const answer = prompt('Rename class:',c.name);
+  if (answer === null) return;
+  const name = answer.trim();
+  if (!name) { toast('Class name cannot be blank.'); return; }
+  if (db.classes.some(other => other.id !== c.id && normalizeName(other.name) === normalizeName(name))) {
+    toast('A class with that name already exists.');
+    return;
+  }
+  c.name = name;
+  save();
+  render();
+  toast('Class renamed.');
+});
+$('deleteClassBtn').addEventListener('click',() => {
+  const c = current();
+  if (!c) { toast('Choose a class first.'); return; }
+  if (!confirm(`Permanently delete "${c.name}" and its roster, rules, and seating assignments? The shared desk layout will remain.`)) return;
+  db.classes = db.classes.filter(other => other.id !== c.id);
+  db.activeId = db.classes[0]?.id || null;
+  groups = [];
+  absentIds = new Set();
+  if (!db.classes.length) {
+    makeClass('My Class');
+  } else {
+    save();
+    render();
+  }
+  toast('Class deleted. Shared desk layout preserved.');
+});
 $('newClassBtn').addEventListener('click',() => $('newClassName').focus());
 $('createClassBtn').addEventListener('click',() => {
   const name = $('newClassName').value.trim();
@@ -1250,6 +1284,7 @@ function seatingDimensions(g) {
   const rows = Math.ceil(g.size / cols);
   return {w:cols*70+(cols-1)*4+16,h:rows*43+(rows-1)*4+16,cols};
 }
+const nameMeasureCanvas = document.createElement('canvas');
 function renderSeating() {
   const room = $('seatingRoom');
   room.innerHTML = '<div class="front-of-class">FRONT OF CLASS</div>';
@@ -1302,6 +1337,18 @@ function renderSeating() {
       const student = current()?.students.find(s => s.id === (seatingAssignments()[g.id]||[])[i]);
       desk.className = 'desk' + (student ? '' : ' empty-seat');
       desk.textContent = student ? student.name : 'Empty';
+      if (student) {
+        // Measure the full name and shrink its font until it fits on one line.
+        const ctx = nameMeasureCanvas.getContext('2d');
+        let fontSize = 10;
+        const availableWidth = 60; // 70px desk minus padding and border
+        while (fontSize > 3 && ctx) {
+          ctx.font = `700 ${fontSize}px system-ui, sans-serif`;
+          if (ctx.measureText(student.name).width <= availableWidth) break;
+          fontSize -= 0.25;
+        }
+        desk.style.fontSize = `${fontSize}px`;
+      }
       desk.title = student ? student.name : 'Empty seat';
       el.append(desk);
       seats++;
