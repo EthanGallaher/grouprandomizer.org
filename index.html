@@ -1070,11 +1070,13 @@ function switchClass(id) {
   db.activeId = id;
   groups = [];
   absentIds = new Set();
+  $('randomStudentResult').textContent = 'Click “Pick a random student” to choose a name.';
   save();
   render();
 }
 $('classSelect').addEventListener('change',e => switchClass(e.target.value));
 $('displayClassSelect').addEventListener('change',e => switchClass(e.target.value));
+$('randomClassSelect').addEventListener('change',e => switchClass(e.target.value));
 $('seatingClassSelect').addEventListener('change',e => switchClass(e.target.value));
 
 $('addNamesBtn').addEventListener('click',() => {
