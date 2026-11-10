@@ -1722,7 +1722,7 @@ function renderSeating() {
     room.append(el);
   });
   const count = current()?.students.length || 0;
-  $('seatingStatus').textContent = `${layout.length} desk groups · ${seats} seats · ${occupied} assigned · ${count} students in roster. Populate fills priority 1 first; changing a priority shifts the others automatically.;
+  $('seatingStatus').textContent = `${layout.length} desk groups · ${seats} seats · ${occupied} assigned · ${count} students in roster. Populate fills priority 1 first; changing a priority shifts the others automatically.`;
 }
 function updateDeskOrientation() {
   const size = Number($('deskSize').value);
