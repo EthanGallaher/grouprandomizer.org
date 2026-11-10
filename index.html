@@ -183,6 +183,8 @@ textarea { resize:vertical; min-height:90px; }
   border-radius:8px; background:white; display:flex; align-items:center; justify-content:center;
   text-align:center; white-space:nowrap; overflow:hidden; font-size:10px; line-height:1.1; font-weight:700; }
 
+.desk-group.multi-selected { outline:3px solid #2459a9; outline-offset:2px; background:#dceafe; }
+.seating-marquee { position:absolute; z-index:50; pointer-events:none; border:2px dashed #2459a9; background:#2459a928; border-radius:3px; }
 /* Click two seats to swap students, including an occupied and empty seat. */
 body:not(.student-seating-view) .seating-room:not(:fullscreen) .desk { cursor:pointer; }
 .desk.swap-selected { outline:3px solid #2459a9; outline-offset:-2px; background:#dbeafe; box-shadow:0 0 0 3px #2459a966; }
@@ -1303,6 +1305,7 @@ function renderSeatingTemplates() {
 }
 $('seatingTemplateSelect').addEventListener('change',e => {
   pendingSeatSwap = null;
+  clearDeskGroupSelection();
   db.activeSeatingTemplateId = e.target.value;
   save(); renderSeating();
 });
@@ -1374,6 +1377,63 @@ function seatingDimensions(g) {
 }
 const nameMeasureCanvas = document.createElement('canvas');
 let pendingSeatSwap = null;
+const selectedDeskGroups = new Set();
+function seatingEditable() {
+  return !document.fullscreenElement && !document.body.classList.contains('student-seating-view');
+}
+function clearDeskGroupSelection() {
+  selectedDeskGroups.clear();
+  document.querySelectorAll('#seatingRoom .desk-group.multi-selected').forEach(el => el.classList.remove('multi-selected'));
+}
+function refreshDeskGroupSelection() {
+  document.querySelectorAll('#seatingRoom .desk-group').forEach(el =>
+    el.classList.toggle('multi-selected', selectedDeskGroups.has(el.dataset.groupId)));
+}
+function roomPointerPoint(e,room) {
+  const rect=room.getBoundingClientRect();
+  return {x:(e.clientX-rect.left)*(room.clientWidth/rect.width),
+          y:(e.clientY-rect.top)*(room.clientHeight/rect.height)};
+}
+// Drag a selection rectangle across the empty classroom to select whole desk groups.
+$('seatingRoom').addEventListener('pointerdown',e => {
+  const room=$('seatingRoom');
+  if (!seatingEditable() || e.button !== 0 || e.target !== room) return;
+  e.preventDefault();
+  const origin=roomPointerPoint(e,room);
+  const additive=e.shiftKey || e.metaKey || e.ctrlKey;
+  if (!additive) clearDeskGroupSelection();
+  const original=new Set(selectedDeskGroups);
+  const marquee=document.createElement('div');
+  marquee.className='seating-marquee';
+  room.append(marquee);
+  room.setPointerCapture(e.pointerId);
+  let moved=false;
+  const move=ev => {
+    const pt=roomPointerPoint(ev,room);
+    const left=Math.max(0,Math.min(origin.x,pt.x)),top=Math.max(0,Math.min(origin.y,pt.y));
+    const right=Math.min(room.clientWidth,Math.max(origin.x,pt.x));
+    const bottom=Math.min(room.clientHeight,Math.max(origin.y,pt.y));
+    moved=moved || Math.abs(pt.x-origin.x)>4 || Math.abs(pt.y-origin.y)>4;
+    Object.assign(marquee.style,{left:left+'px',top:top+'px',width:Math.max(0,right-left)+'px',height:Math.max(0,bottom-top)+'px'});
+    selectedDeskGroups.clear();
+    original.forEach(id => selectedDeskGroups.add(id));
+    if (moved) seatingLayout().forEach(g => {
+      const {w,h}=seatingDimensions(g);
+      if (g.x<right && g.x+w>left && g.y<bottom && g.y+h>top) selectedDeskGroups.add(g.id);
+    });
+    refreshDeskGroupSelection();
+  };
+  const end=() => {
+    room.removeEventListener('pointermove',move);
+    room.removeEventListener('pointerup',end);
+    room.removeEventListener('pointercancel',end);
+    marquee.remove();
+    if (!moved && !additive) clearDeskGroupSelection();
+  };
+  room.addEventListener('pointermove',move);
+  room.addEventListener('pointerup',end);
+  room.addEventListener('pointercancel',end);
+});
 function swapSeatingSeats(groupId,seatIndex) {
   if (document.fullscreenElement || document.body.classList.contains('student-seating-view')) return;
   const chosen = {groupId,seatIndex,classId:current()?.id,templateId:db.activeSeatingTemplateId};
@@ -1410,6 +1470,7 @@ function renderSeating() {
   const room = $('seatingRoom');
   room.innerHTML = '<div class="front-of-class">FRONT OF CLASS</div>';
   const layout = seatingLayout();
+  for (const id of [...selectedDeskGroups]) if (!layout.some(g => g.id===id)) selectedDeskGroups.delete(id);
   normalizeSeatingPriorities(layout);
   let seats = 0, occupied = 0;
   layout.forEach(g => {
@@ -1420,6 +1481,7 @@ function renderSeating() {
     el.style.top = `${g.y}px`;
     el.style.gridTemplateColumns = `repeat(${cols},70px)`;
     el.dataset.groupId = g.id;
+    if (selectedDeskGroups.has(g.id)) el.classList.add('multi-selected');
     const priority = document.createElement('label');
     priority.className = 'desk-priority';
     priority.textContent = 'Priority ';
@@ -1486,24 +1548,43 @@ function renderSeating() {
       if (student) occupied++;
     }
     el.addEventListener('pointerdown',e => {
-      if (document.fullscreenElement === document.querySelector('#seatingPage .seating-scroll') || document.body.classList.contains('student-seating-view') || e.target.closest('button,select')) return;
+      if (!seatingEditable() || e.button !== 0 || e.target.closest('button,select,.desk')) return;
       e.preventDefault();
-      const rect = room.getBoundingClientRect();
-      const startX = e.clientX, startY = e.clientY, x = g.x, y = g.y;
+      if (e.shiftKey || e.metaKey || e.ctrlKey) {
+        if (selectedDeskGroups.has(g.id)) selectedDeskGroups.delete(g.id);
+        else selectedDeskGroups.add(g.id);
+        refreshDeskGroupSelection();
+        return;
+      }
+      if (!selectedDeskGroups.has(g.id)) {
+        clearDeskGroupSelection();
+        selectedDeskGroups.add(g.id);
+        refreshDeskGroupSelection();
+      }
+      const moving=seatingLayout().filter(item=>selectedDeskGroups.has(item.id));
+      const originals=moving.map(item=>({item,x:item.x,y:item.y,dimensions:seatingDimensions(item)}));
+      const origin=roomPointerPoint(e,room);
+      let didMove=false;
       el.classList.add('dragging');
       el.setPointerCapture(e.pointerId);
-      const move = ev => {
-        g.x = Math.max(0,Math.min(room.clientWidth-w,x+ev.clientX-startX));
-        g.y = Math.max(55,Math.min(room.clientHeight-h,y+ev.clientY-startY));
-        el.style.left = `${g.x}px`;
-        el.style.top = `${g.y}px`;
+      const move=ev => {
+        const point=roomPointerPoint(ev,room);
+        let dx=point.x-origin.x,dy=point.y-origin.y;
+        if (Math.abs(dx)>2 || Math.abs(dy)>2) didMove=true;
+        dx=Math.max(...originals.map(o=>-o.x),Math.min(dx,...originals.map(o=>room.clientWidth-o.dimensions.w-o.x)));
+        dy=Math.max(...originals.map(o=>55-o.y),Math.min(dy,...originals.map(o=>room.clientHeight-o.dimensions.h-o.y)));
+        originals.forEach(o=>{
+          o.item.x=o.x+dx; o.item.y=o.y+dy;
+          const node=[...room.querySelectorAll('.desk-group')].find(n=>n.dataset.groupId===o.item.id);
+          if(node) {node.style.left=o.item.x+'px';node.style.top=o.item.y+'px';}
+        });
       };
-      const end = () => {
+      const end=() => {
         el.classList.remove('dragging');
         el.removeEventListener('pointermove',move);
         el.removeEventListener('pointerup',end);
         el.removeEventListener('pointercancel',end);
-        save();
+        if(didMove) save();
       };
       el.addEventListener('pointermove',move);
       el.addEventListener('pointerup',end);
@@ -1512,7 +1593,7 @@ function renderSeating() {
     room.append(el);
   });
   const count = current()?.students.length || 0;
-  $('seatingStatus').textContent = `${layout.length} desk groups · ${seats} seats · ${occupied} assigned · ${count} students in roster. Populate fills priority 1 first; changing a priority shifts the others automatically. Drag to move; × removes a group.`;
+  $('seatingStatus').textContent = `${layout.length} desk groups · ${seats} seats · ${occupied} assigned · ${count} students in roster. Populate fills priority 1 first; changing a priority shifts the others automatically. Drag across empty space to select multiple groups; drag a selected group to move them together. Shift-click to add/remove groups. Click seats to swap students; × removes a group.`;
 }
 function updateDeskOrientation() {
   const size = Number($('deskSize').value);
