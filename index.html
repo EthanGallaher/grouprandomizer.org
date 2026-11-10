@@ -182,6 +182,11 @@ textarea { resize:vertical; min-height:90px; }
 .desk { width:70px; height:43px; min-height:43px; padding:4px; border:1px solid #9daec4;
   border-radius:8px; background:white; display:flex; align-items:center; justify-content:center;
   text-align:center; white-space:nowrap; overflow:hidden; font-size:10px; line-height:1.1; font-weight:700; }
+
+/* Click two seats to swap students, including an occupied and empty seat. */
+body:not(.student-seating-view) .seating-room:not(:fullscreen) .desk { cursor:pointer; }
+.desk.swap-selected { outline:3px solid #2459a9; outline-offset:-2px; background:#dbeafe; box-shadow:0 0 0 3px #2459a966; }
+
 .desk.empty-seat { color:#98a2b3; font-weight:400; }
 .desk-group .desk-delete { position:absolute; right:-7px; top:-9px; width:20px; height:20px;
   border-radius:50%; padding:0; background:#c63b46; color:white; z-index:2; }
@@ -388,7 +393,7 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
 <section class="page" id="seatingPage">
   <main class="panel">
     <div class="groups-page-head">
-      <div><h2>Seating Chart</h2><div class="subline">Desk positions and priorities are shared across classes; student assignments stay separate. "Populate" will automatically sort a High, Middle, and Low Student into each group.</div></div>
+      <div><h2>Seating Chart</h2><div class="subline">Drag desk groups anywhere in the room. Desk positions and priorities are shared across classes; student assignments stay separate.</div></div>
       <div class="btnrow"><label for="seatingClassSelect">Class</label>
         <select id="seatingClassSelect" style="width:auto;min-width:170px"></select></div>
     </div>
@@ -1297,6 +1302,7 @@ function renderSeatingTemplates() {
   $('deleteSeatingTemplateBtn').disabled = db.seatingTemplates.length <= 1;
 }
 $('seatingTemplateSelect').addEventListener('change',e => {
+  pendingSeatSwap = null;
   db.activeSeatingTemplateId = e.target.value;
   save(); renderSeating();
 });
@@ -1367,8 +1373,40 @@ function seatingDimensions(g) {
   return {w:cols*70+(cols-1)*4+16,h:rows*43+(rows-1)*4+16,cols};
 }
 const nameMeasureCanvas = document.createElement('canvas');
+let pendingSeatSwap = null;
+function swapSeatingSeats(groupId,seatIndex) {
+  if (document.fullscreenElement || document.body.classList.contains('student-seating-view')) return;
+  const chosen = {groupId,seatIndex,classId:current()?.id,templateId:db.activeSeatingTemplateId};
+  if (pendingSeatSwap && (pendingSeatSwap.classId !== chosen.classId || pendingSeatSwap.templateId !== chosen.templateId))
+    pendingSeatSwap = null;
+  if (!pendingSeatSwap) {
+    pendingSeatSwap = chosen;
+    renderSeating();
+    return;
+  }
+  const first = pendingSeatSwap;
+  pendingSeatSwap = null;
+  if (first.groupId === groupId && first.seatIndex === seatIndex) {
+    renderSeating(); // Clicking the selected seat again cancels the swap.
+    return;
+  }
+  const assignments = seatingAssignments();
+  const firstSeats = assignments[first.groupId] || (assignments[first.groupId] = []);
+  const secondSeats = assignments[groupId] || (assignments[groupId] = []);
+  const a = firstSeats[first.seatIndex] || null;
+  const b = secondSeats[seatIndex] || null;
+  if (b) firstSeats[first.seatIndex] = b;
+  else delete firstSeats[first.seatIndex];
+  if (a) secondSeats[seatIndex] = a;
+  else delete secondSeats[seatIndex];
+  save(); renderSeating();
+}
+
 function renderSeating() {
   renderSeatingTemplates();
+  if (pendingSeatSwap && (pendingSeatSwap.classId !== current()?.id ||
+      pendingSeatSwap.templateId !== db.activeSeatingTemplateId ||
+      !seatingLayout().some(g => g.id === pendingSeatSwap.groupId))) pendingSeatSwap = null;
   const room = $('seatingRoom');
   room.innerHTML = '<div class="front-of-class">FRONT OF CLASS</div>';
   const layout = seatingLayout();
@@ -1436,6 +1474,13 @@ function renderSeating() {
         desk.style.fontSize = `${fontSize}px`;
       }
       desk.title = student ? student.name : 'Empty seat';
+      if (pendingSeatSwap?.groupId === g.id && pendingSeatSwap.seatIndex === i)
+        desk.classList.add('swap-selected');
+      desk.addEventListener('pointerdown', e => e.stopPropagation());
+      desk.addEventListener('click', e => {
+        e.stopPropagation();
+        swapSeatingSeats(g.id,i);
+      });
       el.append(desk);
       seats++;
       if (student) occupied++;
