@@ -147,10 +147,20 @@ textarea { resize:vertical; min-height:90px; }
 
 /* Seating chart */
 
-#seatingPage:fullscreen { display:block!important; width:100vw; height:100vh; overflow:auto; background:#f5f7fb; padding:12px; }
-#seatingPage:fullscreen > main.panel { min-height:100%; border:0; box-shadow:none; }
-#seatingPage:fullscreen .seating-scroll { display:flex; justify-content:center; }
-#seatingPage:fullscreen .seating-room { flex-shrink:0; }
+/* Only the classroom canvas enters fullscreen; no toolbars or buttons. */
+.seating-scroll:fullscreen {
+  width:100vw; height:100vh; max-width:none;
+  padding:0; margin:0; overflow:hidden;
+  display:flex; align-items:center; justify-content:center;
+  background:#101c32;
+}
+.seating-scroll:fullscreen .seating-room {
+  flex:none; border-radius:0; margin:0;
+  zoom:var(--seating-fullscreen-zoom,1);
+}
+.seating-scroll:fullscreen .desk-delete,
+.seating-scroll:fullscreen .desk-priority { display:none!important; }
+.seating-scroll:fullscreen .desk-group { cursor:default; }
 @media(max-width:1150px) { .seating-scroll { overflow:auto; } }
 
 .seating-controls { display:flex; align-items:end; gap:10px; flex-wrap:wrap; margin:14px 0; }
@@ -1298,7 +1308,7 @@ function renderSeating() {
       if (student) occupied++;
     }
     el.addEventListener('pointerdown',e => {
-      if (document.body.classList.contains('student-seating-view') || e.target.closest('button,select')) return;
+      if (document.fullscreenElement === document.querySelector('#seatingPage .seating-scroll') || document.body.classList.contains('student-seating-view') || e.target.closest('button,select')) return;
       e.preventDefault();
       const rect = room.getBoundingClientRect();
       const startX = e.clientX, startY = e.clientY, x = g.x, y = g.y;
@@ -1350,16 +1360,33 @@ $('studentSeatingViewBtn').addEventListener('click',() => {
   $('studentSeatingViewBtn').textContent = enabled ? 'Exit Student View' : 'Student View';
   $('studentSeatingViewBtn').setAttribute('aria-pressed',String(enabled));
 });
+const seatingFullscreenCanvas = document.querySelector('#seatingPage .seating-scroll');
+function fitSeatingFullscreen() {
+  if (document.fullscreenElement !== seatingFullscreenCanvas) return;
+  const room = $('seatingRoom');
+  const zoom = Math.min(
+    seatingFullscreenCanvas.clientWidth / 1100,
+    seatingFullscreenCanvas.clientHeight / 660
+  );
+  room.style.setProperty('--seating-fullscreen-zoom', String(zoom));
+}
 $('seatingFullscreenBtn').addEventListener('click',async () => {
   try {
-    if (document.fullscreenElement === $('seatingPage')) await document.exitFullscreen();
-    else await $('seatingPage').requestFullscreen();
+    if (document.fullscreenElement === seatingFullscreenCanvas) {
+      await document.exitFullscreen();
+    } else {
+      await seatingFullscreenCanvas.requestFullscreen();
+    }
   } catch(e) { toast('Full screen is not available in this browser.'); }
 });
 document.addEventListener('fullscreenchange',() => {
-  $('seatingFullscreenBtn').textContent =
-    document.fullscreenElement === $('seatingPage') ? '⤢ Exit full screen' : '⛶ Full screen';
+  if (document.fullscreenElement === seatingFullscreenCanvas) {
+    fitSeatingFullscreen();
+  } else {
+    $('seatingRoom').style.removeProperty('--seating-fullscreen-zoom');
+  }
 });
+window.addEventListener('resize',fitSeatingFullscreen);
 $('printSeatingBtn').addEventListener('click',() => {
   if (!seatingLayout().length) { toast('Add desks before printing.'); return; }
   document.body.classList.add('print-seating');
