@@ -1378,6 +1378,66 @@ function seatingDimensions(g) {
 const nameMeasureCanvas = document.createElement('canvas');
 let pendingSeatSwap = null;
 const selectedDeskGroups = new Set();
+// Internal clipboard: desk geometry only, not student assignments.
+let copiedDeskGroups = [];
+let pasteSequence = 0;
+function copySelectedDeskGroups() {
+  if (!seatingEditable() || !selectedDeskGroups.size) return false;
+  const groups = seatingLayout().filter(g => selectedDeskGroups.has(g.id));
+  if (!groups.length) return false;
+  const minX = Math.min(...groups.map(g => g.x));
+  const minY = Math.min(...groups.map(g => g.y));
+  copiedDeskGroups = groups.map(g => ({
+    size:g.size, orientation:g.orientation,
+    dx:g.x-minX, dy:g.y-minY
+  }));
+  pasteSequence = 0;
+  toast(`${groups.length} desk group${groups.length===1?'':'s'} copied. Press ${navigator.platform?.includes('Mac')?'⌘':'Ctrl'}+V to paste.`);
+  return true;
+}
+function pasteSelectedDeskGroups() {
+  if (!seatingEditable() || !copiedDeskGroups.length || !current()) return false;
+  const room = $('seatingRoom');
+  const layout = seatingLayout();
+  const maxX = Math.max(...copiedDeskGroups.map(g => g.dx+seatingDimensions(g).w));
+  const maxY = Math.max(...copiedDeskGroups.map(g => g.dy+seatingDimensions(g).h));
+  // Keep the whole arrangement inside the room, preserving all relative spacing.
+  if (maxX > room.clientWidth || maxY > room.clientHeight) {
+    toast('The copied arrangement is too large for the seating chart.');
+    return false;
+  }
+  pasteSequence++;
+  const offset = 25 * ((pasteSequence-1)%8+1);
+  const first = seatingLayout().filter(g=>selectedDeskGroups.has(g.id));
+  const originalMinX = first.length ? Math.min(...first.map(g=>g.x)) : 30;
+  const originalMinY = first.length ? Math.min(...first.map(g=>g.y)) : 80;
+  const baseX = Math.max(0,Math.min(room.clientWidth-maxX,originalMinX+offset));
+  const baseY = Math.max(55,Math.min(room.clientHeight-maxY,originalMinY+offset));
+  clearDeskGroupSelection();
+  copiedDeskGroups.forEach(g => {
+    const newGroup = {id:uid(),size:g.size,orientation:g.orientation,
+      priority:layout.length+1,x:baseX+g.dx,y:baseY+g.dy};
+    layout.push(newGroup);
+    selectedDeskGroups.add(newGroup.id);
+  });
+  pendingSeatSwap = null;
+  save(); renderSeating();
+  toast(`${copiedDeskGroups.length} desk groups pasted and selected. Drag any highlighted group to move them together.`);
+  return true;
+}
+document.addEventListener('keydown', e => {
+  if (!seatingEditable() || !e.target || !document.getElementById('seatingPage')) return;
+  const page = $('seatingPage');
+  if (page.classList.contains('hidden') || getComputedStyle(page).display==='none') return;
+  if (e.target.closest('input,textarea,select,[contenteditable="true"]')) return;
+  if (!(e.metaKey || e.ctrlKey) || e.altKey) return;
+  const key = e.key.toLowerCase();
+  if (key==='c' && selectedDeskGroups.size) {
+    if (copySelectedDeskGroups()) e.preventDefault();
+  } else if (key==='v' && copiedDeskGroups.length) {
+    if (pasteSelectedDeskGroups()) e.preventDefault();
+  }
+});
 function seatingEditable() {
   return !document.fullscreenElement && !document.body.classList.contains('student-seating-view');
 }
@@ -1593,7 +1653,7 @@ function renderSeating() {
     room.append(el);
   });
   const count = current()?.students.length || 0;
-  $('seatingStatus').textContent = `${layout.length} desk groups · ${seats} seats · ${occupied} assigned · ${count} students in roster. Populate fills priority 1 first; changing a priority shifts the others automatically. Drag across empty space to select multiple groups; drag a selected group to move them together. Shift-click to add/remove groups. Click seats to swap students; × removes a group.`;
+  $('seatingStatus').textContent = `${layout.length} desk groups · ${seats} seats · ${occupied} assigned · ${count} students in roster. Populate fills priority 1 first; changing a priority shifts the others automatically. Drag across empty space to select multiple groups; drag a selected group to move them together. Shift-click to add/remove groups. Ctrl/Cmd+C copies selected desk groups; Ctrl/Cmd+V pastes them, selected and ready to drag. Click seats to swap students; × removes a group.`;
 }
 function updateDeskOrientation() {
   const size = Number($('deskSize').value);
