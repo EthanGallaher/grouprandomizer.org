@@ -144,6 +144,54 @@ textarea { resize:vertical; min-height:90px; }
   .groups { grid-template-columns:repeat(3,1fr); gap:8px; }
   .group-card { break-inside:avoid; }
 }
+
+/* Seating chart */
+.seating-controls { display:flex; align-items:end; gap:10px; flex-wrap:wrap; margin:14px 0; }
+.seating-controls .field { margin:0; min-width:125px; }
+.seating-controls button { min-height:42px; }
+.seating-room { position:relative; width:1100px; height:660px; background:#f8fafc;
+  border:2px solid #b9c7db; border-radius:14px; overflow:hidden;
+  background-image:linear-gradient(#dce5f055 1px,transparent 1px),linear-gradient(90deg,#dce5f055 1px,transparent 1px);
+  background-size:25px 25px; touch-action:none; }
+.seating-scroll { max-width:100%; overflow:auto; }
+.front-of-class { position:absolute; top:0; left:0; right:0; height:48px;
+  background:#172b4d; color:#fff; display:flex; align-items:center; justify-content:center;
+  font-weight:800; font-size:18px; letter-spacing:.12em; border-radius:10px 10px 0 0;
+  z-index:1; pointer-events:none; }
+.desk-group { position:absolute; display:grid; gap:5px; padding:9px;
+  background:#e4eaf4; border:2px solid #8fa5c4; border-radius:12px;
+  cursor:grab; user-select:none; touch-action:none; }
+.desk-group.dragging { cursor:grabbing; z-index:20; box-shadow:0 10px 25px #18223035; }
+.desk { width:105px; min-height:66px; padding:7px; border:1px solid #9daec4;
+  border-radius:8px; background:white; display:flex; align-items:center; justify-content:center;
+  text-align:center; overflow-wrap:anywhere; font-size:12px; font-weight:700; }
+.desk.empty-seat { color:#98a2b3; font-weight:400; }
+.desk-group .desk-delete { position:absolute; right:-9px; top:-12px; width:25px; height:25px;
+  border-radius:50%; padding:0; background:#c63b46; color:white; z-index:2; }
+.seating-note { font-size:13px; color:#667085; margin:10px 0; }
+@media print {
+  #seatingPage { display:block!important; }
+  #seatingPage .seating-controls,#seatingPage .seating-note { display:none!important; }
+  .seating-scroll { overflow:visible; }
+  .seating-room { transform:scale(.72); transform-origin:top left; }
+}
+@media print {
+  @page { size:landscape; margin:10mm; }
+  body.print-seating .top, body.print-seating .page-nav,
+  body.print-seating .footer, body.print-seating #toast,
+  body.print-seating #teacherPage, body.print-seating #groupsPage,
+  body.print-seating #randomStudentPage { display:none!important; }
+  body.print-seating .wrap { max-width:none; padding:0; }
+  body.print-seating #seatingPage { display:block!important; }
+  body.print-seating #seatingPage > main.panel { border:0; padding:0; box-shadow:none; }
+  body.print-seating #seatingPage .groups-page-head,
+  body.print-seating #seatingPage .seating-controls,
+  body.print-seating #seatingPage .seating-note { display:none!important; }
+  body.print-seating .seating-scroll { overflow:visible!important; width:792px; height:476px; }
+  body.print-seating .seating-room { transform:scale(.72); transform-origin:top left;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  body.print-seating .desk-delete { display:none!important; }
+}
 </style>
 </head>
 <body>
@@ -158,6 +206,7 @@ textarea { resize:vertical; min-height:90px; }
   <button class="secondary active" id="teacherTab">Teacher Setup</button>
   <button class="secondary" id="groupsTab">Display Groups</button>
   <button class="secondary" id="randomStudentTab">Random Student</button>
+  <button class="secondary" id="seatingTab">Seating Chart</button>
 </nav>
 
 <div class="wrap">
@@ -304,6 +353,29 @@ textarea { resize:vertical; min-height:90px; }
   </main>
 </section>
 
+
+<section class="page" id="seatingPage">
+  <main class="panel">
+    <div class="groups-page-head">
+      <div><h2>Seating Chart</h2><div class="subline">Drag desk groups anywhere in the room. Layouts are saved separately for each class.</div></div>
+      <div class="btnrow"><label for="seatingClassSelect">Class</label>
+        <select id="seatingClassSelect" style="width:auto;min-width:170px"></select></div>
+    </div>
+    <div class="seating-controls">
+      <div class="field"><label for="deskSize">Desk group</label>
+        <select id="deskSize"><option value="1">1 desk</option><option value="2">2 desks</option><option value="3">3 desks</option><option value="4">4 desks (2×2)</option></select></div>
+      <div class="field"><label for="deskOrientation">Orientation</label>
+        <select id="deskOrientation"><option value="row">Row (horizontal)</option><option value="column">Column (vertical)</option></select></div>
+      <button class="secondary" id="addDeskBtn">＋ Add desks</button>
+      <button class="primary" id="populateDesksBtn">Populate desks</button>
+      <button class="secondary" id="clearStudentsBtn">Clear students</button>
+      <button class="secondary" id="clearDesksBtn">Clear desks</button>
+      <button class="secondary" id="printSeatingBtn">Print seating chart</button>
+    </div>
+    <div class="seating-note" id="seatingStatus">Add desks to create your classroom layout.</div>
+    <div class="seating-scroll"><div class="seating-room" id="seatingRoom" aria-label="Draggable classroom desk layout"><div class="front-of-class">FRONT OF CLASS</div></div></div>
+  </main>
+</section>
 </div>
 <div class="footer">Made for classroom collaboration</div>
 </div>
@@ -344,7 +416,7 @@ function makeClass(name) {
   const c = {
     id:uid(), name:name.trim() || `Class ${db.classes.length+1}`,
     students:[], avoidPairs:[], avoidGroups:[],
-    roles:defaultRoles.slice()
+    roles:defaultRoles.slice(), seating:[]
   };
   db.classes.push(c);
   db.activeId = c.id;
@@ -354,7 +426,7 @@ function makeClass(name) {
   return c;
 }
 function syncClassDropdowns() {
-  ['classSelect','displayClassSelect','randomClassSelect'].forEach(id => {
+  ['classSelect','displayClassSelect','randomClassSelect','seatingClassSelect'].forEach(id => {
     const select = $(id);
     const prior = select.value;
     select.innerHTML = '';
@@ -580,6 +652,7 @@ function render() {
   $('displayTitle').textContent = c ? `${c.name} — Groups` : 'Class groups';
   $('generateBtn').disabled = !c || c.students.length < 2;
   renderGroups();
+  renderSeating();
 }
 
 function createGroupSizes(n) {
@@ -878,17 +951,21 @@ function showPage(which) {
   const teacher = which === 'teacher';
   const groupDisplay = which === 'groups';
   const randomStudent = which === 'randomStudent';
+  const seating = which === 'seating';
   $('teacherPage').classList.toggle('active',teacher);
   $('groupsPage').classList.toggle('active',groupDisplay);
   $('randomStudentPage').classList.toggle('active',randomStudent);
+  $('seatingPage').classList.toggle('active',seating);
   $('teacherTab').classList.toggle('active',teacher);
   $('groupsTab').classList.toggle('active',groupDisplay);
   $('randomStudentTab').classList.toggle('active',randomStudent);
+  $('seatingTab').classList.toggle('active',seating);
 }
 
 $('teacherTab').addEventListener('click',() => showPage('teacher'));
 $('groupsTab').addEventListener('click',() => showPage('groups'));
 $('randomStudentTab').addEventListener('click',() => showPage('randomStudent'));
+$('seatingTab').addEventListener('click',() => showPage('seating'));
 $('randomBackTeacherBtn').addEventListener('click',() => showPage('teacher'));
 $('backTeacherBtn').addEventListener('click',() => showPage('teacher'));
 $('teacherGoGroupsBtn').addEventListener('click',() => showPage('groups'));
@@ -926,6 +1003,7 @@ function switchClass(id) {
 }
 $('classSelect').addEventListener('change',e => switchClass(e.target.value));
 $('displayClassSelect').addEventListener('change',e => switchClass(e.target.value));
+$('seatingClassSelect').addEventListener('change',e => switchClass(e.target.value));
 
 $('addNamesBtn').addEventListener('click',() => {
   const c = current();
@@ -1078,6 +1156,178 @@ $('importFile').addEventListener('change',async e => {
     toast('That file is not a valid group randomizer backup.');
   }
   e.target.value = '';
+});
+
+
+// Seating chart: layout and assignments are persisted inside each class.
+function seatingLayout() {
+  const c = current();
+  if (!c) return [];
+  if (!Array.isArray(c.seating)) c.seating = [];
+  return c.seating;
+}
+function seatingDimensions(g) {
+  const cols = g.size === 4 ? 2 : g.orientation === 'column' ? 1 : g.size;
+  const rows = Math.ceil(g.size / cols);
+  return {w:cols*105+(cols-1)*5+22,h:rows*66+(rows-1)*5+22,cols};
+}
+function renderSeating() {
+  const room = $('seatingRoom');
+  room.innerHTML = '<div class="front-of-class">FRONT OF CLASS</div>';
+  const layout = seatingLayout();
+  let seats = 0, occupied = 0;
+  layout.forEach(g => {
+    const {w,h,cols} = seatingDimensions(g);
+    const el = document.createElement('div');
+    el.className = 'desk-group';
+    el.style.left = `${g.x}px`;
+    el.style.top = `${g.y}px`;
+    el.style.gridTemplateColumns = `repeat(${cols},105px)`;
+    el.dataset.groupId = g.id;
+    const del = document.createElement('button');
+    del.className = 'desk-delete';
+    del.textContent = '×';
+    del.title = 'Remove this desk group';
+    del.addEventListener('pointerdown',e => e.stopPropagation());
+    del.addEventListener('click',e => {
+      e.stopPropagation();
+      const c = current();
+      c.seating = seatingLayout().filter(item => item.id !== g.id);
+      save(); renderSeating();
+    });
+    el.append(del);
+    for (let i=0;i<g.size;i++) {
+      const desk = document.createElement('div');
+      const student = current()?.students.find(s => s.id === (g.students||[])[i]);
+      desk.className = 'desk' + (student ? '' : ' empty-seat');
+      desk.textContent = student ? student.name : 'Empty';
+      desk.title = student ? student.name : 'Empty seat';
+      el.append(desk);
+      seats++;
+      if (student) occupied++;
+    }
+    el.addEventListener('pointerdown',e => {
+      if (e.target.closest('button')) return;
+      e.preventDefault();
+      const rect = room.getBoundingClientRect();
+      const startX = e.clientX, startY = e.clientY, x = g.x, y = g.y;
+      el.classList.add('dragging');
+      el.setPointerCapture(e.pointerId);
+      const move = ev => {
+        g.x = Math.max(0,Math.min(room.clientWidth-w,x+ev.clientX-startX));
+        g.y = Math.max(55,Math.min(room.clientHeight-h,y+ev.clientY-startY));
+        el.style.left = `${g.x}px`;
+        el.style.top = `${g.y}px`;
+      };
+      const end = () => {
+        el.classList.remove('dragging');
+        el.removeEventListener('pointermove',move);
+        el.removeEventListener('pointerup',end);
+        el.removeEventListener('pointercancel',end);
+        save();
+      };
+      el.addEventListener('pointermove',move);
+      el.addEventListener('pointerup',end);
+      el.addEventListener('pointercancel',end);
+    });
+    room.append(el);
+  });
+  const count = current()?.students.length || 0;
+  $('seatingStatus').textContent = `${layout.length} desk groups · ${seats} seats · ${occupied} assigned · ${count} students in roster. Drag a group to move it; × removes that group.`;
+}
+function updateDeskOrientation() {
+  const size = Number($('deskSize').value);
+  $('deskOrientation').disabled = size === 1 || size === 4;
+}
+$('deskSize').addEventListener('change',updateDeskOrientation);
+updateDeskOrientation();
+$('addDeskBtn').addEventListener('click',() => {
+  const c = current();
+  if (!c) { toast('Create a class first.'); return; }
+  const size = Number($('deskSize').value);
+  const orientation = size === 4 ? 'square' : $('deskOrientation').value;
+  const layout = seatingLayout();
+  const g = {id:uid(),size,orientation,x:20+(layout.length%6)*145,y:65+(Math.floor(layout.length/6)%5)*115,students:[]};
+  const {w,h} = seatingDimensions(g);
+  g.x = Math.min(g.x,1100-w);
+  g.y = Math.min(g.y,660-h);
+  layout.push(g);
+  save(); renderSeating();
+});
+$('printSeatingBtn').addEventListener('click',() => {
+  if (!seatingLayout().length) { toast('Add desks before printing.'); return; }
+  document.body.classList.add('print-seating');
+  window.print();
+});
+window.addEventListener('afterprint',() => document.body.classList.remove('print-seating'));
+$('clearDesksBtn').addEventListener('click',() => {
+  const c = current();
+  if (!c || !seatingLayout().length) return;
+  if (!confirm('Remove all desk groups and seating assignments for this class?')) return;
+  c.seating = [];
+  save(); renderSeating();
+  toast('All desks cleared.');
+});
+$('clearStudentsBtn').addEventListener('click',() => {
+  seatingLayout().forEach(g => g.students = []);
+  save(); renderSeating(); toast('Seating assignments cleared.');
+});
+function seatingScore(layout,c) {
+  let score = 0;
+  const groups = layout.map(g => (g.students||[]).map(id => c.students.find(s=>s.id===id)).filter(Boolean));
+  for (const group of groups) {
+    const ids = new Set(group.map(s=>s.id));
+    for (const pair of c.avoidPairs) if (pair.every(id=>ids.has(id))) score -= 100000;
+    for (const rule of c.avoidGroups) if (rule.filter(id=>ids.has(id)).length>1) score -= 100000;
+    const counts = {High:0,Middle:0,Low:0};
+    group.forEach(s=>counts[s.tier]++);
+    if (group.length===4) {
+      if (counts.High===1 && counts.Middle===2 && counts.Low===1) score += 90;
+      else score += (counts.High>0?12:0)+(counts.Low>0?12:0)+(counts.Middle>0?12:0);
+    } else if (group.length===3) {
+      if (counts.High && counts.Middle && counts.Low) score += 55;
+      else if (Object.values(counts).filter(n=>n>0).length===2) score += 15;
+    } else if (group.length===2 && Object.values(counts).filter(n=>n>0).length===2) score += 18;
+  }
+  return score;
+}
+$('populateDesksBtn').addEventListener('click',() => {
+  const c = current(), layout = seatingLayout();
+  if (!c || !c.students.length) { toast('Add students to this class first.'); return; }
+  if (!layout.length) { toast('Add desk groups first.'); return; }
+  const capacity = layout.reduce((n,g)=>n+g.size,0);
+  if (capacity < c.students.length) { toast(`Not enough seats: ${capacity} seats for ${c.students.length} students.`); return; }
+  // Fill grouped desks before any individual desks.
+  const ordered = [...layout].sort((a,b)=>(a.size===1)-(b.size===1) || b.size-a.size);
+  let best=null, bestScore=-Infinity;
+  const attempts=Math.min(6000,Math.max(1200,c.students.length*140));
+  for (let trial=0;trial<attempts;trial++) {
+    const shuffled=c.students.slice();
+    for(let i=shuffled.length-1;i>0;i--) {
+      const j=Math.floor(Math.random()*(i+1));
+      [shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]];
+    }
+    const candidate=layout.map(g=>({...g,students:[]}));
+    const byId=new Map(candidate.map(g=>[g.id,g]));
+    let pos=0;
+    ordered.forEach(g=>{
+      byId.get(g.id).students=shuffled.slice(pos,pos+g.size).map(s=>s.id);
+      pos+=g.size;
+    });
+    const score=seatingScore(candidate,c)+Math.random()*.01;
+    if(score>bestScore){bestScore=score;best=candidate;}
+  }
+  best.forEach(g=>{
+    const target=layout.find(x=>x.id===g.id);
+    target.students=g.students;
+  });
+  save(); renderSeating();
+  const violations=best.some(g=>{
+    const ids=new Set(g.students);
+    return c.avoidPairs.some(p=>p.every(id=>ids.has(id))) ||
+      c.avoidGroups.some(rule=>rule.filter(id=>ids.has(id)).length>1);
+  });
+  toast(violations?'Seated students; some separation rules could not be satisfied.':'Students seated successfully.');
 });
 
 try {
