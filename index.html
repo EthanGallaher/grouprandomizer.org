@@ -168,6 +168,18 @@ textarea { resize:vertical; min-height:90px; }
 .desk.empty-seat { color:#98a2b3; font-weight:400; }
 .desk-group .desk-delete { position:absolute; right:-9px; top:-12px; width:25px; height:25px;
   border-radius:50%; padding:0; background:#c63b46; color:white; z-index:2; }
+body.student-seating-view .desk-priority,
+body.student-seating-view .desk-delete { display:none!important; }
+body.student-seating-view #seatingPage .seating-controls > :not(#studentSeatingViewBtn):not(#printSeatingBtn) { display:none!important; }
+body.student-seating-view .desk-group { cursor:default; }
+.desk-priority { position:absolute; left:8px; top:-29px; display:flex; align-items:center; gap:5px;
+  padding:3px 7px; background:#172b4d; color:white; border-radius:7px 7px 0 0;
+  font-size:11px; font-weight:700; cursor:default; }
+.desk-priority select { width:auto; min-width:45px; padding:2px 4px; border-radius:4px;
+  font-size:12px; color:#182230; }
+.desk-group { margin-top:0; }
+body.print-seating .desk-priority { background:#172b4d; color:white; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+body.print-seating .desk-priority select { appearance:none; border:0; padding:0 2px; }
 .seating-note { font-size:13px; color:#667085; margin:10px 0; }
 @media print {
   #seatingPage { display:block!important; }
@@ -190,7 +202,7 @@ textarea { resize:vertical; min-height:90px; }
   body.print-seating .seating-scroll { overflow:visible!important; width:792px; height:476px; }
   body.print-seating .seating-room { transform:scale(.72); transform-origin:top left;
     -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-  body.print-seating .desk-delete { display:none!important; }
+  body.print-seating .desk-delete, body.print-seating .desk-priority { display:none!important; }
 }
 </style>
 </head>
@@ -370,6 +382,7 @@ textarea { resize:vertical; min-height:90px; }
       <button class="primary" id="populateDesksBtn">Populate desks</button>
       <button class="secondary" id="clearStudentsBtn">Clear students</button>
       <button class="secondary" id="clearDesksBtn">Clear desks</button>
+      <button class="secondary" id="studentSeatingViewBtn" aria-pressed="false">Student View</button>
       <button class="secondary" id="printSeatingBtn">Print seating chart</button>
     </div>
     <div class="seating-note" id="seatingStatus">Add desks to create your classroom layout.</div>
@@ -1166,6 +1179,27 @@ function seatingLayout() {
   if (!Array.isArray(c.seating)) c.seating = [];
   return c.seating;
 }
+function normalizeSeatingPriorities(layout) {
+  // Existing layouts are numbered in their original creation order.
+  const ranked = layout.map((g,i) => ({g,i})).sort((a,b) => {
+    const ap = Number.isInteger(a.g.priority) && a.g.priority > 0 ? a.g.priority : a.i+1;
+    const bp = Number.isInteger(b.g.priority) && b.g.priority > 0 ? b.g.priority : b.i+1;
+    return ap-bp || a.i-b.i;
+  });
+  ranked.forEach(({g},i) => { g.priority = i+1; });
+}
+function changeSeatingPriority(groupId,newPriority) {
+  const layout = seatingLayout();
+  normalizeSeatingPriorities(layout);
+  const ranked = [...layout].sort((a,b)=>a.priority-b.priority);
+  const from = ranked.findIndex(g=>g.id===groupId);
+  if (from<0) return;
+  const [moving] = ranked.splice(from,1);
+  ranked.splice(Math.max(0,Math.min(ranked.length,newPriority-1)),0,moving);
+  ranked.forEach((g,i)=>{ g.priority=i+1; });
+  save();
+  renderSeating();
+}
 function seatingDimensions(g) {
   const cols = g.size === 4 ? 2 : g.orientation === 'column' ? 1 : g.size;
   const rows = Math.ceil(g.size / cols);
@@ -1175,6 +1209,7 @@ function renderSeating() {
   const room = $('seatingRoom');
   room.innerHTML = '<div class="front-of-class">FRONT OF CLASS</div>';
   const layout = seatingLayout();
+  normalizeSeatingPriorities(layout);
   let seats = 0, occupied = 0;
   layout.forEach(g => {
     const {w,h,cols} = seatingDimensions(g);
@@ -1184,6 +1219,26 @@ function renderSeating() {
     el.style.top = `${g.y}px`;
     el.style.gridTemplateColumns = `repeat(${cols},105px)`;
     el.dataset.groupId = g.id;
+    const priority = document.createElement('label');
+    priority.className = 'desk-priority';
+    priority.textContent = 'Priority ';
+    const prioritySelect = document.createElement('select');
+    prioritySelect.setAttribute('aria-label', `Populate priority for desk group ${g.priority}`);
+    for (let n=1;n<=layout.length;n++) {
+      const option = document.createElement('option');
+      option.value = String(n);
+      option.textContent = String(n);
+      option.selected = n === g.priority;
+      prioritySelect.append(option);
+    }
+    prioritySelect.addEventListener('pointerdown',e => e.stopPropagation());
+    prioritySelect.addEventListener('click',e => e.stopPropagation());
+    prioritySelect.addEventListener('change',e => {
+      e.stopPropagation();
+      changeSeatingPriority(g.id,Number(e.target.value));
+    });
+    priority.append(prioritySelect);
+    el.append(priority);
     const del = document.createElement('button');
     del.className = 'desk-delete';
     del.textContent = '×';
@@ -1193,6 +1248,7 @@ function renderSeating() {
       e.stopPropagation();
       const c = current();
       c.seating = seatingLayout().filter(item => item.id !== g.id);
+      normalizeSeatingPriorities(c.seating);
       save(); renderSeating();
     });
     el.append(del);
@@ -1207,7 +1263,7 @@ function renderSeating() {
       if (student) occupied++;
     }
     el.addEventListener('pointerdown',e => {
-      if (e.target.closest('button')) return;
+      if (document.body.classList.contains('student-seating-view') || e.target.closest('button,select')) return;
       e.preventDefault();
       const rect = room.getBoundingClientRect();
       const startX = e.clientX, startY = e.clientY, x = g.x, y = g.y;
@@ -1233,7 +1289,7 @@ function renderSeating() {
     room.append(el);
   });
   const count = current()?.students.length || 0;
-  $('seatingStatus').textContent = `${layout.length} desk groups · ${seats} seats · ${occupied} assigned · ${count} students in roster. Drag a group to move it; × removes that group.`;
+  $('seatingStatus').textContent = `${layout.length} desk groups · ${seats} seats · ${occupied} assigned · ${count} students in roster. Populate fills priority 1 first; changing a priority shifts the others automatically. Drag to move; × removes a group.`;
 }
 function updateDeskOrientation() {
   const size = Number($('deskSize').value);
@@ -1247,12 +1303,17 @@ $('addDeskBtn').addEventListener('click',() => {
   const size = Number($('deskSize').value);
   const orientation = size === 4 ? 'square' : $('deskOrientation').value;
   const layout = seatingLayout();
-  const g = {id:uid(),size,orientation,x:20+(layout.length%6)*145,y:65+(Math.floor(layout.length/6)%5)*115,students:[]};
+  const g = {id:uid(),size,orientation,priority:layout.length+1,x:20+(layout.length%6)*145,y:65+(Math.floor(layout.length/6)%5)*115,students:[]};
   const {w,h} = seatingDimensions(g);
   g.x = Math.min(g.x,1100-w);
   g.y = Math.min(g.y,660-h);
   layout.push(g);
   save(); renderSeating();
+});
+$('studentSeatingViewBtn').addEventListener('click',() => {
+  const enabled = document.body.classList.toggle('student-seating-view');
+  $('studentSeatingViewBtn').textContent = enabled ? 'Exit Student View' : 'Student View';
+  $('studentSeatingViewBtn').setAttribute('aria-pressed',String(enabled));
 });
 $('printSeatingBtn').addEventListener('click',() => {
   if (!seatingLayout().length) { toast('Add desks before printing.'); return; }
@@ -1297,8 +1358,9 @@ $('populateDesksBtn').addEventListener('click',() => {
   if (!layout.length) { toast('Add desk groups first.'); return; }
   const capacity = layout.reduce((n,g)=>n+g.size,0);
   if (capacity < c.students.length) { toast(`Not enough seats: ${capacity} seats for ${c.students.length} students.`); return; }
-  // Fill grouped desks before any individual desks.
-  const ordered = [...layout].sort((a,b)=>(a.size===1)-(b.size===1) || b.size-a.size);
+  // Fill strictly by teacher-selected priority, regardless of desk group size.
+  normalizeSeatingPriorities(layout);
+  const ordered = [...layout].sort((a,b)=>a.priority-b.priority);
   let best=null, bestScore=-Infinity;
   const attempts=Math.min(6000,Math.max(1200,c.students.length*140));
   for (let trial=0;trial<attempts;trial++) {
