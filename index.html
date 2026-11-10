@@ -187,7 +187,7 @@ textarea { resize:vertical; min-height:90px; }
   border-radius:50%; padding:0; background:#c63b46; color:white; z-index:2; }
 body.student-seating-view .desk-priority,
 body.student-seating-view .desk-delete { display:none!important; }
-body.student-seating-view #seatingPage .seating-controls > :not(#studentSeatingViewBtn):not(#printSeatingBtn):not(#seatingFullscreenBtn) { display:none!important; }
+body.student-seating-view #seatingPage .seating-controls > :not(#studentSeatingViewBtn):not(#printSeatingBtn):not(#seatingFullscreenBtn),\nbody.student-seating-view #templateControls { display:none!important; }
 body.student-seating-view .desk-group { cursor:default; }
 .desk-priority { position:absolute; left:5px; top:-25px; display:flex; align-items:center; gap:5px;
   padding:3px 7px; background:#172b4d; color:white; border-radius:7px 7px 0 0;
@@ -391,6 +391,13 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
       <div><h2>Seating Chart</h2><div class="subline">Drag desk groups anywhere in the room. Desk positions and priorities are shared across classes; student assignments stay separate.</div></div>
       <div class="btnrow"><label for="seatingClassSelect">Class</label>
         <select id="seatingClassSelect" style="width:auto;min-width:170px"></select></div>
+    </div>
+    <div class="seating-controls" id="templateControls">
+      <div class="field"><label for="seatingTemplateSelect">Templates</label>
+        <select id="seatingTemplateSelect" style="min-width:190px"></select></div>
+      <button class="secondary" id="addSeatingTemplateBtn">＋ Add template</button>
+      <button class="secondary" id="renameSeatingTemplateBtn">Rename</button>
+      <button class="secondary" id="deleteSeatingTemplateBtn" style="color:#c63b46">Delete template</button>
     </div>
     <div class="seating-controls">
       <div class="field"><label for="deskSize">Desk group</label>
@@ -1224,40 +1231,113 @@ $('importFile').addEventListener('change',async e => {
 });
 
 
-// One shared room layout for every class; each class owns its own student assignments.
-function seatingLayout() {
-  if (!Array.isArray(db.sharedSeating)) {
-    // Upgrade existing saved data without losing the active class's seating chart.
-    const source = current()?.seating || db.classes.find(c => Array.isArray(c.seating) && c.seating.length)?.seating || [];
-    db.sharedSeating = source.map(g => ({
-      id:g.id, size:g.size, orientation:g.orientation, priority:g.priority, x:g.x, y:g.y
-    }));
-    db.classes.forEach(c => {
-      if (!c.seatingAssignments || typeof c.seatingAssignments !== 'object')
-        c.seatingAssignments = {};
-      (c.seating || []).forEach(g => {
-        if (db.sharedSeating.some(shared => shared.id === g.id))
-          c.seatingAssignments[g.id] = Array.isArray(g.students) ? g.students.slice() : [];
+// Templates are shared between classes; student assignments belong to each class and template.
+function ensureSeatingTemplates() {
+  if (!Array.isArray(db.seatingTemplates) || !db.seatingTemplates.length) {
+    // Migrate the existing shared layout, preserving positions, priorities and student assignments.
+    if (!Array.isArray(db.sharedSeating)) {
+      const source = current()?.seating || db.classes.find(c => Array.isArray(c.seating) && c.seating.length)?.seating || [];
+      db.sharedSeating = source.map(g => ({
+        id:g.id,size:g.size,orientation:g.orientation,priority:g.priority,x:g.x,y:g.y
+      }));
+      db.classes.forEach(c => {
+        if (!c.seatingAssignments || typeof c.seatingAssignments !== 'object') c.seatingAssignments = {};
+        (c.seating || []).forEach(g => {
+          if (db.sharedSeating.some(shared => shared.id === g.id))
+            c.seatingAssignments[g.id] = Array.isArray(g.students) ? g.students.slice() : [];
+        });
       });
+    }
+    if (!db.seatingCompactV1) {
+      db.sharedSeating.forEach(g => {
+        g.x = Math.max(0,Math.min(1100-seatingDimensions(g).w,Math.round((g.x||0)*0.68)));
+        g.y = Math.max(52,Math.min(660-seatingDimensions(g).h,Math.round((g.y||0)*0.62)+18));
+      });
+      db.seatingCompactV1 = true;
+    }
+    const id = uid();
+    db.seatingTemplates = [{id,name:'Default Layout',layout:db.sharedSeating}];
+    db.activeSeatingTemplateId = id;
+    db.classes.forEach(c => {
+      c.seatingAssignmentsByTemplate = {[id]: c.seatingAssignments || {}};
     });
     save();
   }
-  if (!db.seatingCompactV1) {
-    db.sharedSeating.forEach(g => {
-      g.x = Math.max(0,Math.min(1100-seatingDimensions(g).w,Math.round((g.x||0)*0.68)));
-      g.y = Math.max(52,Math.min(660-seatingDimensions(g).h,Math.round((g.y||0)*0.62)+18));
-    });
-    db.seatingCompactV1 = true;
-    save();
-  }
-  return db.sharedSeating;
+  if (!db.seatingTemplates.some(t => t.id === db.activeSeatingTemplateId))
+    db.activeSeatingTemplateId = db.seatingTemplates[0].id;
+  db.seatingTemplates.forEach(t => { if (!Array.isArray(t.layout)) t.layout = []; });
 }
+function activeSeatingTemplate() {
+  ensureSeatingTemplates();
+  return db.seatingTemplates.find(t => t.id === db.activeSeatingTemplateId);
+}
+function seatingLayout() { return activeSeatingTemplate().layout; }
 function seatingAssignments(c=current()) {
   if (!c) return {};
-  if (!c.seatingAssignments || typeof c.seatingAssignments !== 'object')
-    c.seatingAssignments = {};
-  return c.seatingAssignments;
+  ensureSeatingTemplates();
+  if (!c.seatingAssignmentsByTemplate || typeof c.seatingAssignmentsByTemplate !== 'object')
+    c.seatingAssignmentsByTemplate = {};
+  const id = db.activeSeatingTemplateId;
+  if (!c.seatingAssignmentsByTemplate[id]) c.seatingAssignmentsByTemplate[id] = {};
+  return c.seatingAssignmentsByTemplate[id];
 }
+function renderSeatingTemplates() {
+  ensureSeatingTemplates();
+  const select = $('seatingTemplateSelect');
+  select.innerHTML = '';
+  db.seatingTemplates.forEach(t => {
+    const option = document.createElement('option');
+    option.value = t.id;
+    option.textContent = t.name;
+    select.append(option);
+  });
+  select.value = db.activeSeatingTemplateId;
+  $('deleteSeatingTemplateBtn').disabled = db.seatingTemplates.length <= 1;
+}
+$('seatingTemplateSelect').addEventListener('change',e => {
+  db.activeSeatingTemplateId = e.target.value;
+  save(); renderSeating();
+});
+$('addSeatingTemplateBtn').addEventListener('click',() => {
+  const name = prompt('Name the new seating chart template:',`Layout ${db.seatingTemplates.length+1}`);
+  if (name === null) return;
+  const trimmed = name.trim();
+  if (!trimmed) { toast('Enter a template name.'); return; }
+  if (db.seatingTemplates.some(t => normalizeName(t.name) === normalizeName(trimmed))) {
+    toast('A template with that name already exists.'); return;
+  }
+  const clone = confirm('Copy the current desk layout into the new template?\\nOK = Copy layout; Cancel = Start with an empty layout.');
+  const source = seatingLayout();
+  const layout = clone ? source.map(g => ({...g,id:uid()})) : [];
+  const id = uid();
+  db.seatingTemplates.push({id,name:trimmed,layout});
+  db.activeSeatingTemplateId = id;
+  // New template begins with empty student assignments, even if the layout was copied.
+  save(); renderSeating(); toast('Template created.');
+});
+$('renameSeatingTemplateBtn').addEventListener('click',() => {
+  const template = activeSeatingTemplate();
+  const answer = prompt('Rename seating chart template:',template.name);
+  if (answer === null) return;
+  const name = answer.trim();
+  if (!name) { toast('Template name cannot be blank.'); return; }
+  if (db.seatingTemplates.some(t => t.id !== template.id && normalizeName(t.name) === normalizeName(name))) {
+    toast('A template with that name already exists.'); return;
+  }
+  template.name = name;
+  save(); renderSeating(); toast('Template renamed.');
+});
+$('deleteSeatingTemplateBtn').addEventListener('click',() => {
+  const template = activeSeatingTemplate();
+  if (db.seatingTemplates.length <= 1) { toast('Keep at least one template.'); return; }
+  if (!confirm(`Delete template "${template.name}" and its student assignments for all classes?`)) return;
+  db.seatingTemplates = db.seatingTemplates.filter(t => t.id !== template.id);
+  db.classes.forEach(c => {
+    if (c.seatingAssignmentsByTemplate) delete c.seatingAssignmentsByTemplate[template.id];
+  });
+  db.activeSeatingTemplateId = db.seatingTemplates[0].id;
+  save(); renderSeating(); toast('Template deleted.');
+});
 function normalizeSeatingPriorities(layout) {
   // Existing layouts are numbered in their original creation order.
   const ranked = layout.map((g,i) => ({g,i})).sort((a,b) => {
@@ -1286,6 +1366,7 @@ function seatingDimensions(g) {
 }
 const nameMeasureCanvas = document.createElement('canvas');
 function renderSeating() {
+  renderSeatingTemplates();
   const room = $('seatingRoom');
   room.innerHTML = '<div class="front-of-class">FRONT OF CLASS</div>';
   const layout = seatingLayout();
@@ -1326,9 +1407,12 @@ function renderSeating() {
     del.addEventListener('pointerdown',e => e.stopPropagation());
     del.addEventListener('click',e => {
       e.stopPropagation();
-      db.sharedSeating = seatingLayout().filter(item => item.id !== g.id);
-      db.classes.forEach(c => { delete seatingAssignments(c)[g.id]; });
-      normalizeSeatingPriorities(db.sharedSeating);
+      activeSeatingTemplate().layout = seatingLayout().filter(item => item.id !== g.id);
+      db.classes.forEach(c => {
+        const assignments = c.seatingAssignmentsByTemplate?.[db.activeSeatingTemplateId];
+        if (assignments) delete assignments[g.id];
+      });
+      normalizeSeatingPriorities(activeSeatingTemplate().layout);
       save(); renderSeating();
     });
     el.append(del);
@@ -1443,14 +1527,16 @@ window.addEventListener('afterprint',() => document.body.classList.remove('print
 $('clearDesksBtn').addEventListener('click',() => {
   const c = current();
   if (!c || !seatingLayout().length) return;
-  if (!confirm('Remove the shared desk layout and all classes\' seating assignments?')) return;
-  db.sharedSeating = [];
-  db.classes.forEach(cl => { cl.seatingAssignments = {}; });
+  if (!confirm('Clear all desks in this template and its seating assignments for every class?')) return;
+  activeSeatingTemplate().layout = [];
+  db.classes.forEach(cl => {
+    if (cl.seatingAssignmentsByTemplate) cl.seatingAssignmentsByTemplate[db.activeSeatingTemplateId] = {};
+  });
   save(); renderSeating();
   toast('All desks cleared.');
 });
 $('clearStudentsBtn').addEventListener('click',() => {
-  current().seatingAssignments = {};
+  current().seatingAssignmentsByTemplate[db.activeSeatingTemplateId] = {};
   save(); renderSeating(); toast('Seating assignments cleared.');
 });
 function seatingScore(layout,c) {
