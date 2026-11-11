@@ -47,6 +47,11 @@ textarea { resize:vertical; min-height:90px; }
 .student-list { max-height:430px; overflow:auto; }
 .student { display:grid; grid-template-columns:minmax(0,1fr) 104px 30px; gap:6px; align-items:center; }
 .student-name { font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.student-name-wrap { display:flex; align-items:center; gap:4px; min-width:0; }
+.student-name-wrap .student-name { min-width:0; }
+.edit-student-name { flex:none; width:25px; height:27px; padding:3px; border:0; border-radius:6px; background:transparent; color:var(--muted); display:grid; place-items:center; }
+.edit-student-name:hover,.edit-student-name:focus-visible { background:#e8efff; color:var(--blue); }
+.student-name-input { min-width:0; width:100%; padding:5px 6px; font-size:13px; }
 .student select { padding:7px 6px; font-size:12px; }
 .remove { width:30px; height:32px; padding:0; background:#f5f6f8; color:#667085; font-size:18px; }
 .role-item { display:flex; gap:8px; align-items:center; }
@@ -279,6 +284,24 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
   <p class="help">One name per line. Duplicate names are skipped.</p>
 </div>
 
+<div class="divider"></div>
+<h2>Automatic class building &amp; student ranking</h2>
+<p class="help">Import a PowerSchool Final Grades Report PDF containing all your classes, student names, and numeric grades. Review the extracted roster before saving. Grades are used only to assign tiers, not stored. Imported students use first names only, with a last initial when first names repeat in the same class.</p>
+<div class="field">
+  <label for="classPdfUpload">Upload class roster PDF</label>
+  <input id="classPdfUpload" type="file" accept="application/pdf,.pdf">
+  <p class="help">Supports PowerSchool Final Grades Reports (one class per page), and other text-based PDFs with lines such as <strong>Jordan Smith 92</strong> or <strong>Smith, Jordan 92%</strong>. Scanned/image-only PDFs are not supported.</p>
+</div>
+<div id="pdfImportPanel" class="field" style="display:none">
+  <label for="pdfImportReview">Review and correct extracted records</label>
+  <p class="help">One student per line: <strong>Class name | Student name | Grade</strong>. Grade must be 0–100. You can edit, add, or remove lines. Each class is divided as evenly as possible into High, Middle, and Low by grade.</p>
+  <textarea id="pdfImportReview" style="min-height:190px" spellcheck="false"></textarea>
+  <div class="btnrow">
+    <button class="primary" id="confirmPdfImportBtn">Create / update classes</button>
+    <button class="secondary" id="cancelPdfImportBtn">Cancel import</button>
+  </div>
+  <p id="pdfImportStatus" class="help" role="status" aria-live="polite"></p>
+</div>
 <div class="roster-head">
   <strong>Student performance</strong>
   <span class="help" id="rosterCount">0 students</span>
@@ -429,6 +452,7 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
 
 <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
 (() => {
 const KEY = 'balancedGroupRandomizer.v1';
@@ -509,6 +533,48 @@ function renderStudents(c) {
     name.textContent = s.name;
     name.title = s.name;
 
+    const nameWrap = document.createElement('div');
+    nameWrap.className = 'student-name-wrap';
+    const edit = document.createElement('button');
+    edit.type = 'button';
+    edit.className = 'edit-student-name';
+    edit.title = `Edit preferred name for ${s.name}`;
+    edit.setAttribute('aria-label', `Edit preferred name for ${s.name}`);
+    edit.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4Z"/></svg>';
+    nameWrap.append(name, edit);
+    edit.addEventListener('click', () => {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'student-name-input';
+      input.value = s.name;
+      input.maxLength = 80;
+      input.setAttribute('aria-label', 'Preferred student name');
+      nameWrap.replaceChildren(input);
+      input.focus();
+      input.select();
+      let finished = false;
+      const finish = (commit) => {
+        if (finished) return;
+        const value = input.value.trim().replace(/\s+/g, ' ');
+        if (commit && !value) { toast('Student name cannot be blank.'); input.focus(); return; }
+        if (commit && c.students.some(other => other.id !== s.id && normalizeName(other.name) === normalizeName(value))) {
+          toast('Another student in this class already uses that name.'); input.focus(); return;
+        }
+        finished = true;
+        if (commit && value !== s.name) {
+          s.name = value;
+          save();
+          toast(`Preferred name saved: ${value}`);
+        }
+        render();
+      };
+      input.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); finish(true); }
+        if (e.key === 'Escape') { e.preventDefault(); finish(false); }
+      });
+      input.addEventListener('blur', () => finish(true));
+    });
+
     const select = document.createElement('select');
     select.setAttribute('aria-label', `Performance tier for ${s.name}`);
     tiers.forEach(t => {
@@ -538,7 +604,7 @@ function renderStudents(c) {
       render();
     });
 
-    row.append(name,select,del);
+    row.append(nameWrap,select,del);
     list.append(row);
   });
 
@@ -1107,6 +1173,170 @@ $('addNamesBtn').addEventListener('click',() => {
   toast(`Added ${added} student${added===1?'':'s'}.`);
 });
 $('clearTextBtn').addEventListener('click',() => $('bulkNames').value = '');
+
+// PDF imports are reviewed before they modify local classes. PDF data never leaves the browser.
+function parseGradeLine(line) {
+  const cleaned=line.replace(/\s+/g,' ').trim();
+  // Ignore summary rows, headers, and report metadata.
+  if (!cleaned || /^(student|name|grade|average|total|page |teacher|period|course|school|report|attendance|assignment|percent)/i.test(cleaned)) return null;
+  const match=cleaned.match(/^(.+?)\s+(?:\|\s*)?(100(?:\.0+)?|\d{1,2}(?:\.\d+)?)\s*%?\s*$/);
+  if (!match) return null;
+  let name=match[1].replace(/^\d+[.)]?\s+/,'').replace(/\s*[,|:-]\s*$/,'').trim();
+  if (!/[a-zA-Z]/.test(name) || name.length<3 || name.length>100 || /\b(class|section|period|overall|average|total)\b/i.test(name)) return null;
+  const grade=Number(match[2]);
+  if (grade<0 || grade>100) return null;
+  return {name,grade};
+}
+function classHeading(line) {
+  const t=line.trim().replace(/\s+/g,' ');
+  let m=t.match(/^(?:class|course|section|period)\s*[:#-]\s*(.{1,70})$/i);
+  if (m) return m[1].trim();
+  m=t.match(/^(.{2,70}?)\s*[-–|]\s*(?:period|section)\s*\d+[A-Za-z]?$/i);
+  if (m) return t;
+  // Common class heading formats: "Geometry - 3(A)", "3A Geometry", "Geometry Honors"
+  if (/^(?:(?:\d+[A-Za-z]?\s+)?(?:geometry|algebra|math|calculus|statistics|precalculus|trigonometry)\b.{0,55})$/i.test(t)) return t;
+  return null;
+}
+function extractPdfRoster(lines) {
+  const records=[]; let className=null;
+  for(const raw of lines) {
+    const line=raw.trim();
+    const heading=classHeading(line);
+    if(heading) { className=heading; continue; }
+    const student=parseGradeLine(line);
+    if(student && className) records.push({className,...student});
+  }
+  return records;
+}
+$('classPdfUpload').addEventListener('change',async e=>{
+  const file=e.target.files?.[0];
+  if(!file) return;
+  const panel=$('pdfImportPanel'), review=$('pdfImportReview'), status=$('pdfImportStatus');
+  panel.style.display='block'; review.value=''; status.textContent='Reading PDF…';
+  try {
+    if(!window.pdfjsLib) throw new Error('PDF reader could not load. Connect to the internet and reload this page.');
+    pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    const pdf=await pdfjsLib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;
+    const found=[];
+    for(let pageNum=1;pageNum<=pdf.numPages;pageNum++) {
+      const page=await pdf.getPage(pageNum), content=await page.getTextContent();
+      const rows=[];
+      for(const item of content.items) {
+        if(!item.str?.trim()) continue;
+        const y=item.transform[5], x=item.transform[4];
+        let row=rows.find(r=>Math.abs(r.y-y)<2.5);
+        if(!row) {row={y,parts:[]};rows.push(row);}
+        row.parts.push({x,str:item.str.trim()});
+      }
+      rows.sort((a,b)=>b.y-a.y);
+      rows.forEach(r=>r.parts.sort((a,b)=>a.x-b.x));
+      const header=rows.find(r=>r.parts.some(p=>/Final Grades Report/i.test(p.str)));
+      // PowerSchool's Final Grades Report places the class name at the upper right.
+      const reportClass=header?.parts.filter(p=>!/^Final Grades Report$/i.test(p.str))
+        .map(p=>p.str).find(t=>/^\d+\s*\([A-Za-z]\)\s+.+/.test(t));
+      if(reportClass) {
+        let inTable=false;
+        for(const row of rows) {
+          const joined=row.parts.map(p=>p.str).join(' ');
+          if(/Student Name/i.test(joined) && /Final Grade/i.test(joined)) {inTable=true;continue;}
+          if(!inTable) continue;
+          // Separate the left-hand name column from the far-right grade column.
+          const gradePart=row.parts.find(p=>/^\d{1,3}(?:\.\d+)?%$/.test(p.str));
+          if(!gradePart) continue;
+          const name=row.parts.filter(p=>p.x<gradePart.x-25).map(p=>p.str).join(' ').trim();
+          const grade=Number(gradePart.str.replace('%',''));
+          if(name.includes(',') && name.length<=100 && grade>=0 && grade<=100)
+            found.push({className:reportClass.trim(),name,grade});
+        }
+      } else {
+        // Retain support for other text-based roster PDFs.
+        const lines=rows.map(r=>r.parts.map(p=>p.str).join(' ').replace(/\s+/g,' ').trim());
+        found.push(...extractPdfRoster(lines));
+      }
+    }
+    review.value=found.map(r=>`${r.className} | ${r.name} | ${r.grade}`).join('\n');
+    status.textContent=found.length ? `Found ${found.length} student records in ${new Set(found.map(r=>r.className)).size} classes. Check every line before importing.` : 'No records automatically detected. This PDF may use a different layout or be scanned. You can manually enter records in the format shown above.';
+  } catch(err) {status.textContent=`Could not read PDF: ${err.message}`;}
+});
+$('cancelPdfImportBtn').addEventListener('click',()=>{
+  $('pdfImportPanel').style.display='none'; $('pdfImportReview').value=''; $('classPdfUpload').value='';
+});
+// Make short display names separately for each class, after parsing full names.
+// If two students share a first name, append their last initial. If initials
+// also collide, use progressively more of the surname to keep names distinct.
+function importedDisplayNames(students) {
+  const firstName = full => {
+    const pieces=full.split(',');
+    return (pieces.length>1 ? pieces.slice(1).join(',') : full).trim().split(/\s+/)[0];
+  };
+  const surname = full => {
+    const pieces=full.split(',');
+    return (pieces.length>1 ? pieces[0] : full.trim().split(/\s+/).slice(-1)[0]).trim();
+  };
+  const counts=new Map();
+  students.forEach(s=>{const k=firstName(s.name).toLocaleLowerCase();counts.set(k,(counts.get(k)||0)+1);});
+  const proposed=students.map(s=>{
+    const first=firstName(s.name), last=surname(s.name);
+    return counts.get(first.toLocaleLowerCase())>1 ? `${first} ${last.charAt(0).toUpperCase()}.` : first;
+  });
+  // Rare case: same first name AND same last initial.
+  const duplicates=new Map();
+  proposed.forEach((name,i)=>{const k=name.toLocaleLowerCase();if(!duplicates.has(k))duplicates.set(k,[]);duplicates.get(k).push(i);});
+  for(const indexes of duplicates.values()) {
+    if(indexes.length<2) continue;
+    indexes.forEach(i=>{proposed[i]=`${firstName(students[i].name)} ${surname(students[i].name)}`;});
+  }
+  return proposed;
+}
+$('confirmPdfImportBtn').addEventListener('click',()=>{
+  const status=$('pdfImportStatus');
+  const button=$('confirmPdfImportBtn');
+  const lines=$('pdfImportReview').value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+  const byClass=new Map(), errors=[];
+  lines.forEach((line,i)=>{
+    const parts=line.split('|').map(s=>s.trim());
+    const grade=Number(parts[2]);
+    if(parts.length!==3 || !parts[0] || !parts[1] || parts[1].length>100 || parts[0].length>100 || parts[2]==='' || !Number.isFinite(grade) || grade<0 || grade>100) {
+      errors.push(i+1); return;
+    }
+    const key=normalizeName(parts[0]);
+    if(!byClass.has(key)) byClass.set(key,{name:parts[0],students:new Map()});
+    byClass.get(key).students.set(normalizeName(parts[1]),{name:parts[1],grade});
+  });
+  if(errors.length) {status.textContent=`Correct invalid line(s): ${errors.slice(0,15).join(', ')}. No changes were saved.`;return;}
+  if(!byClass.size) {status.textContent='No valid student records to import.';return;}
+  // Do not use window.confirm here: embedded preview browsers may silently block native dialogs.
+  button.disabled=true;
+  status.textContent='Creating and ranking classes…';
+  try {
+    let count=0,firstId=null;
+    byClass.forEach(entry=>{
+      let c=db.classes.find(c=>normalizeName(c.name)===normalizeName(entry.name));
+      if(!c) {c={id:uid(),name:entry.name,students:[],avoidPairs:[],avoidGroups:[],roles:defaultRoles.slice(),seating:[]};db.classes.push(c);}
+      if(!firstId) firstId=c.id;
+      const sorted=[...entry.students.values()].sort((a,b)=>b.grade-a.grade || a.name.localeCompare(b.name));
+      const shortNames=importedDisplayNames(sorted);
+      sorted.forEach((student,i)=>{
+        const tier=tiers[Math.min(2,Math.floor(i*3/sorted.length))];
+        const displayName=shortNames[i];
+        // Match either an earlier full-name import or a previous short-name import.
+        const existing=c.students.find(s=>normalizeName(s.name)===normalizeName(student.name))
+          || c.students.find(s=>normalizeName(s.name)===normalizeName(displayName));
+        if(existing) {existing.tier=tier;existing.name=displayName;}
+        else c.students.push({id:uid(),name:displayName,tier});
+        count++;
+      });
+    });
+    db.activeId=firstId; groups=[]; absentIds=new Set();
+    save();
+    render();
+    status.textContent=`Success: imported ${count} students across ${byClass.size} classes. Select a class above to review its rankings. Grades were not saved.`;
+    toast(`Imported ${count} students across ${byClass.size} classes.`);
+  } catch(err) {
+    console.error('PDF class import failed',err);
+    status.textContent=`Import error: ${err.message}. Please export a backup before retrying.`;
+  } finally {button.disabled=false;}
+});
 
 $('avoidRuleType').addEventListener('change',() => {
   renderAvoidControls(current());
