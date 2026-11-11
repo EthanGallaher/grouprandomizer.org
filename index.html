@@ -286,7 +286,7 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
 
 <div class="divider"></div>
 <h2>Automatic class building &amp; student ranking</h2>
-<p class="help">Import a PowerSchool Final Grades Report PDF containing all your classes, student names, and numeric grades. Review the extracted roster before saving. Grades are used only to assign tiers, not stored. </p>
+<p class="help">Import a PowerSchool Final Grades Report PDF containing all your classes, student names, and numeric grades. Review the extracted roster before saving. Grades are used only to assign tiers, not stored. Imported students use first names only, with a last initial when first names repeat in the same class.</p>
 <div class="field">
   <label for="classPdfUpload">Upload class roster PDF</label>
   <input id="classPdfUpload" type="file" accept="application/pdf,.pdf">
@@ -300,6 +300,7 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
     <button class="primary" id="confirmPdfImportBtn">Create / update classes</button>
     <button class="secondary" id="cancelPdfImportBtn">Cancel import</button>
   </div>
+  <div id="pdfSyncMappings" style="display:none;max-height:260px;overflow:auto;margin:12px 0"></div>
   <p id="pdfImportStatus" class="help" role="status" aria-live="polite"></p>
 </div>
 <div class="roster-head">
@@ -1212,7 +1213,7 @@ $('classPdfUpload').addEventListener('change',async e=>{
   const file=e.target.files?.[0];
   if(!file) return;
   const panel=$('pdfImportPanel'), review=$('pdfImportReview'), status=$('pdfImportStatus');
-  panel.style.display='block'; review.value=''; status.textContent='Reading PDF…';
+  panel.style.display='block'; review.value=''; status.textContent='Reading PDF…'; $('pdfSyncMappings').style.display='none';
   try {
     if(!window.pdfjsLib) throw new Error('PDF reader could not load. Connect to the internet and reload this page.');
     pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -1259,7 +1260,7 @@ $('classPdfUpload').addEventListener('change',async e=>{
   } catch(err) {status.textContent=`Could not read PDF: ${err.message}`;}
 });
 $('cancelPdfImportBtn').addEventListener('click',()=>{
-  $('pdfImportPanel').style.display='none'; $('pdfImportReview').value=''; $('classPdfUpload').value='';
+  $('pdfImportPanel').style.display='none'; $('pdfImportReview').value=''; $('classPdfUpload').value=''; $('pdfSyncMappings').style.display='none';
 });
 // Make short display names separately for each class, after parsing full names.
 // If two students share a first name, append their last initial. If initials
@@ -1288,54 +1289,132 @@ function importedDisplayNames(students) {
   }
   return proposed;
 }
-$('confirmPdfImportBtn').addEventListener('click',()=>{
-  const status=$('pdfImportStatus');
-  const button=$('confirmPdfImportBtn');
-  const lines=$('pdfImportReview').value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
-  const byClass=new Map(), errors=[];
-  lines.forEach((line,i)=>{
-    const parts=line.split('|').map(s=>s.trim());
-    const grade=Number(parts[2]);
-    if(parts.length!==3 || !parts[0] || !parts[1] || parts[1].length>100 || parts[0].length>100 || parts[2]==='' || !Number.isFinite(grade) || grade<0 || grade>100) {
-      errors.push(i+1); return;
-    }
-    const key=normalizeName(parts[0]);
-    if(!byClass.has(key)) byClass.set(key,{name:parts[0],students:new Map()});
-    byClass.get(key).students.set(normalizeName(parts[1]),{name:parts[1],grade});
-  });
-  if(errors.length) {status.textContent=`Correct invalid line(s): ${errors.slice(0,15).join(', ')}. No changes were saved.`;return;}
-  if(!byClass.size) {status.textContent='No valid student records to import.';return;}
-  // Do not use window.confirm here: embedded preview browsers may silently block native dialogs.
-  button.disabled=true;
-  status.textContent='Creating and ranking classes…';
-  try {
-    let count=0,firstId=null;
-    byClass.forEach(entry=>{
-      let c=db.classes.find(c=>normalizeName(c.name)===normalizeName(entry.name));
-      if(!c) {c={id:uid(),name:entry.name,students:[],avoidPairs:[],avoidGroups:[],roles:defaultRoles.slice(),seating:[]};db.classes.push(c);}
-      if(!firstId) firstId=c.id;
-      const sorted=[...entry.students.values()].sort((a,b)=>b.grade-a.grade || a.name.localeCompare(b.name));
-      const shortNames=importedDisplayNames(sorted);
-      sorted.forEach((student,i)=>{
-        const tier=tiers[Math.min(2,Math.floor(i*3/sorted.length))];
-        const displayName=shortNames[i];
-        // Match either an earlier full-name import or a previous short-name import.
-        const existing=c.students.find(s=>normalizeName(s.name)===normalizeName(student.name))
-          || c.students.find(s=>normalizeName(s.name)===normalizeName(displayName));
-        if(existing) {existing.tier=tier;existing.name=displayName;}
-        else c.students.push({id:uid(),name:displayName,tier});
-        count++;
-      });
+// Sync keeps stable student/class IDs. Full PowerSchool names are stored privately
+// in the local browser data and never replace teacher-selected display names.
+let pendingPdfSync=null;
+$('pdfImportReview').addEventListener('input',()=>{pendingPdfSync=null;$('pdfSyncMappings').style.display='none';});
+function pdfSyncPlan(byClass) {
+  const plan=[], unresolved=[];
+  byClass.forEach(entry=>{
+    const c=db.classes.find(c=>normalizeName(c.name)===normalizeName(entry.name)) || null;
+    const sorted=[...entry.students.values()].sort((a,b)=>b.grade-a.grade || a.name.localeCompare(b.name));
+    const proposed=importedDisplayNames(sorted);
+    const claimed=new Set(), actions=[];
+    sorted.forEach((record,i)=>{
+      const full=normalizeName(record.name);
+      let match=c?.students.find(s=>!claimed.has(s.id) && s.sourceFullName && normalizeName(s.sourceFullName)===full);
+      if(!match && c) {
+        // One-time migration for previously imported short/full names.
+        const candidates=c.students.filter(s=>!claimed.has(s.id) && !s.sourceFullName &&
+          (normalizeName(s.name)===full || normalizeName(s.name)===normalizeName(proposed[i])));
+        if(candidates.length===1) match=candidates[0];
+      }
+      if(match) claimed.add(match.id);
+      else if(c?.students.length) unresolved.push({className:entry.name,record,index:i,c,claimed});
+      actions.push({record,tier:tiers[Math.min(2,Math.floor(i*3/sorted.length))],proposed:proposed[i],match});
     });
-    db.activeId=firstId; groups=[]; absentIds=new Set();
-    save();
-    render();
-    status.textContent=`Success: imported ${count} students across ${byClass.size} classes. Select a class above to review its rankings. Grades were not saved.`;
-    toast(`Imported ${count} students across ${byClass.size} classes.`);
-  } catch(err) {
-    console.error('PDF class import failed',err);
-    status.textContent=`Import error: ${err.message}. Please export a backup before retrying.`;
-  } finally {button.disabled=false;}
+    plan.push({c,name:entry.name,actions});
+  });
+  return {plan,unresolved};
+}
+function showPdfSyncMappings(sync) {
+  const container=$('pdfSyncMappings'); container.replaceChildren();
+  const title=document.createElement('p');
+  title.textContent='Review unmatched students. For renamed students, choose their existing preferred name. Leave “New student” for new enrollments. Unmatched old students will be dropped from classes in this report.';
+  container.append(title);
+  sync.unresolved.forEach(item=>{
+    const row=document.createElement('div'); row.style.cssText='display:flex;gap:10px;align-items:center;margin:6px 0;flex-wrap:wrap';
+    const label=document.createElement('label');label.textContent=`${item.className}: ${item.record.name}`;label.style.flex='1 1 220px';
+    const select=document.createElement('select');select.style.flex='1 1 170px';
+    const opt=document.createElement('option');opt.value='';opt.textContent='New student';select.append(opt);
+    item.c.students.filter(s=>!s.sourceFullName && !item.claimed.has(s.id)).forEach(s=>{
+      const o=document.createElement('option');o.value=s.id;o.textContent=s.name;select.append(o);
+    });
+    item.select=select;row.append(label,select);container.append(row);
+  });
+  container.style.display='block';
+}
+$('confirmPdfImportBtn').addEventListener('click',()=>{
+  const status=$('pdfImportStatus'), button=$('confirmPdfImportBtn');
+  const lines=$('pdfImportReview').value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+  const byClass=new Map(),errors=[];
+  lines.forEach((line,i)=>{
+    const parts=line.split('|').map(s=>s.trim()), grade=Number(parts[2]);
+    if(parts.length!==3 || !parts[0] || !parts[1] || parts[1].length>100 || parts[0].length>100 || parts[2]==='' || !Number.isFinite(grade) || grade<0 || grade>100) {errors.push(i+1);return;}
+    const key=normalizeName(parts[0]);
+    if(!byClass.has(key))byClass.set(key,{name:parts[0],students:new Map()});
+    const skey=normalizeName(parts[1]);
+    if(byClass.get(key).students.has(skey))errors.push(i+1);
+    else byClass.get(key).students.set(skey,{name:parts[1],grade});
+  });
+  if(errors.length){status.textContent=`Invalid or duplicate student on line(s): ${errors.slice(0,15).join(', ')}. Nothing saved.`;return;}
+  if(!byClass.size){status.textContent='No valid student records.';return;}
+  const signature=lines.join('\n');
+  if(!pendingPdfSync || pendingPdfSync.signature!==signature){
+    const sync=pdfSyncPlan(byClass);
+    pendingPdfSync={signature,...sync};
+    showPdfSyncMappings(sync);
+    status.textContent=`Ready to synchronize ${[...byClass.values()].reduce((n,c)=>n+c.students.size,0)} students across ${byClass.size} classes. Review any unmatched students above, then click Create / Update Classes again to apply.`;
+    return;
+  }
+  button.disabled=true;
+  try{
+    const sync=pendingPdfSync;
+    const selected=new Map();
+    for(const item of sync.unresolved){
+      const id=item.select.value;
+      if(id){
+        const key=item.c.id+':'+id;
+        if(selected.has(key))throw new Error('An existing student was selected for multiple PDF records. Correct the mappings.');
+        selected.set(key,true);
+        const action=sync.plan.find(p=>p.name===item.className).actions[item.index];
+        action.match=item.c.students.find(s=>s.id===id);
+      }
+    }
+    // Validate all matches before modifying any class.
+    for(const entry of sync.plan){
+      const ids=entry.actions.filter(a=>a.match).map(a=>a.match.id);
+      if(new Set(ids).size!==ids.length)throw new Error(`Duplicate student matching in ${entry.name}.`);
+      const names=new Set();
+      for(const a of entry.actions){
+        const name=a.match?.name || a.proposed;
+        if(names.has(normalizeName(name)))throw new Error(`Duplicate display name “${name}” in ${entry.name}. Edit preferred names or mappings first.`);
+        names.add(normalizeName(name));
+      }
+    }
+    let added=0,removed=0,updated=0,firstId=null;
+    for(const entry of sync.plan){
+      let c=entry.c;
+      if(!c){c={id:uid(),name:entry.name,students:[],avoidPairs:[],avoidGroups:[],roles:defaultRoles.slice(),seating:[]};db.classes.push(c);}
+      if(!firstId)firstId=c.id;
+      const next=[],kept=new Set();
+      for(const a of entry.actions){
+        if(a.match){a.match.tier=a.tier;a.match.sourceFullName=a.record.name;next.push(a.match);kept.add(a.match.id);updated++;}
+        else {const student={id:uid(),name:a.proposed,tier:a.tier,sourceFullName:a.record.name};next.push(student);kept.add(student.id);added++;}
+      }
+      const dropped=new Set(c.students.filter(s=>!kept.has(s.id)).map(s=>s.id));
+      removed+=dropped.size;
+      c.students=next;
+      c.avoidPairs=(c.avoidPairs||[]).filter(pair=>pair.every(id=>!dropped.has(id)));
+      c.avoidGroups=(c.avoidGroups||[]).map(rule=>rule.filter(id=>!dropped.has(id))).filter(rule=>rule.length>=3);
+      const cleanAssignments = assignments => {
+        if(!assignments || typeof assignments!=='object')return;
+        for(const [desk,ids] of Object.entries(assignments))
+          if(Array.isArray(ids))assignments[desk]=ids.map(id=>dropped.has(id)?null:id);
+      };
+      cleanAssignments(c.seatingAssignments);
+      if(c.seatingAssignmentsByTemplate)
+        Object.values(c.seatingAssignmentsByTemplate).forEach(cleanAssignments);
+      if(Array.isArray(c.seating))c.seating.forEach(g=>{
+        if(Array.isArray(g.students))g.students=g.students.map(id=>dropped.has(id)?null:id);
+      });
+    }
+    db.activeId=firstId;groups=[];absentIds=new Set();save();render();
+    pendingPdfSync=null;$('pdfSyncMappings').style.display='none';
+    status.textContent=`Synced ${byClass.size} classes: ${updated} returning students updated, ${added} added, ${removed} dropped. Class IDs, layouts, remaining seating assignments, preferred names and valid separation rules preserved.`;
+    toast('Roster synchronized successfully.');
+  }catch(err){console.error(err);status.textContent=`Sync not completed: ${err.message}`;}
+  finally{button.disabled=false;}
 });
 
 $('avoidRuleType').addEventListener('change',() => {
