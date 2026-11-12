@@ -271,6 +271,29 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
 @media(max-width:1100px) { .class-card,.actions-card,.roster-card,.add-card,.pdf-card,.avoid-card { grid-column:span 6; } .roles-card,.backup-card { grid-column:span 6; } .roster-card { grid-row:auto; } }
 @media(max-width:700px) { .teacher-dashboard > .teacher-card { grid-column:1/-1; } .teacher-heading { align-items:flex-start; } .school-pill { display:none; } .wrap { padding:14px; } .page-nav { overflow-x:auto; } .page-nav button { white-space:nowrap; } }
 
+/* Balanced desktop workspace: independent columns prevent tall rosters from creating gaps. */
+.teacher-dashboard { grid-template-columns: minmax(0,1fr) minmax(0,1.12fr); gap:20px; align-items:start; }
+.teacher-heading { grid-column:1/-1; }
+.teacher-column { min-width:0; display:grid; align-content:start; gap:18px; }
+.teacher-column > .teacher-card { grid-column:auto; grid-row:auto; }
+.teacher-mini-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; align-items:start; }
+.teacher-mini-grid > .teacher-card { grid-column:auto; grid-row:auto; }
+.teacher-column-right .student-list { max-height:650px; }
+@media (min-width:1500px) {
+ .wrap:has(#teacherPage.active), .top-inner, .page-nav { max-width:1740px; }
+ .teacher-dashboard { grid-template-columns:minmax(0,1fr) minmax(0,1.12fr); gap:24px; }
+ .teacher-column { gap:20px; }
+}
+@media (max-width:1050px) {
+ .teacher-dashboard { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .teacher-mini-grid { grid-template-columns:1fr; }
+}
+@media (max-width:760px) {
+ .teacher-dashboard { grid-template-columns:minmax(0,1fr); }
+ .teacher-column { grid-column:1/-1; }
+ .teacher-mini-grid { grid-template-columns:1fr; }
+}
+
 </style>
 </head>
 <body>
@@ -294,6 +317,7 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
 <section class="page active" id="teacherPage">
 <div class="teacher-dashboard">
 <div class="teacher-heading"><div><span class="eyebrow">TEACHER WORKSPACE</span><h2>Teacher Setup</h2><p>Manage classes, students, grouping rules, and classroom roles in one place.</p></div></div>
+<div class="teacher-column teacher-column-left">
 <section class="panel teacher-card class-card"><h2>1. Your classes</h2>
 <div class="field">
   <label for="classSelect">Choose a class</label>
@@ -308,18 +332,6 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
   <input class="grow" id="newClassName" placeholder="New class name">
   <button class="secondary" id="createClassBtn">Create</button>
 </div>
-
-</section>
-<section class="panel teacher-card roster-card"><h2>Student roster &amp; performance</h2><p class="help">Edit names and adjust performance tiers for the selected class.</p><div class="roster-head">
-  <strong>Student performance</strong>
-  <span class="help" id="rosterCount">0 students</span>
-</div>
-<div class="stats">
-  <div class="stat"><strong id="highCount">0</strong><span>High</span></div>
-  <div class="stat"><strong id="midCount">0</strong><span>Middle</span></div>
-  <div class="stat"><strong id="lowCount">0</strong><span>Low</span></div>
-</div>
-<div id="studentList" class="student-list"></div>
 
 </section>
 <section class="panel teacher-card add-card"><h2>2. Add students</h2>
@@ -385,6 +397,21 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
 <div id="avoidList" class="avoid-list"></div>
 
 </section>
+</div>
+<div class="teacher-column teacher-column-right">
+<section class="panel teacher-card roster-card"><h2>Student roster &amp; performance</h2><p class="help">Edit names and adjust performance tiers for the selected class.</p><div class="roster-head">
+  <strong>Student performance</strong>
+  <span class="help" id="rosterCount">0 students</span>
+</div>
+<div class="stats">
+  <div class="stat"><strong id="highCount">0</strong><span>High</span></div>
+  <div class="stat"><strong id="midCount">0</strong><span>Middle</span></div>
+  <div class="stat"><strong id="lowCount">0</strong><span>Low</span></div>
+</div>
+<div id="studentList" class="student-list"></div>
+
+</section>
+<div class="teacher-mini-grid">
 <section class="panel teacher-card roles-card"><h2>4. Group roles</h2><p class="help">Role titles are shared automatically across every class.</p>
 <p class="help">Customize the role titles displayed beside each student. In pairs, the second student gets Roles 2 and 3.</p>
 <div id="roleList" class="role-list"></div>
@@ -397,6 +424,8 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
 </div>
 <p class="notice">Classes are saved in this browser. Export a backup periodically.</p>
 </section>
+</div>
+</div>
 </div>
 </section>
 
