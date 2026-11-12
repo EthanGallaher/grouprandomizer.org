@@ -341,7 +341,6 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
   <label for="classSelect">Choose a class</label>
   <div class="row">
     <select class="grow" id="classSelect"></select>
-    <button class="secondary" id="newClassBtn">＋</button>
     <button class="secondary" id="renameClassBtn" title="Rename selected class">Rename</button>
     <button class="secondary" id="deleteClassBtn" title="Delete selected class" style="color:#c63b46">Delete</button>
   </div>
@@ -1198,7 +1197,6 @@ $('deleteClassBtn').addEventListener('click',() => {
   }
   toast('Class deleted. Shared desk layout preserved.');
 });
-$('newClassBtn').addEventListener('click',() => $('newClassName').focus());
 $('createClassBtn').addEventListener('click',() => {
   const name = $('newClassName').value.trim();
   if (!name) {
