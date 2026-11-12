@@ -233,6 +233,44 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
     -webkit-print-color-adjust:exact; print-color-adjust:exact; }
   body.print-seating .desk-delete, body.print-seating .desk-priority { display:none!important; }
 }
+
+/* Blue, red and white dashboard theme */
+:root { --navy:#10346b; --blue:#1856ad; --red:#c92e42; --paper:#f2f5fb; --line:#d9e2ef; }
+.top { background:linear-gradient(110deg,#102c5a 0%,#164b98 72%,#ba2d43 100%); border-bottom:4px solid var(--red); }
+.page-nav button.active { background:var(--blue); box-shadow:inset 0 -3px 0 var(--red); }
+.primary { background:var(--blue); }
+.primary:hover { background:#103d82; }
+.secondary:hover { border-color:#91acd3; background:#f1f6ff; }
+#teacherPage.active { width:100%; }
+.wrap:has(#teacherPage.active) { max-width:1580px; }
+.teacher-dashboard { display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:18px; align-items:start; }
+.teacher-dashboard > * { min-width:0; }
+.teacher-heading { grid-column:1/-1; display:flex; justify-content:space-between; align-items:center; gap:16px; padding:4px 2px 0; }
+.teacher-heading h2 { font-size:clamp(24px,2.6vw,32px); margin:3px 0; color:var(--navy); }
+.teacher-heading p { margin:0; color:var(--muted); }
+.eyebrow { font-size:11px; font-weight:850; letter-spacing:.13em; color:var(--red); }
+.school-pill { font-size:11px; font-weight:850; letter-spacing:.08em; color:var(--navy); background:#e6eefb; border:1px solid #bcd0ed; padding:10px 14px; border-radius:30px; white-space:nowrap; }
+.teacher-card { border-top:4px solid var(--blue); box-shadow:0 5px 18px #102c5a0a; }
+.teacher-card h2 { color:var(--navy); font-size:17px; }
+.class-card { grid-column:span 5; }
+.actions-card { grid-column:span 7; border-top-color:var(--red); background:linear-gradient(130deg,#fff,#f7f9ff); }
+.roster-card { grid-column:span 6; grid-row:span 2; }
+.add-card { grid-column:span 6; }
+.pdf-card { grid-column:span 6; }
+.avoid-card { grid-column:span 6; }
+.roles-card { grid-column:span 3; border-top-color:var(--red); }
+.backup-card { grid-column:span 3; border-top-color:var(--red); }
+.teacher-card .student-list { max-height:550px; }
+.teacher-card .stat:nth-child(1) { background:#e9f5ed; }
+.teacher-card .stat:nth-child(2) { background:#fff4dc; }
+.teacher-card .stat:nth-child(3) { background:#eaf0ff; }
+.teacher-card .stat strong { color:var(--navy); }
+.teacher-card .field:last-child { margin-bottom:0; }
+.teacher-card .avoid-student-options { max-height:300px; }
+.teacher-card .role-item { flex-wrap:wrap; }
+@media(max-width:1100px) { .class-card,.actions-card,.roster-card,.add-card,.pdf-card,.avoid-card { grid-column:span 6; } .roles-card,.backup-card { grid-column:span 6; } .roster-card { grid-row:auto; } }
+@media(max-width:700px) { .teacher-dashboard > .teacher-card { grid-column:1/-1; } .teacher-heading { align-items:flex-start; } .school-pill { display:none; } .wrap { padding:14px; } .page-nav { overflow-x:auto; } .page-nav button { white-space:nowrap; } }
+
 </style>
 </head>
 <body>
@@ -254,10 +292,9 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
 <div class="layout">
 
 <section class="page active" id="teacherPage">
-<div class="teacher-layout">
-
-<aside class="panel sidebar">
-<h2>1. Your classes</h2>
+<div class="teacher-dashboard">
+<div class="teacher-heading"><div><span class="eyebrow">TEACHER WORKSPACE</span><h2>Teacher Setup</h2><p>Manage classes, students, grouping rules, and classroom roles in one place.</p></div></div>
+<section class="panel teacher-card class-card"><h2>1. Your classes</h2>
 <div class="field">
   <label for="classSelect">Choose a class</label>
   <div class="row">
@@ -272,8 +309,20 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
   <button class="secondary" id="createClassBtn">Create</button>
 </div>
 
-<div class="divider"></div>
-<h2>2. Add students</h2>
+</section>
+<section class="panel teacher-card roster-card"><h2>Student roster &amp; performance</h2><p class="help">Edit names and adjust performance tiers for the selected class.</p><div class="roster-head">
+  <strong>Student performance</strong>
+  <span class="help" id="rosterCount">0 students</span>
+</div>
+<div class="stats">
+  <div class="stat"><strong id="highCount">0</strong><span>High</span></div>
+  <div class="stat"><strong id="midCount">0</strong><span>Middle</span></div>
+  <div class="stat"><strong id="lowCount">0</strong><span>Low</span></div>
+</div>
+<div id="studentList" class="student-list"></div>
+
+</section>
+<section class="panel teacher-card add-card"><h2>2. Add students</h2>
 <div class="field">
   <label for="bulkNames">Paste roster</label>
   <textarea id="bulkNames" placeholder="One student per line&#10;Jordan Smith&#10;Alex Johnson&#10;Taylor Lee"></textarea>
@@ -284,8 +333,8 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
   <p class="help">One name per line. Duplicate names are skipped.</p>
 </div>
 
-<div class="divider"></div>
-<h2>Automatic class building &amp; student ranking</h2>
+</section>
+<section class="panel teacher-card pdf-card"><h2>Automatic class building &amp; student ranking</h2>
 <p class="help">Import a PowerSchool Final Grades Report PDF containing all your classes, student names, and numeric grades. Grades are used only to assign tiers, not stored.</p>
 <div class="field">
   <label for="classPdfUpload">Upload class roster PDF</label>
@@ -303,19 +352,8 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
   <div id="pdfSyncMappings" style="display:none;max-height:260px;overflow:auto;margin:12px 0"></div>
   <p id="pdfImportStatus" class="help" role="status" aria-live="polite"></p>
 </div>
-<div class="roster-head">
-  <strong>Student performance</strong>
-  <span class="help" id="rosterCount">0 students</span>
-</div>
-<div class="stats">
-  <div class="stat"><strong id="highCount">0</strong><span>High</span></div>
-  <div class="stat"><strong id="midCount">0</strong><span>Middle</span></div>
-  <div class="stat"><strong id="lowCount">0</strong><span>Low</span></div>
-</div>
-<div id="studentList" class="student-list"></div>
-
-<div class="divider"></div>
-<h2>3. Keep students apart</h2>
+</section>
+<section class="panel teacher-card avoid-card"><h2>3. Keep students apart</h2>
 <p class="help">Choose a rule type. Rules are optional and saved with this class. </p>
 
 <div class="field">
@@ -346,29 +384,19 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
 
 <div id="avoidList" class="avoid-list"></div>
 
-<div class="divider"></div>
-<h2>4. Group roles</h2>
+</section>
+<section class="panel teacher-card roles-card"><h2>4. Group roles</h2><p class="help">Role titles are shared automatically across every class.</p>
 <p class="help">Customize the role titles displayed beside each student. In pairs, the second student gets Roles 2 and 3.</p>
 <div id="roleList" class="role-list"></div>
 
-<div class="divider"></div>
-<div class="btnrow">
+</section>
+<section class="panel teacher-card backup-card"><h2>Backup &amp; restore</h2><div class="btnrow">
   <button class="secondary" id="exportBtn">Export backup</button>
   <button class="secondary" id="importBtn">Import backup</button>
   <input id="importFile" type="file" accept=".json,application/json" class="hidden">
 </div>
 <p class="notice">Classes are saved in this browser. Export a backup periodically.</p>
-</aside>
-
-<section class="panel">
-<h2>Teacher controls</h2>
-<p>Set up your class and assign performance tiers here. Performance rankings are not shown on the student display.</p>
-<div class="btnrow">
-  <button class="primary" id="teacherGenerateBtn">Randomize and view groups</button>
-  <button class="secondary" id="teacherGoGroupsBtn">Open group display</button>
-</div>
 </section>
-
 </div>
 </section>
 
@@ -457,7 +485,7 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
 <script>
 (() => {
 const KEY = 'balancedGroupRandomizer.v1';
-let db = {classes:[], activeId:null};
+let db = {classes:[], activeId:null, sharedRoles:null};
 let groups = [];
 let absentIds = new Set();
 let toastTimer;
@@ -484,11 +512,20 @@ function save() {
 function current() {
   return db.classes.find(c => c.id === db.activeId) || null;
 }
+function sharedRoles() {
+  if (!Array.isArray(db.sharedRoles)) db.sharedRoles = (current()?.roles || defaultRoles).slice(0,3);
+  while (db.sharedRoles.length < 3) db.sharedRoles.push(defaultRoles[db.sharedRoles.length]);
+  return db.sharedRoles;
+}
+function syncRolesAcrossClasses() {
+  const roles = sharedRoles();
+  db.classes.forEach(c => { c.roles = roles.slice(); });
+}
 function makeClass(name) {
   const c = {
     id:uid(), name:name.trim() || `Class ${db.classes.length+1}`,
     students:[], avoidPairs:[], avoidGroups:[],
-    roles:defaultRoles.slice(), seating:[]
+    roles:sharedRoles().slice(), seating:[]
   };
   db.classes.push(c);
   db.activeId = c.id;
@@ -727,10 +764,8 @@ function renderRoles(c) {
   list.innerHTML = '';
   if (!c) return;
 
-  if (!Array.isArray(c.roles)) c.roles = defaultRoles.slice();
-  while (c.roles.length < 3) c.roles.push(defaultRoles[c.roles.length]);
-
-  c.roles.forEach((role,index) => {
+  syncRolesAcrossClasses();
+  sharedRoles().forEach((role,index) => {
     const item = document.createElement('div');
     item.className = 'role-item';
     const label = document.createElement('label');
@@ -746,7 +781,8 @@ function renderRoles(c) {
         toast('Role titles cannot be blank.');
         return;
       }
-      c.roles[index] = input.value.trim();
+      sharedRoles()[index] = input.value.trim();
+      syncRolesAcrossClasses();
       groups = [];
       save();
       renderGroups();
@@ -1082,11 +1118,6 @@ $('randomStudentTab').addEventListener('click',() => showPage('randomStudent'));
 $('seatingTab').addEventListener('click',() => showPage('seating'));
 $('randomBackTeacherBtn').addEventListener('click',() => showPage('teacher'));
 $('backTeacherBtn').addEventListener('click',() => showPage('teacher'));
-$('teacherGoGroupsBtn').addEventListener('click',() => showPage('groups'));
-$('teacherGenerateBtn').addEventListener('click',() => {
-  generate();
-  showPage('groups');
-});
 
 $('renameClassBtn').addEventListener('click',() => {
   const c = current();
@@ -1385,7 +1416,7 @@ $('confirmPdfImportBtn').addEventListener('click',()=>{
     let added=0,removed=0,updated=0,firstId=null;
     for(const entry of sync.plan){
       let c=entry.c;
-      if(!c){c={id:uid(),name:entry.name,students:[],avoidPairs:[],avoidGroups:[],roles:defaultRoles.slice(),seating:[]};db.classes.push(c);}
+      if(!c){c={id:uid(),name:entry.name,students:[],avoidPairs:[],avoidGroups:[],roles:sharedRoles().slice(),seating:[]};db.classes.push(c);}
       if(!firstId)firstId=c.id;
       const next=[],kept=new Set();
       for(const a of entry.actions){
@@ -1539,6 +1570,7 @@ $('importFile').addEventListener('change',async e => {
       db.classes.push(c);
     });
     if (!db.classes.some(c => c.id === db.activeId)) db.activeId = db.classes[0]?.id || null;
+    syncRolesAcrossClasses();
     save();
     render();
     toast('Backup imported.');
@@ -2184,6 +2216,7 @@ try {
         });
       });
       if (!db.classes.some(c => c.id === db.activeId)) db.activeId = db.classes[0]?.id || null;
+      syncRolesAcrossClasses();
     }
   }
 } catch(e) {
