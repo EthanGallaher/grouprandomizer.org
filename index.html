@@ -271,6 +271,24 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
 @media(max-width:1100px) { .class-card,.actions-card,.roster-card,.add-card,.pdf-card,.avoid-card { grid-column:span 6; } .roles-card,.backup-card { grid-column:span 6; } .roster-card { grid-row:auto; } }
 @media(max-width:700px) { .teacher-dashboard > .teacher-card { grid-column:1/-1; } .teacher-heading { align-items:flex-start; } .school-pill { display:none; } .wrap { padding:14px; } .page-nav { overflow-x:auto; } .page-nav button { white-space:nowrap; } }
 
+/* Align the header and navigation with the workspace at normal desktop zoom. */
+@media (min-width:761px) {
+  .top-inner, .page-nav {
+    max-width:none !important;
+    width:100%;
+    margin-left:0;
+    margin-right:0;
+    padding-left:26px;
+    padding-right:26px;
+  }
+  .wrap:has(#teacherPage.active) {
+    max-width:none !important;
+    width:100%;
+    padding-left:26px;
+    padding-right:26px;
+  }
+}
+
 /* Balanced desktop workspace: independent columns prevent tall rosters from creating gaps. */
 .teacher-dashboard { grid-template-columns: minmax(0,1fr) minmax(0,1.12fr); gap:20px; align-items:start; }
 .teacher-heading { grid-column:1/-1; }
