@@ -102,7 +102,7 @@ textarea { resize:vertical; min-height:90px; }
 #groupsPage:fullscreen .members { flex:1; min-height:0; display:grid; grid-template-rows:repeat(var(--fg-members,3),minmax(0,1fr)); padding:var(--fg-pad,9px); gap:var(--fg-member-gap,5px); }
 #groupsPage:fullscreen .member { min-height:0; min-width:0; padding:var(--fg-member-pad,5px); gap:var(--fg-member-gap,5px); border-radius:7px; }
 #groupsPage:fullscreen .member-name { font-size:var(--fg-name,18px); line-height:1.1; white-space:nowrap; overflow:visible; overflow-wrap:normal; }
-#groupsPage:fullscreen .avatar { flex:none; min-width:0; max-width:none; min-height:0; height:auto; width:var(--fg-role-width,80px); padding:3px; font-size:var(--fg-role,11px); line-height:1.1; overflow-wrap:normal; word-break:normal; }
+#groupsPage:fullscreen .avatar { flex:none; min-width:0; max-width:none; min-height:0; height:auto; width:var(--fg-role-width,80px); padding:3px; font-size:var(--fg-role,11px); line-height:1.1; overflow-wrap:break-word; word-break:normal; }
 .random-result { margin-top:18px; padding:24px; border:2px dashed #cfd7e3; border-radius:14px; text-align:center; background:#f8faff; }
 .random-result strong { display:block; font-size:clamp(24px,4vw,36px); color:var(--navy); margin-top:8px; }
 .empty { padding:50px 20px; text-align:center; color:var(--muted); border:2px dashed #d5deea; border-radius:15px; margin-top:18px; }
@@ -1603,24 +1603,17 @@ function fitGroupFullscreen() {
   const gap=Math.max(3,Math.min(10,Math.round(Math.min(W,H)*.008)));
   const availableW=W-2*outer, availableH=H-2*outer;
   const maxMembers=Math.max(1,...cards.map(c=>c.querySelectorAll('.member').length));
-  // Evaluate all possible column counts and favor the largest legible text.
-  let best=null;
-  for(let cols=1;cols<=n;cols++) {
-    const rows=Math.ceil(n/cols), cw=(availableW-gap*(cols-1))/cols, ch=(availableH-gap*(rows-1))/rows;
-    if(cw<85||ch<42) continue;
-    const name=Math.min(32,(ch-22)/(maxMembers*1.65),cw/11.5);
-    const score=name - Math.max(0,rows-4)*.5 - Math.max(0,cols-7)*.3;
-    if(!best||score>best.score) best={cols,rows,cw,ch,score};
-  }
-  if(!best) best={cols:n,rows:1,cw:availableW/n,ch:availableH};
-  const {cols,rows,cw,ch}=best;
+  // Student presentation uses exactly four columns, with as many rows as needed.
+  const cols=4, rows=Math.ceil(n/cols);
+  const cw=(availableW-gap*(cols-1))/cols;
+  const ch=(availableH-gap*(rows-1))/rows;
   const titleH=Math.max(13,Math.min(30,ch*.17));
   const padding=Math.max(2,Math.min(10,cw*.025,ch*.035));
   const memberGap=Math.max(2,Math.min(7,ch*.015));
   const memberH=Math.max(8,(ch-titleH-padding*2-memberGap*(maxMembers-1))/maxMembers);
   const nameSize=Math.max(7,Math.min(34,memberH*.48,cw*.085));
-  const roleSize=Math.max(6,Math.min(17,nameSize*.68));
-  const roleWidth=Math.max(32,Math.min(cw*.36,110));
+  const roleSize=Math.max(10,Math.min(21,nameSize*.86));
+  const roleWidth=Math.max(58,Math.min(cw*.34,125));
   const vars={
     '--fg-outer':outer+'px','--fg-gap':gap+'px','--fg-cols':cols,'--fg-rows':rows,
     '--fg-members':maxMembers,'--fg-title':Math.max(9,Math.min(24,titleH*.57))+'px',
@@ -1647,8 +1640,8 @@ function fitGroupFullscreen() {
         for(let i=0;i<13;i++){const mid=(lo+hi)/2;if(fits(mid))lo=mid;else hi=mid;}
         el.style.fontSize=lo+'px';
       };
-      fit(role,Math.max(8,role.clientWidth-6),Math.max(8,role.clientHeight-6),roleSize,Math.min(5,roleSize));
-      fit(name,Math.max(8,nameBox.clientWidth),Math.max(8,member.clientHeight-4),nameSize,Math.min(5,nameSize));
+      fit(role,Math.max(8,role.clientWidth-6),Math.max(8,role.clientHeight-6),roleSize,Math.min(8,roleSize));
+      fit(name,Math.max(8,name.parentElement.clientWidth),Math.max(8,member.clientHeight-4),nameSize,Math.min(7,nameSize));
     });
   });
 }
