@@ -166,7 +166,10 @@ body .seating-room:not(:fullscreen) .desk { cursor:pointer; }
 
 .desk.empty-seat { color:#98a2b3; font-weight:400; }
 .desk-group .desk-delete { position:absolute; right:-7px; top:-9px; width:20px; height:20px;
-  border-radius:50%; padding:0; background:#c63b46; color:white; z-index:2; }
+  box-sizing:border-box; border:0; border-radius:50%; padding:0; margin:0;
+  display:flex; align-items:center; justify-content:center;
+  line-height:1; font-family:Arial,sans-serif; font-size:18px; font-weight:600;
+  letter-spacing:0; text-align:center; background:#c63b46; color:white; z-index:2; }
 
 
 
