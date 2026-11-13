@@ -238,7 +238,7 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
 .teacher-heading h2 { font-size:clamp(24px,2.6vw,32px); margin:3px 0; color:var(--navy); }
 .teacher-heading p { margin:0; color:var(--muted); }
 .teacher-intro { display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
-.teacher-intro #openGuideBtn { padding:7px 12px; white-space:nowrap; }
+
 .eyebrow { font-size:11px; font-weight:850; letter-spacing:.13em; color:var(--red); }
 .school-pill { font-size:11px; font-weight:850; letter-spacing:.08em; color:var(--navy); background:#e6eefb; border:1px solid #bcd0ed; padding:10px 14px; border-radius:30px; white-space:nowrap; }
 .teacher-card { border-top:4px solid var(--blue); box-shadow:0 5px 18px #102c5a0a; }
@@ -370,13 +370,29 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
 .feedback-dialog textarea,.feedback-dialog select {width:100%;box-sizing:border-box;}
 .feedback-actions {display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;}
 .feedback-actions button {font-size:12px;padding:8px 10px;}
+
+.welcome-dialog {width:min(94vw,640px);max-height:90vh;overflow-y:auto;border:1px solid #dfe5ed;border-radius:18px;padding:24px;color:var(--ink);box-shadow:0 20px 60px #102c5a55;}
+.welcome-dialog::backdrop {background:rgba(12,27,52,.64);}
+.welcome-top,.welcome-footer {display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+.welcome-kicker {font-size:11px;font-weight:800;letter-spacing:.09em;color:var(--blue);}
+.welcome-dialog h2 {margin:10px 0 6px;font-size:25px;color:var(--navy);}
+.welcome-dialog p {font-size:14px;line-height:1.5;}
+.welcome-choices {display:grid;gap:10px;margin:18px 0;}
+.welcome-choice {display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:4px;width:100%;border:1px solid #cdd8e8;background:#f5f8fd;color:var(--ink);border-radius:12px;padding:14px 16px;}
+.welcome-choice:hover,.welcome-choice:focus-visible {border-color:var(--blue);background:#eaf2ff;outline-offset:2px;}
+.welcome-choice strong {color:var(--navy);font-size:15px;}
+.welcome-choice span {font-weight:400;font-size:13px;line-height:1.4;}
+.welcome-privacy {border-left:4px solid var(--blue);background:#edf4ff;padding:12px 14px;border-radius:8px;margin:12px 0 18px;}
+.welcome-privacy strong {font-size:13px;color:var(--navy);}
+.welcome-privacy p {font-size:12px;margin:6px 0 0;}
+@media(max-width:600px) {.welcome-dialog {padding:16px;}.welcome-dialog h2 {font-size:21px;}}
 </style>
 </head>
 <body>
 <header class="top">
   <div class="top-inner">
     <div class="site-brand"><img src="group-randomizer-icon.png" alt="" width="48" height="48"><h1>Balanced Group Randomizer</h1></div>
-    <div class="install-actions"><button type="button" class="install-app-btn" id="feedbackBtn">Feedback</button><button type="button" class="install-app-btn" id="installAppBtn" hidden>Install Desktop App</button><div class="save-state" id="saveState">Saved on this device</div></div>
+    <div class="install-actions"><button type="button" class="install-app-btn" id="welcomeHelpBtn">Getting Started</button><button type="button" class="install-app-btn" id="feedbackBtn">Feedback</button><button type="button" class="install-app-btn" id="installAppBtn" hidden>Install Desktop App</button><div class="save-state" id="saveState">Saved on this device</div></div>
   </div>
 </header>
 
@@ -390,6 +406,18 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
   <button type="button" id="applyUpdateBtn">Restart to Update</button>
   <button type="button" id="dismissUpdateBtn" aria-label="Dismiss update reminder">Later</button>
 </div>
+<dialog id="welcomeDialog" class="welcome-dialog" aria-labelledby="welcomeTitle">
+  <div class="welcome-top"><span class="welcome-kicker">WELCOME TO BALANCED GROUP RANDOMIZER</span><button type="button" id="welcomeClose" class="secondary" aria-label="Close welcome">✕</button></div>
+  <h2 id="welcomeTitle">Get your classes ready</h2>
+  <p>Create balanced groups, choose students randomly, and arrange seating charts. Start with the option that fits your roster.</p>
+  <div class="welcome-choices">
+    <button type="button" id="welcomePdf" class="welcome-choice"><strong>Import a PowerSchool PDF</strong><span>Automatically build classes and assign initial performance tiers from a supported numeric-grade report.</span></button>
+    <button type="button" id="welcomePaste" class="welcome-choice"><strong>Paste a student roster</strong><span>Add student names to the selected class, one per line.</span></button>
+    <button type="button" id="welcomeManual" class="welcome-choice"><strong>Create a class manually</strong><span>Name a new class and add students when you're ready.</span></button>
+  </div>
+  <div class="welcome-privacy"><strong><span aria-hidden="true">🔒</span> Your classroom data stays on this device</strong><p>Rosters, tiers, seating charts, and grouping settings are saved in this browser's local storage. The app does not automatically upload them to a cloud account. Data may be lost if browser storage is cleared or the device is reset. Export backups to a school-approved secure location; backups contain student information. The feedback email opens your email app only when you choose to send it.</p></div>
+  <div class="welcome-footer"><button type="button" class="secondary" id="welcomeTutorial">Take the setup tutorial</button><button type="button" class="secondary" id="welcomeSkip">Skip for now</button></div>
+</dialog>
 <dialog id="feedbackDialog" class="feedback-dialog" aria-labelledby="feedbackTitle">
   <h2 id="feedbackTitle">Report a problem or suggest an improvement</h2>
   <p>Describe what happened or what you would like changed. Student names and classroom data are not included automatically.</p>
@@ -418,7 +446,7 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
 
 <section class="page active" id="teacherPage">
 <div class="teacher-dashboard">
-<div class="teacher-heading"><div><h2>Teacher Setup</h2><div class="teacher-intro"><p>Manage classes, students, grouping rules, and classroom roles in one place.</p><button class="secondary" id="openGuideBtn">Setup tutorial</button></div></div></div>
+<div class="teacher-heading"><div><h2>Teacher Setup</h2><div class="teacher-intro"><p>Manage classes, students, grouping rules, and classroom roles in one place.</p></div></div></div>
 <div class="teacher-column teacher-column-left">
 <section class="panel teacher-card class-card"><h2>1. Your classes</h2>
 <div class="field">
@@ -651,6 +679,7 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
 <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 <div class="guide-overlay" id="guideOverlay" hidden><section class="guide-dialog" role="dialog" aria-modal="false" aria-labelledby="guideTitle"><div class="guide-progress" id="guideProgress"></div><h2 id="guideTitle"></h2><p id="guideText"></p><div class="btnrow" style="justify-content:flex-end"><button class="secondary" id="guideClose">Close</button><button class="secondary" id="guidePrev">Back</button><button class="primary" id="guideNext">Next</button></div></section></div>
 
+<script>window.__bgrHadPriorData = (() => { try { return localStorage.getItem('balancedGroupRandomizer.v1') !== null; } catch (_) { return true; } })();</script>
 <script src="./pdf.min.js"></script>
 <script>
 (() => {
@@ -2664,7 +2693,7 @@ $('populateDesksBtn').addEventListener('click',() => {
 });
 
 const guideSteps = [
-  {title:'Welcome', body:'This interactive tour will take you directly to each part of the website. The highlighted controls remain usable, so you can follow along as you set up a class.', page:'teacher', target:'openGuideBtn'},
+  {title:'Welcome', body:'This interactive tour will take you directly to each part of the website. The highlighted controls remain usable, so you can follow along as you set up a class.', page:'teacher', target:'welcomeHelpBtn'},
   {title:'Create or select a class', body:'Enter a class name and select Create, or choose an existing class from the dropdown.', page:'teacher', target:'classSelect'},
   {title:'Add students', body:'Paste student names here, one per line, then select Add students. You can also use the PowerSchool PDF importer in the next step.', page:'teacher', target:'bulkNames'},
   {title:'Import and rank automatically', body:'Upload a PowerSchool Final Grades PDF here. Review the extracted records before confirming; existing classes can be updated.', page:'teacher', target:'classPdfUpload'},
@@ -2704,7 +2733,7 @@ function renderGuide(){
     });
   }
 }
-$('openGuideBtn').addEventListener('click',()=>{guidePreviousFocus=document.activeElement;guideIndex=0;$('guideOverlay').hidden=false;renderGuide();$('guideNext').focus({preventScroll:true});});
+function startSetupGuide(){guidePreviousFocus=document.activeElement;guideIndex=0;$('guideOverlay').hidden=false;renderGuide();$('guideNext').focus({preventScroll:true});}
 $('guideClose').addEventListener('click',closeGuide);
 $('guidePrev').addEventListener('click',()=>{guideIndex=Math.max(0,guideIndex-1);renderGuide();});
 $('guideNext').addEventListener('click',()=>{if(guideIndex===guideSteps.length-1){closeGuide();return;}guideIndex++;renderGuide();});
@@ -2905,6 +2934,47 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
     setTimeout(() => URL.revokeObjectURL(url), 10000);
     status.textContent = 'Feedback saved. Send the text file to the app owner.';
   });
+})();
+</script>
+<script>
+// First-launch guidance is separate from class data and never resets it.
+(() => {
+  const SEEN_KEY = 'balancedGroupRandomizer.welcomeSeen.v1';
+  const DATA_KEY = 'balancedGroupRandomizer.v1';
+  const dialog = document.getElementById('welcomeDialog');
+  const $ = id => document.getElementById(id);
+  function dismiss() {
+    try { localStorage.setItem(SEEN_KEY,'1'); } catch (_) {}
+    dialog.close();
+  }
+  function focusSetup(targetId) {
+    dismiss();
+    $('teacherTab').click();
+    const target = $(targetId);
+    if (target) {
+      target.scrollIntoView({behavior:'smooth',block:'center'});
+      setTimeout(() => { try { target.focus({preventScroll:true}); } catch (_) { target.focus(); } }, 250);
+    }
+  }
+  $('welcomeClose').addEventListener('click',dismiss);
+  $('welcomeSkip').addEventListener('click',dismiss);
+  $('welcomeHelpBtn').addEventListener('click',() => dialog.showModal());
+  $('welcomePdf').addEventListener('click',() => focusSetup('classPdfUpload'));
+  $('welcomePaste').addEventListener('click',() => focusSetup('bulkNames'));
+  $('welcomeManual').addEventListener('click',() => focusSetup('newClassName'));
+  $('welcomeTutorial').addEventListener('click',() => { dismiss(); startSetupGuide(); });
+  dialog.addEventListener('close',() => {
+    try { localStorage.setItem(SEEN_KEY,'1'); } catch (_) {}
+  });
+  // Existing users should never be interrupted, including those with an empty starter class.
+  const existing = window.__bgrHadPriorData !== false;
+  // The app creates its starter class during initialization; detect prior use from
+  // the saved data rather than treating that starter class as user onboarding.
+  // A separate marker is written on the first visit to prevent repeat prompts.
+  let seen = false;
+  try { seen = localStorage.getItem(SEEN_KEY) === '1'; } catch (_) {}
+  if (!seen && !existing) dialog.showModal();
+  else if (!seen) { try { localStorage.setItem(SEEN_KEY,'1'); } catch (_) {} }
 })();
 </script>
 </body>
