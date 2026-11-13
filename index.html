@@ -103,6 +103,18 @@ textarea { resize:vertical; min-height:90px; }
 #groupsPage:fullscreen .member { min-height:0; min-width:0; padding:var(--fg-member-pad,5px); gap:var(--fg-member-gap,5px); border-radius:7px; }
 #groupsPage:fullscreen .member-name { font-size:var(--fg-name,18px); line-height:1.1; white-space:nowrap; overflow:visible; overflow-wrap:normal; }
 #groupsPage:fullscreen .avatar { flex:none; min-width:0; max-width:none; min-height:0; height:var(--fg-role-height,48px); width:var(--fg-role-width,90px); padding:4px 6px; font-size:var(--fg-role,16px); line-height:1.15; overflow-wrap:break-word; word-break:normal; }
+/* Absent students remain accessible without disturbing the four-column group grid. */
+.groups-shell {display:grid;grid-template-columns:minmax(0,1fr) 185px;gap:12px;align-items:start;}
+.groups-shell > .groups {min-width:0;}
+.absent-sidebar {border:1px solid #f2c4c8;background:#fff7f8;border-radius:12px;padding:12px;min-width:0;}
+.absent-sidebar h3 {margin:0;font-size:15px;color:#a52d39;}
+.absent-student {display:block;width:100%;margin-top:7px;text-align:left;padding:9px;overflow-wrap:anywhere;font-size:13px;}
+#groupsPage:fullscreen .groups-shell {height:100%;min-height:0;grid-template-columns:minmax(0,1fr) minmax(125px,14vw);gap:8px;}
+#groupsPage:fullscreen .groups-shell > .groups {height:100%;min-height:0;}
+#groupsPage:fullscreen .absent-sidebar {height:100%;overflow:auto;padding:9px;}
+#groupsPage:fullscreen .absent-sidebar h3 {font-size:clamp(13px,1.4vw,20px);}
+#groupsPage:fullscreen .absent-student {font-size:clamp(11px,1vw,16px);}
+@media(max-width:700px){.groups-shell{grid-template-columns:1fr;}.absent-sidebar{order:-1;}}
 .random-result { margin-top:18px; padding:24px; border:2px dashed #cfd7e3; border-radius:14px; text-align:center; background:#f8faff; }
 .random-result strong { display:block; font-size:clamp(24px,4vw,36px); color:var(--navy); margin-top:8px; }
 .empty { padding:50px 20px; text-align:center; color:var(--muted); border:2px dashed #d5deea; border-radius:15px; margin-top:18px; }
@@ -390,14 +402,15 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
   <p id="pdfImportStatus" class="help" role="status" aria-live="polite"></p>
 </div>
 </section>
-<section class="panel teacher-card avoid-card"><h2>3. Keep students apart</h2>
-<p class="help">Choose a rule type. Rules are optional and saved with this class. </p>
+<section class="panel teacher-card avoid-card"><h2>3. Grouping rules</h2>
+<p class="help">Choose which students must stay apart or together. Rules are optional and saved with this class. </p>
 
 <div class="field">
   <label for="avoidRuleType">Separation rule type</label>
   <select id="avoidRuleType">
     <option value="2">Separate 2 students</option>
     <option value="3plus">Separate 3+ students</option>
+    <option value="together">Keep students together (2–3)</option>
   </select>
 </div>
 
@@ -419,6 +432,11 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
   <button class="secondary" id="addAvoidGroupBtn">＋ Add group separation rule</button>
 </div>
 
+<div id="togetherControls" class="hidden">
+  <p class="help">Select two or three students who must be assigned to the same group. This applies to group generation and automatic seating assignments.</p>
+  <div id="togetherStudents" class="avoid-student-options"></div>
+  <button class="secondary" id="addTogetherBtn">＋ Add keep-together rule</button>
+</div>
 <div id="avoidList" class="avoid-list"></div>
 
 </section>
@@ -564,6 +582,7 @@ const KEY = 'balancedGroupRandomizer.v1';
 let db = {classes:[], activeId:null, sharedRoles:null};
 let groups = [];
 let absentIds = new Set();
+let absentOrigins = new Map();
 let toastTimer;
 const $ = id => document.getElementById(id);
 const tiers = ['High','Middle','Low'];
@@ -600,7 +619,7 @@ function syncRolesAcrossClasses() {
 function makeClass(name) {
   const c = {
     id:uid(), name:name.trim() || `Class ${db.classes.length+1}`,
-    students:[], avoidPairs:[], avoidGroups:[],
+    students:[], avoidPairs:[], avoidGroups:[], togetherGroups:[],
     roles:sharedRoles().slice(), seating:[], groupingStrategy:"balanced", groupHistory:[]
   };
   db.classes.push(c);
@@ -713,6 +732,7 @@ function renderStudents(c) {
       c.students = c.students.filter(x => x.id !== s.id);
       c.avoidPairs = c.avoidPairs.filter(p => !p.includes(s.id));
       c.avoidGroups = c.avoidGroups.map(rule => rule.filter(id => id !== s.id)).filter(rule => rule.length >= 3);
+      c.togetherGroups = (c.togetherGroups||[]).map(rule=>rule.filter(id=>id!==s.id)).filter(rule=>rule.length>=2);
       groups = [];
       save();
       render();
@@ -778,18 +798,29 @@ function renderAvoidControls(c) {
     });
   }
 
+  const togetherChecklist=$('togetherStudents');
+  togetherChecklist.innerHTML='';
+  students.forEach(s=>{
+    const label=document.createElement('label');label.className='avoid-student-option';
+    const input=document.createElement('input');input.type='checkbox';input.value=s.id;input.dataset.togetherStudent='true';
+    const span=document.createElement('span');span.textContent=s.name;
+    label.append(input,span);togetherChecklist.append(label);
+  });
+  if(!students.length)togetherChecklist.textContent='Add students first.';
   const pairControls = $('avoidPairControls');
   const groupControls = $('avoidGroupControls');
-  const isGroupRule = $('avoidRuleType').value === '3plus';
-  pairControls.classList.toggle('hidden',isGroupRule);
-  groupControls.classList.toggle('hidden',!isGroupRule);
+  const ruleType=$('avoidRuleType').value;
+  pairControls.classList.toggle('hidden',ruleType!=='2');
+  groupControls.classList.toggle('hidden',ruleType!=='3plus');
+  $('togetherControls').classList.toggle('hidden',ruleType!=='together');
 
   const list = $('avoidList');
   list.innerHTML = '';
   const pairRules = c ? c.avoidPairs : [];
   const groupRules = c ? c.avoidGroups : [];
+  const togetherRules = c ? (c.togetherGroups||[]) : [];
 
-  if (!pairRules.length && !groupRules.length) {
+  if (!pairRules.length && !groupRules.length && !togetherRules.length) {
     const empty = document.createElement('p');
     empty.className = 'help';
     empty.textContent = 'No separation rules added.';
@@ -817,6 +848,15 @@ function renderAvoidControls(c) {
       groups = [];
       save();
       render();
+    });
+  });
+
+  togetherRules.forEach(rule=>{
+    const names=rule.map(id=>students.find(s=>s.id===id)?.name).filter(Boolean);
+    if(names.length<2)return;
+    addRuleDisplay(`Keep together: ${names.join(', ')}`,()=>{
+      c.togetherGroups=c.togetherGroups.filter(r=>!(r.length===rule.length&&r.every(id=>rule.includes(id))));
+      groups=[];absentIds.clear();absentOrigins.clear();save();render();
     });
   });
 
@@ -904,6 +944,45 @@ const strategyDescriptions={balanced:'Prioritizes mixed-ability groups.',random:
 function updateStrategyHelp(){ $('strategyHelp').textContent=strategyDescriptions[$('groupStrategy').value] || strategyDescriptions.balanced; }
 $('groupStrategy').addEventListener('change',()=>{const c=current();if(c){c.groupingStrategy=$('groupStrategy').value;$('seatingStrategy').value=c.groupingStrategy;save();}updateStrategyHelp();});
 $('seatingStrategy').addEventListener('change',()=>{const c=current();if(c){c.groupingStrategy=$('seatingStrategy').value;$('groupStrategy').value=c.groupingStrategy;updateStrategyHelp();save();}});
+function togetherComponents(c,rules=c.togetherGroups||[],students=c.students){
+  const byId=new Map(students.map(s=>[s.id,s]));const parent=new Map(students.map(s=>[s.id,s.id]));
+  const root=id=>{while(parent.get(id)!==id)id=parent.get(id);return id;};
+  for(const rule of rules){const valid=rule.filter(id=>parent.has(id));for(const id of valid.slice(1))parent.set(root(id),root(valid[0]));}
+  const blocks=new Map();for(const s of students){const key=root(s.id);if(!blocks.has(key))blocks.set(key,[]);blocks.get(key).push(s);}
+  return [...blocks.values()];
+}
+function validateTogetherRules(c,rules=c.togetherGroups||[]){
+  const blocks=togetherComponents(c,rules);
+  if(blocks.some(b=>b.length>3))return 'Combined keep-together rules exceed the three-student group limit.';
+  if(blocks.some(b=>separationViolations([b],c)>0))return 'Keep-together and separation rules conflict for these students.';
+  return '';
+}
+// Pack linked students as indivisible units, then fill the remaining group seats.
+function arrangeTogether(students,sizes,c){
+  const blocks=togetherComponents(c,c.togetherGroups||[],students);
+  const slots=sizes.map(size=>({size,students:[]}));
+  const ordered=blocks.slice().sort((a,b)=>b.length-a.length||Math.random()-.5);
+  function place(i){
+    if(i===ordered.length)return true;
+    const block=ordered[i];
+    const choices=slots.map((slot,index)=>index).filter(index=>slots[index].students.length+block.length<=slots[index].size);
+    for(let j=choices.length-1;j>0;j--){const k=Math.floor(Math.random()*(j+1));[choices[j],choices[k]]=[choices[k],choices[j]];}
+    for(const index of choices){
+      const slot=slots[index];slot.students.push(...block);
+      if(!separationViolations([slot.students],c)&&place(i+1))return true;
+      slot.students.length-=block.length;
+    }
+    return false;
+  }
+  return place(0)?slots.map(slot=>slot.students):null;
+}
+function togetherViolations(arr,c){
+  const locations=new Map();arr.forEach((g,i)=>g.forEach(s=>locations.set(s.id,i)));
+  return (c.togetherGroups||[]).filter(rule=>{
+    const found=rule.filter(id=>locations.has(id));
+    return found.length>1&&found.some(id=>locations.get(id)!==locations.get(found[0]));
+  }).length;
+}
 function separationViolations(arr,c){let n=0;for(const g of arr){const ids=new Set(g.map(s=>s.id));n+=c.avoidPairs.filter(p=>p.every(id=>ids.has(id))).length;n+=c.avoidGroups.filter(rule=>rule.filter(id=>ids.has(id)).length>1).length;}return n;}
 function strategyScore(arr,c){
  const strategy=c.groupingStrategy||'balanced';
@@ -958,24 +1037,15 @@ function arrangementScore(arr,c) {
 function generate() {
   const c = current();
   if (!c || c.students.length < 2) return;
-  absentIds = new Set();
+  const issue=validateTogetherRules(c);if(issue){toast(issue);return;}
   const sizes = createGroupSizes(c.students.length);
   let best = null, bestScore = -Infinity;
   let bestInvalid=null,bestInvalidCount=Infinity;
   const attempts = Math.min(5000,Math.max(800,c.students.length*120));
 
   for (let trial=0;trial<attempts;trial++) {
-    const shuffled = c.students.slice();
-    for (let i=shuffled.length-1;i>0;i--) {
-      const j = Math.floor(Math.random()*(i+1));
-      [shuffled[i],shuffled[j]] = [shuffled[j],shuffled[i]];
-    }
-    let pos = 0;
-    const arr = sizes.map(size => {
-      const g = shuffled.slice(pos,pos+size);
-      pos += size;
-      return g;
-    });
+    const arr=arrangeTogether(c.students,sizes,c);
+    if(!arr)continue;
     const violations=separationViolations(arr,c);
     if(violations){if(violations<bestInvalidCount){bestInvalid=arr;bestInvalidCount=violations;}continue;}
     const score = strategyScore(arr,c) + Math.random()*0.06;
@@ -989,6 +1059,7 @@ function generate() {
     $('balanceNote').textContent='No valid arrangement found within the search limit. No groups were changed. Check conflicting separation rules or retry.';
     toast('Could not satisfy all separation rules.');return;
   }
+  absentIds.clear();absentOrigins.clear();
   recordGroupHistory(c,best);save();
   const roles = c.roles || defaultRoles;
   groups = best.map(g => g.map((s,i) => ({
@@ -1000,7 +1071,7 @@ function generate() {
 
   renderGroups();
 
-  const violations = [...c.avoidPairs].filter(pair =>
+  const violations = togetherViolations(groups,c) + [...c.avoidPairs].filter(pair =>
     groups.some(g => g.some(s => s.id === pair[0]) && g.some(s => s.id === pair[1]))
   ).length + [...c.avoidGroups].filter(rule =>
     groups.some(g => rule.filter(id => g.some(s => s.id === id)).length > 1)
@@ -1032,6 +1103,7 @@ function markStudentAbsent(studentId) {
   if (!affectedGroup) return;
 
   // Mark absent and remove only this student from their group.
+  absentOrigins.set(studentId,groups.indexOf(affectedGroup));
   absentIds.add(studentId);
 
   const remainingMembers = affectedGroup.filter(s =>
@@ -1150,6 +1222,44 @@ function markStudentAbsent(studentId) {
   toast(`${student.name} marked absent. Groups updated.`);
 }
 
+function restoreAbsentStudent(studentId){
+  if(!absentIds.has(studentId))return;
+  const c=current(),student=c?.students.find(s=>s.id===studentId);
+  if(!student)return;
+  const preferred=absentOrigins.get(studentId);
+  const order=[...groups.keys()].sort((a,b)=>{
+    if(a===preferred)return -1;if(b===preferred)return 1;
+    return groups[a].length-groups[b].length;
+  });
+  const roles=c.roles||defaultRoles;
+  for(const index of order){
+    const group=groups[index];if(group.length>=3)continue;
+    const trial=group.concat(student);
+    if(separationViolations([trial],c))continue;
+    const trialGroups=groups.map((g,i)=>i===index?trial:g);
+    if(togetherViolations(trialGroups,c))continue;
+    groups[index]=trial.map((s,i)=>({...s,role:trial.length===2?(i===0?roles[0]:`${roles[1]} + ${roles[2]}`):roles[i]}));
+    absentIds.delete(studentId);absentOrigins.delete(studentId);
+    renderGroups();toast(`${student.name} returned to Group ${index+1}.`);return;
+  }
+  // If a group was removed during absence repairs, recreate a valid group of two
+  // by taking a student from a triple only when that keeps all rules satisfied.
+  for(let i=0;i<groups.length;i++){
+    if(groups[i].length!==3)continue;
+    for(let j=0;j<3;j++){
+      const moved=groups[i][j];const left=groups[i].filter(s=>s.id!==moved.id);
+      const pair=[moved,student];
+      if(separationViolations([left,pair],c))continue;
+      const candidate=groups.map((g,k)=>k===i?left:g).concat([pair]);
+      if(togetherViolations(candidate,c))continue;
+      groups[i]=left.map((s,k)=>({...s,role:k===0?roles[0]:`${roles[1]} + ${roles[2]}`}));
+      groups.push(pair.map((s,k)=>({...s,role:k===0?roles[0]:`${roles[1]} + ${roles[2]}`})));
+      absentIds.delete(studentId);absentOrigins.delete(studentId);renderGroups();toast(`${student.name} returned.`);return;
+    }
+  }
+  toast(`No valid group has room for ${student.name}. Adjust groups or randomize again.`);
+}
+
 function renderGroups() {
   const area = $('groupsArea');
   area.innerHTML = '';
@@ -1201,7 +1311,17 @@ function renderGroups() {
     card.append(title,members);
     wrap.append(card);
   });
-  area.append(wrap);
+  const shell=document.createElement('div');shell.className='groups-shell';
+  shell.append(wrap);
+  const absent=document.createElement('aside');absent.className='absent-sidebar';
+  const heading=document.createElement('h3');heading.textContent=`Absent (${absentIds.size})`;absent.append(heading);
+  const hint=document.createElement('p');hint.className='help';hint.textContent='Click a student to return them to a group.';absent.append(hint);
+  if(!absentIds.size){const empty=document.createElement('p');empty.className='help';empty.textContent='No absent students';absent.append(empty);}
+  for(const id of absentIds){const student=current()?.students.find(s=>s.id===id);if(!student)continue;
+    const btn=document.createElement('button');btn.type='button';btn.className='absent-student secondary';btn.textContent=student.name;
+    btn.title=`Return ${student.name} to a group`;btn.addEventListener('click',()=>restoreAbsentStudent(id));absent.append(btn);
+  }
+  shell.append(absent);area.append(shell);
   if (document.fullscreenElement === $('groupsPage')) fitGroupFullscreen();
 }
 
@@ -1523,7 +1643,7 @@ $('confirmPdfImportBtn').addEventListener('click',()=>{
     let added=0,removed=0,updated=0,firstId=null;
     for(const entry of sync.plan){
       let c=entry.c;
-      if(!c){c={id:uid(),name:entry.name,students:[],avoidPairs:[],avoidGroups:[],roles:sharedRoles().slice(),seating:[],groupingStrategy:"balanced",groupHistory:[]};db.classes.push(c);}
+      if(!c){c={id:uid(),name:entry.name,students:[],avoidPairs:[],avoidGroups:[],togetherGroups:[],roles:sharedRoles().slice(),seating:[],groupingStrategy:"balanced",groupHistory:[]};db.classes.push(c);}
       if(!firstId)firstId=c.id;
       const next=[],kept=new Set();
       for(const a of entry.actions){
@@ -1535,6 +1655,7 @@ $('confirmPdfImportBtn').addEventListener('click',()=>{
       c.students=next;
       c.avoidPairs=(c.avoidPairs||[]).filter(pair=>pair.every(id=>!dropped.has(id)));
       c.avoidGroups=(c.avoidGroups||[]).map(rule=>rule.filter(id=>!dropped.has(id))).filter(rule=>rule.length>=3);
+      c.togetherGroups=(c.togetherGroups||[]).map(rule=>rule.filter(id=>!dropped.has(id))).filter(rule=>rule.length>=2);
       const cleanAssignments = assignments => {
         if(!assignments || typeof assignments!=='object')return;
         for(const [desk,ids] of Object.entries(assignments))
@@ -1597,6 +1718,17 @@ $('addAvoidGroupBtn').addEventListener('click',() => {
   toast('Group separation rule saved.');
 });
 
+$('addTogetherBtn').addEventListener('click',()=>{
+  const c=current();if(!c)return;
+  const ids=[...$('togetherStudents').querySelectorAll('input[data-together-student]:checked')].map(el=>el.value);
+  if(ids.length<2||ids.length>3){toast('Select two or three students to keep together.');return;}
+  if((c.togetherGroups||[]).some(r=>r.length===ids.length&&r.every(id=>ids.includes(id)))){toast('That rule already exists.');return;}
+  const proposed=[...(c.togetherGroups||[]),ids];
+  const issue=validateTogetherRules(c,proposed);
+  if(issue){toast(issue);return;}
+  c.togetherGroups=proposed;groups=[];absentIds.clear();absentOrigins.clear();save();render();toast('Keep-together rule saved.');
+});
+
 $('generateBtn').addEventListener('click',generate);
 const fullscreenBtn = $('fullscreenBtn');
 // Fit every group on one screen, then independently shrink long names and role labels.
@@ -1606,7 +1738,8 @@ function fitGroupFullscreen() {
   if (!grid) return;
   const cards=[...grid.querySelectorAll('.group-card')];
   if (!cards.length) return;
-  const n=cards.length, W=page.clientWidth, H=page.clientHeight;
+  const shell=page.querySelector('.groups-shell');
+  const n=cards.length, W=shell?.querySelector('.groups')?.clientWidth||page.clientWidth, H=page.clientHeight;
   const outer=Math.max(5,Math.min(14,Math.round(Math.min(W,H)*.012)));
   const gap=Math.max(3,Math.min(10,Math.round(Math.min(W,H)*.008)));
   const availableW=W-2*outer, availableH=H-2*outer;
@@ -1738,6 +1871,7 @@ $('importFile').addEventListener('change',async e => {
       if (!c.id || !c.name || !Array.isArray(c.students)) throw new Error('Invalid class');
       if (!Array.isArray(c.avoidPairs)) c.avoidPairs = [];
       if (!Array.isArray(c.avoidGroups)) c.avoidGroups = [];
+      if (!Array.isArray(c.togetherGroups)) c.togetherGroups = [];
       if (!Array.isArray(c.roles)) c.roles = defaultRoles.slice();
       c.students.forEach(s => {
         if (!tiers.includes(s.tier)) s.tier = 'Middle';
@@ -2353,30 +2487,24 @@ $('populateDesksBtn').addEventListener('click',() => {
   if (!layout.length) { toast('Add desk groups first.'); return; }
   const capacity = layout.reduce((n,g)=>n+g.size,0);
   if (capacity < c.students.length) { toast(`Not enough seats: ${capacity} seats for ${c.students.length} students.`); return; }
+  const issue=validateTogetherRules(c);if(issue){toast(issue);return;}
   // Fill strictly by teacher-selected priority, regardless of desk group size.
   normalizeSeatingPriorities(layout);
   const ordered = [...layout].sort((a,b)=>a.priority-b.priority);
   let best=null, bestScore=-Infinity;
   const attempts=Math.min(6000,Math.max(1200,c.students.length*140));
   for (let trial=0;trial<attempts;trial++) {
-    const shuffled=c.students.slice();
-    for(let i=shuffled.length-1;i>0;i--) {
-      const j=Math.floor(Math.random()*(i+1));
-      [shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]];
-    }
+    const arranged=arrangeTogether(c.students,ordered.map(g=>g.size),c);
+    if(!arranged)continue;
     const candidate=layout.map(g=>({...g,students:[]}));
     const byId=new Map(candidate.map(g=>[g.id,g]));
-    let pos=0;
-    ordered.forEach(g=>{
-      byId.get(g.id).students=shuffled.slice(pos,pos+g.size).map(s=>s.id);
-      pos+=g.size;
-    });
+    ordered.forEach((g,i)=>{byId.get(g.id).students=arranged[i].map(s=>s.id);});
     const candidateGroups=candidate.map(g=>g.students.map(id=>c.students.find(st=>st.id===id)).filter(Boolean));
-    if(separationViolations(candidateGroups,c)) continue;
+    if(separationViolations(candidateGroups,c)||togetherViolations(candidateGroups,c)) continue;
     const score=seatingScore(candidate,c)+Math.random()*.01;
     if(score>bestScore){bestScore=score;best=candidate;}
   }
-  if(!best){toast('No valid seating arrangement found that satisfies all separation rules. Existing seats unchanged.');return;}
+  if(!best){toast('No valid seating arrangement satisfies all grouping rules. Existing seats unchanged.');return;}
   rememberSeatingEdit();
   const assignments = seatingAssignments(c);
   best.forEach(g => { assignments[g.id] = g.students; });
@@ -2396,7 +2524,7 @@ const guideSteps = [
   {title:'Add students', body:'Paste student names here, one per line, then select Add students. You can also use the PowerSchool PDF importer in the next step.', page:'teacher', target:'bulkNames'},
   {title:'Import and rank automatically', body:'Upload a PowerSchool Final Grades PDF here. Review the extracted records before confirming; existing classes can be updated.', page:'teacher', target:'classPdfUpload'},
   {title:'Review performance tiers', body:'Review High, Middle, and Low rankings and adjust any student individually. These tiers are only visible in Teacher Setup.', page:'teacher', target:'studentList'},
-  {title:'Set separation rules', body:'Use these optional restrictions to keep particular students apart. Choose a pair or a 3+ rule.', page:'teacher', target:'avoidRuleType'},
+  {title:'Set grouping rules', body:'Keep selected students apart, or choose Keep Together for students who must share a group.', page:'teacher', target:'avoidRuleType'},
   {title:'Customize group roles', body:'Change the three role titles here. They are shared across all classes; in pairs, the second student covers roles 2 and 3.', page:'teacher', target:'roleList'},
   {title:'Generate groups', body:'Select a grouping strategy, then click Randomize groups. The New partners option uses locally saved grouping history.', page:'groups', target:'groupStrategy'},
   {title:'Build your seating chart', body:'Choose or create a template, add desks, select a grouping strategy, and click Populate desks to assign students.', page:'seating', target:'seatingSetupControls'},
@@ -2452,6 +2580,7 @@ try {
         if (!Array.isArray(c.students)) c.students = [];
         if (!Array.isArray(c.avoidPairs)) c.avoidPairs = [];
         if (!Array.isArray(c.avoidGroups)) c.avoidGroups = [];
+      if (!Array.isArray(c.togetherGroups)) c.togetherGroups = [];
         if (!Array.isArray(c.roles)) c.roles = defaultRoles.slice();
         if(!strategyDescriptions[c.groupingStrategy])c.groupingStrategy='balanced';
         if(!Array.isArray(c.groupHistory))c.groupHistory=[];
