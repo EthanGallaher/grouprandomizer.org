@@ -702,6 +702,7 @@ body.ipad-presentation .ipad-exit-presentation {display:block;}
 
 <script>window.__bgrHadPriorData = (() => { try { return localStorage.getItem('balancedGroupRandomizer.v1') !== null; } catch (_) { return true; } })();</script>
 <script src="./pdf.min.js"></script>
+<button type="button" id="ipadExitPresentation" class="ipad-exit-presentation" aria-label="Exit student presentation">✕ Exit fullscreen</button>
 <script>
 (() => {
 const KEY = 'balancedGroupRandomizer.v1';
@@ -3021,6 +3022,6 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
   else if (!seen) { try { localStorage.setItem(SEEN_KEY,'1'); } catch (_) {} }
 })();
 </script>
-<button type="button" id="ipadExitPresentation" class="ipad-exit-presentation" aria-label="Exit student presentation">✕ Exit fullscreen</button>
+
 </body>
 </html>
