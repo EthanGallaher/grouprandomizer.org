@@ -337,7 +337,7 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
 .seating-present-section .seating-tool-heading { margin:0; }
 @media(max-width:950px){ .seating-toolbar { grid-template-columns:1fr; } }
 @media(max-width:600px){ .seating-tool-row button { flex:1 1 auto; } }
-/* Desktop app installation */
+/* App installation */
 .install-actions { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
 .install-app-btn { background:#fff; color:#10346b; border:1px solid #dbe5f6; border-radius:8px; padding:6px 10px; font-size:12px; line-height:1.2; font-weight:700; }
 .install-app-btn:hover { background:#e6eefb; }
@@ -346,6 +346,14 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
 .install-dialog::backdrop { background:#0a1936a8; }
 .install-dialog h2 { margin:0 0 12px; color:#10346b; }
 .install-dialog p { line-height:1.5; }
+.install-dialog .ipad-guide { margin:12px 0; }
+.install-dialog .ipad-guide ol { margin:12px 0 8px; padding-left:24px; }
+.install-dialog .ipad-guide li { margin:12px 0; padding-left:3px; }
+.install-dialog .ipad-guide .step-icon { display:inline-flex; vertical-align:middle; align-items:center; justify-content:center; width:30px; height:30px; border:1px solid #c6d7ef; border-radius:8px; background:#eef4ff; color:#1854a5; font-size:19px; font-weight:800; margin-right:6px; }
+.install-dialog .ipad-guide .ipad-tip { background:#eef4ff; border-radius:10px; padding:10px 12px; font-size:13px; }
+.install-dialog .ipad-guide .ipad-note { font-size:13px; color:#475467; }
+.install-dialog .ipad-guide .ipad-browser { font-weight:700; }
+
 .install-dialog .install-dialog-actions { display:flex; justify-content:flex-end; margin-top:18px; }
 @media(max-width:700px) { .install-app-btn { padding:5px 8px; font-size:11px; } }
 </style>
@@ -2634,15 +2642,38 @@ else render();
   const installFlagKey = 'bgr-pwa-installed';
   let installEvent = null;
   const installed = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  // iPadOS may identify itself as a Mac in desktop-class Safari.
+  const isIPad = /iPad/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isIOS = isIPad || /iPhone|iPod/.test(navigator.userAgent);
+  const isIPhone = isIOS && !isIPad;
+  const isChromeIOS = /CriOS/i.test(navigator.userAgent);
   const isSafari = /^((?!chrome|chromium|crios|edg|opr|fxios).)*safari/i.test(navigator.userAgent);
-  function showButton() { installButton.hidden = installed() || localStorage.getItem(installFlagKey) === 'yes'; }
+  function showButton() { installButton.hidden = installed() || localStorage.getItem(installFlagKey) === 'yes'; installButton.textContent = isIPad ? 'Install on iPad' : isIPhone ? 'Install on iPhone' : 'Install Desktop App'; }
   function markInstalled() { localStorage.setItem(installFlagKey, 'yes'); installButton.hidden = true; }
   window.addEventListener('storage', event => { if (event.key === installFlagKey) showButton(); });
   function showHelp(message) {
     instructions.textContent = message;
     if (typeof dialog.showModal === 'function') dialog.showModal();
     else alert(message);
+  }
+  function showIOSGuide() {
+    // Safari's Add to Home Screen sheet cannot be invoked programmatically.
+    // Use a clear in-app guide rather than a non-functional install prompt.
+    const device = isIPad ? 'iPad' : 'iPhone';
+    const safariMessage = isSafari ? '' : '<p class="ipad-tip"><strong>First:</strong> Open this page in <span class="ipad-browser">Safari</span> for the most reliable installation experience. Copy this page’s address and paste it into Safari.</p>';
+    instructions.innerHTML = '<div class="ipad-guide">' + safariMessage +
+      '<p>To put Balanced Group Randomizer on your ' + device + ' Home Screen:</p>' +
+      '<ol>' +
+      '<li>In Safari, tap <span class="step-icon" aria-label="Share">⇧</span> <strong>Share</strong> (the square with an upward arrow, usually near the address bar).</li>' +
+      '<li>Scroll through the Share menu and tap <strong>Add to Home Screen</strong>. If you don’t see it, scroll to the bottom and check <strong>Edit Actions</strong>.</li>' +
+      '<li>Turn on <strong>Open as Web App</strong> if that option appears, then tap <strong>Add</strong>.</li>' +
+      '</ol>' +
+      '<p class="ipad-tip">The app will appear on your Home Screen with the same icon as the website. Open it once while online to finish caching the offline files.</p>' +
+      '<p class="ipad-note">Apple requires these final taps; websites cannot automatically add apps to the Home Screen.</p>' +
+      '</div>';
+    confirmInstalledButton.textContent = 'Done — I added it';
+    if (typeof dialog.showModal === 'function') dialog.showModal();
+    else alert(instructions.textContent);
   }
   window.addEventListener('beforeinstallprompt', event => {
     event.preventDefault();
@@ -2660,7 +2691,7 @@ else render();
         if (result?.outcome === 'accepted') { markInstalled(); return; }
       } catch (error) { console.warn('App installation prompt unavailable:', error); }
     }
-    if (isIOS) showHelp('In Safari, tap Share, then Add to Home Screen. Tap Add to install the app.');
+    if (isIOS) showIOSGuide();
     else if (isSafari) showHelp('In Safari on Mac, choose File → Add to Dock. The app will appear in your Dock and Applications.');
     else showHelp('In Chrome or Edge, open the browser menu and choose Install Balanced Group Randomizer or Install page as app. After installing, pin it to your desktop, Dock, or taskbar if desired.');
   });
