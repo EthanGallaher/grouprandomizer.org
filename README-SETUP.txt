@@ -1,12 +1,7 @@
-BALANCED GROUP RANDOMIZER — INSTALLABLE OFFLINE APP (v16)
+Balanced Group Randomizer v17 — Offline Installable PWA
 
-1. Export your existing class backup before updating.
-2. Upload ALL eight files from this ZIP into the SAME folder of your GitHub Pages repository (including both pdf.min.js and pdf.worker.min.js).
-3. Keep existing favicon.png and group-randomizer-icon.png in your repository.
-4. Open the GitHub Pages URL while online and refresh once after deployment. The service worker will cache the app and both PDF libraries.
-5. Install through Chrome/Edge Install App or Safari Add to Dock.
-6. Once the new version has loaded online, turn off Wi-Fi, reload the installed app, and test importing a NON-SENSITIVE sample PDF.
+Upload ALL files in this ZIP to the ROOT of your GitHub Pages repository. Preserve your existing group-randomizer-icon.png and favicon.png if present.
 
-IMPORTANT: Existing localStorage data should remain on the same origin/browser profile, but export a backup before changing the deployment. Different browsers/profiles/domains can have separate local data. Do not delete browser storage while updating.
+Teachers can click Install Desktop App in the site header. Chrome/Edge will display a native install prompt when the browser makes one available; otherwise the button shows browser-specific steps. Safari on Mac uses File > Add to Dock. Browser installation may not automatically create a desktop shortcut: teachers can pin or create a shortcut after installation.
 
-PDF.js 3.11.174 is bundled under the Apache License 2.0. Its license notice is retained in the supplied JavaScript files.
+Open the app online once to cache the app and PDF.js library before testing offline. Keep backups of classroom data; it is saved on the teacher’s device, not synced across devices.
