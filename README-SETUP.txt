@@ -1,7 +1,9 @@
-Balanced Group Randomizer v17 — Offline Installable PWA
+Balanced Group Randomizer — Version 18
 
-Upload ALL files in this ZIP to the ROOT of your GitHub Pages repository. Preserve your existing group-randomizer-icon.png and favicon.png if present.
+Upload ALL files in this ZIP to the ROOT of your existing GitHub Pages repository, replacing files with matching names. Do not upload the enclosing folder.
 
-Teachers can click Install Desktop App in the site header. Chrome/Edge will display a native install prompt when the browser makes one available; otherwise the button shows browser-specific steps. Safari on Mac uses File > Add to Dock. Browser installation may not automatically create a desktop shortcut: teachers can pin or create a shortcut after installation.
+The same provided icon is used for the website header, browser tab, Apple home screen and installed desktop/mobile PWA.
 
-Open the app online once to cache the app and PDF.js library before testing offline. Keep backups of classroom data; it is saved on the teacher’s device, not synced across devices.
+Open the live website online to let the service worker refresh, then close and reopen the app. Existing installations may need an additional restart for the updated icon to show. If the operating system retains the old icon, remove and reinstall the app.
+
+Export a class backup before making changes. Test offline operation and PDF imports after initial online load.

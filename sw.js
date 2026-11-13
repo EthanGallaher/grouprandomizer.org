@@ -1,5 +1,5 @@
-const CACHE = 'bgr-pwa-v17';
-const SHELL = ['./', './index.html', './manifest.webmanifest', './app-icon-192.png', './app-icon-512.png', './pdf.min.js', './pdf.worker.min.js'];
+const CACHE = 'bgr-pwa-v18';
+const SHELL = ['./', './index.html', './manifest.webmanifest', './app-icon-192.png', './app-icon-512.png', './group-randomizer-icon.png', './favicon.png', './apple-touch-icon.png', './pdf.min.js', './pdf.worker.min.js'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(SHELL)).then(() => self.skipWaiting()));
 });
