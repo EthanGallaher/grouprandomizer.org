@@ -356,6 +356,10 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
 
 .install-dialog .install-dialog-actions { display:flex; justify-content:flex-end; margin-top:18px; }
 @media(max-width:700px) { .install-app-btn { padding:5px 8px; font-size:11px; } }
+
+.backup-reminder {margin-top:12px;padding:11px 13px;background:#fff3db;border:1px solid #ebc87d;border-radius:10px;font-size:13px;}
+.restore-preview {margin-top:12px;padding:14px;border:1px solid #a8bbd7;background:#f2f6fd;border-radius:10px;}
+.restore-preview .btnrow {margin:10px 0;flex-wrap:wrap;}
 </style>
 </head>
 <body>
@@ -494,7 +498,19 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
   <button class="secondary" id="importBtn">Import backup</button>
   <input id="importFile" type="file" accept=".json,application/json" class="hidden">
 </div>
-<p class="notice">Classes are saved in this browser. Export a backup periodically.</p>
+<p class="notice">Classes are saved on this device, not in an online account. Keep a backup in a secure school-approved location.</p>
+<div id="backupReminder" class="backup-reminder hidden" role="status"></div>
+<p id="backupStatus" class="help" aria-live="polite">No backup recorded on this device yet.</p>
+<div id="restorePreview" class="restore-preview hidden">
+  <strong>Review backup before restoring</strong>
+  <p id="restoreSummary"></p>
+  <div class="btnrow">
+    <button class="secondary" id="restoreMergeBtn">Add classes from backup</button>
+    <button class="primary" id="restoreReplaceBtn">Replace all current data</button>
+    <button class="secondary" id="restoreCancelBtn">Cancel</button>
+  </div>
+  <p class="help">Replacing restores all settings and classes from the backup. A safety copy of your current data will download first.</p>
+</div>
 <button class="secondary" id="privacyBtn" style="margin-top:10px">Privacy &amp; data controls</button>
 <div id="privacyPanel" class="privacy-panel hidden" style="margin-top:12px"><strong>Local-first storage</strong><p>Class names, student names, performance tiers, source names from PDF imports, separation rules, and seating assignments are saved in this browser's local storage. The app does not intentionally send this roster data to a server. The PDF reader is bundled with the app and PDF parsing occurs in the browser. Other browser extensions or users of this browser profile may be able to access local data. Backups contain student information and must be stored securely. Clearing browser data can erase your classes. Teachers should follow their school’s applicable student-data privacy and technology policies.</p><button class="secondary" id="clearAllDataBtn" style="color:#b42332">Delete all local class data</button></div>
 </section>
@@ -608,6 +624,62 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
 <script>
 (() => {
 const KEY = 'balancedGroupRandomizer.v1';
+const BACKUP_META_KEY = 'balancedGroupRandomizer.backupMeta.v1';
+const BACKUP_INTERVAL_DAYS = 21;
+let pendingRestore = null;
+function readBackupMeta() {
+  try { return JSON.parse(localStorage.getItem(BACKUP_META_KEY) || '{}') || {}; }
+  catch (_) { return {}; }
+}
+function writeBackupMeta(meta) {
+  try { localStorage.setItem(BACKUP_META_KEY, JSON.stringify(meta)); } catch (_) {}
+}
+function updateBackupStatus() {
+  const meta = readBackupMeta(), status = document.getElementById('backupStatus');
+  const reminder = document.getElementById('backupReminder');
+  if (!status || !reminder) return;
+  const last = Number(meta.lastExport || 0), hasStudents = db.classes.some(c => c.students?.length);
+  status.textContent = last
+    ? 'Last backup exported on this device: ' + new Date(last).toLocaleDateString()
+    : 'No backup exported from this device yet.';
+  const due = hasStudents && (!last || (Date.now() - last > BACKUP_INTERVAL_DAYS*86400000));
+  reminder.classList.toggle('hidden', !due);
+  if (due) reminder.textContent = last
+    ? 'Backup reminder: it has been over 3 weeks since your last export. Save a fresh copy before making major changes.'
+    : 'Backup reminder: your class information is only on this device. Export a backup to protect it.';
+}
+function downloadBackup(snapshot, prefix='balanced-group-randomizer-backup') {
+  const stamp = new Date().toISOString().slice(0,10);
+  const blob = new Blob([JSON.stringify(snapshot,null,2)],{type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = prefix + '-' + stamp + '.json';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+function validateBackup(parsed) {
+  if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.classes) || parsed.classes.length > 200)
+    throw new Error('Invalid backup structure');
+  const classIds = new Set();
+  parsed.classes.forEach(c => {
+    if (!c || typeof c.id !== 'string' || typeof c.name !== 'string' || !c.name.trim() ||
+        !Array.isArray(c.students) || c.students.length > 2000 || classIds.has(c.id))
+      throw new Error('Invalid class data');
+    classIds.add(c.id);
+    c.students.forEach(s => {
+      if (!s || typeof s.name !== 'string' || !s.name.trim()) throw new Error('Invalid student data');
+    });
+    if (!Array.isArray(c.avoidPairs)) c.avoidPairs = [];
+    if (!Array.isArray(c.avoidGroups)) c.avoidGroups = [];
+    if (!Array.isArray(c.togetherGroups)) c.togetherGroups = [];
+    if (!Array.isArray(c.roles)) c.roles = defaultRoles.slice();
+    c.students.forEach(s => { if (!tiers.includes(s.tier)) s.tier = 'Middle'; });
+  });
+  return parsed;
+}
 let db = {classes:[], activeId:null, sharedRoles:null};
 let groups = [];
 let absentIds = new Set();
@@ -629,6 +701,7 @@ function save() {
   try {
     localStorage.setItem(KEY, JSON.stringify(db));
     $('saveState').textContent = '✓ Saved on this device';
+    updateBackupStatus();
   } catch(e) {
     $('saveState').textContent = 'Could not save — export a backup';
   }
@@ -1880,50 +1953,62 @@ $('pickRandomStudentBtn').addEventListener('click',() => {
   result.append(label,name);
 });
 
-$('exportBtn').addEventListener('click',() => {
-  const blob = new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'balanced-group-randomizer-backup.json';
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url),1000);
+$('exportBtn').addEventListener('click', () => {
+  downloadBackup(db);
+  const meta = readBackupMeta();
+  meta.lastExport = Date.now();
+  writeBackupMeta(meta);
+  updateBackupStatus();
+  toast('Backup download started. Save the file somewhere secure.');
 });
-$('importBtn').addEventListener('click',() => $('importFile').click());
-$('importFile').addEventListener('change',async e => {
+$('importBtn').addEventListener('click', () => $('importFile').click());
+function closeRestorePreview() {
+  pendingRestore = null;
+  $('restorePreview').classList.add('hidden');
+}
+$('restoreCancelBtn').addEventListener('click',closeRestorePreview);
+$('importFile').addEventListener('change', async e => {
   const file = e.target.files[0];
+  e.target.value = '';
   if (!file) return;
   try {
-    const parsed = JSON.parse(await file.text());
-    if (!parsed || !Array.isArray(parsed.classes)) throw new Error('Invalid backup');
-    parsed.classes.forEach(c => {
-      if (!c.id || !c.name || !Array.isArray(c.students)) throw new Error('Invalid class');
-      if (!Array.isArray(c.avoidPairs)) c.avoidPairs = [];
-      if (!Array.isArray(c.avoidGroups)) c.avoidGroups = [];
-      if (!Array.isArray(c.togetherGroups)) c.togetherGroups = [];
-      if (!Array.isArray(c.roles)) c.roles = defaultRoles.slice();
-      c.students.forEach(s => {
-        if (!tiers.includes(s.tier)) s.tier = 'Middle';
-      });
-    });
-    const ids = new Set(db.classes.map(c => c.id));
-    parsed.classes.forEach(c => {
-      if (ids.has(c.id)) {
-        c = {...c,id:uid(),name:c.name+' (imported)'};
-      }
-      db.classes.push(c);
-    });
-    if (!db.classes.some(c => c.id === db.activeId)) db.activeId = db.classes[0]?.id || null;
-    syncRolesAcrossClasses();
-    save();
-    render();
-    toast('Backup imported.');
+    if (file.size > 10*1024*1024) throw new Error('Backup is too large');
+    pendingRestore = validateBackup(JSON.parse(await file.text()));
+    const count = pendingRestore.classes.reduce((sum,c) => sum+c.students.length,0);
+    $('restoreSummary').textContent = `${pendingRestore.classes.length} classes and ${count} student records. Choose whether to add these classes or replace everything currently saved.`;
+    $('restorePreview').classList.remove('hidden');
   } catch(err) {
-    toast('That file is not a valid group randomizer backup.');
+    closeRestorePreview();
+    toast('Invalid backup file. No data was changed.');
   }
-  e.target.value = '';
 });
-
+$('restoreMergeBtn').addEventListener('click', () => {
+  if (!pendingRestore) return;
+  const imported = pendingRestore;
+  const ids = new Set(db.classes.map(c => c.id));
+  imported.classes.forEach(original => {
+    let c = structuredClone(original);
+    if (ids.has(c.id)) {
+      c.id = uid();
+      c.name += ' (imported)';
+    }
+    ids.add(c.id);
+    db.classes.push(c);
+  });
+  syncRolesAcrossClasses();
+  save(); render(); closeRestorePreview();
+  toast('Classes added. Existing classes preserved.');
+});
+$('restoreReplaceBtn').addEventListener('click', () => {
+  if (!pendingRestore) return;
+  if (!confirm('Replace ALL current classes, seating charts, settings and grouping history with this backup? A safety copy of your current data will download first.')) return;
+  downloadBackup(db,'balanced-group-randomizer-before-restore');
+  db = pendingRestore;
+  if (!db.classes.some(c => c.id === db.activeId)) db.activeId = db.classes[0]?.id || null;
+  syncRolesAcrossClasses();
+  save(); render(); closeRestorePreview();
+  toast('Backup restored. A safety copy of previous data was downloaded.');
+});
 
 // Templates are shared between classes; student assignments belong to each class and template.
 function ensureSeatingTemplates() {
@@ -2597,7 +2682,7 @@ $('privacyBtn').addEventListener('click',()=>{$('privacyPanel').classList.toggle
 $('clearAllDataBtn').addEventListener('click',()=>{
  if(!confirm('Delete ALL locally saved classes, rankings, rules, history, and seating charts? Export a backup first if needed. This cannot be undone.'))return;
  if(!confirm('Final confirmation: permanently erase all data saved by this app in this browser?'))return;
- localStorage.removeItem(KEY);db={classes:[],activeId:null,sharedRoles:null};groups=[];absentIds=new Set();makeClass('My Class');toast('All previous local app data deleted.');
+ localStorage.removeItem(KEY);localStorage.removeItem(BACKUP_META_KEY);db={classes:[],activeId:null,sharedRoles:null};groups=[];absentIds=new Set();makeClass('My Class');toast('All previous local app data deleted.');
 });
 try {
   const raw = localStorage.getItem(KEY);
@@ -2628,6 +2713,7 @@ try {
 }
 if (!db.classes.length) makeClass('My Class');
 else render();
+updateBackupStatus();
 
 })();
 </script>
