@@ -102,7 +102,7 @@ textarea { resize:vertical; min-height:90px; }
 #groupsPage:fullscreen .members { flex:1; min-height:0; display:grid; grid-template-rows:repeat(var(--fg-members,3),minmax(0,1fr)); padding:var(--fg-pad,9px); gap:var(--fg-member-gap,5px); }
 #groupsPage:fullscreen .member { min-height:0; min-width:0; padding:var(--fg-member-pad,5px); gap:var(--fg-member-gap,5px); border-radius:7px; }
 #groupsPage:fullscreen .member-name { font-size:var(--fg-name,18px); line-height:1.1; white-space:nowrap; overflow:visible; overflow-wrap:normal; }
-#groupsPage:fullscreen .avatar { flex:none; min-width:0; max-width:none; min-height:0; height:auto; width:var(--fg-role-width,80px); padding:3px; font-size:var(--fg-role,11px); line-height:1.1; overflow-wrap:break-word; word-break:normal; }
+#groupsPage:fullscreen .avatar { flex:none; min-width:0; max-width:none; min-height:0; height:var(--fg-role-height,48px); width:var(--fg-role-width,90px); padding:4px 6px; font-size:var(--fg-role,16px); line-height:1.15; overflow-wrap:break-word; word-break:normal; }
 .random-result { margin-top:18px; padding:24px; border:2px dashed #cfd7e3; border-radius:14px; text-align:center; background:#f8faff; }
 .random-result strong { display:block; font-size:clamp(24px,4vw,36px); color:var(--navy); margin-top:8px; }
 .empty { padding:50px 20px; text-align:center; color:var(--muted); border:2px dashed #d5deea; border-radius:15px; margin-top:18px; }
@@ -1612,8 +1612,9 @@ function fitGroupFullscreen() {
   const memberGap=Math.max(2,Math.min(7,ch*.015));
   const memberH=Math.max(8,(ch-titleH-padding*2-memberGap*(maxMembers-1))/maxMembers);
   const nameSize=Math.max(7,Math.min(34,memberH*.48,cw*.085));
-  const roleSize=Math.max(10,Math.min(21,nameSize*.86));
-  const roleWidth=Math.max(58,Math.min(cw*.34,125));
+  const roleSize=Math.max(13,Math.min(20,nameSize*.65));
+  const roleWidth=Math.max(78,Math.min(cw*.31,118));
+  const roleHeight=Math.max(27,Math.min(54,memberH*.56));
   const vars={
     '--fg-outer':outer+'px','--fg-gap':gap+'px','--fg-cols':cols,'--fg-rows':rows,
     '--fg-members':maxMembers,'--fg-title':Math.max(9,Math.min(24,titleH*.57))+'px',
@@ -1621,7 +1622,7 @@ function fitGroupFullscreen() {
     '--fg-title-pad':Math.max(2,Math.min(8,titleH*.17))+'px',
     '--fg-pad':padding+'px','--fg-member-gap':memberGap+'px',
     '--fg-member-pad':Math.max(1,Math.min(8,memberH*.1))+'px',
-    '--fg-name':nameSize+'px','--fg-role':roleSize+'px','--fg-role-width':roleWidth+'px'
+    '--fg-name':nameSize+'px','--fg-role':roleSize+'px','--fg-role-width':roleWidth+'px','--fg-role-height':roleHeight+'px'
   };
   Object.entries(vars).forEach(([k,v])=>page.style.setProperty(k,String(v)));
   // Measure rendered strings and shrink their own font size rather than clipping.
@@ -1640,7 +1641,9 @@ function fitGroupFullscreen() {
         for(let i=0;i<13;i++){const mid=(lo+hi)/2;if(fits(mid))lo=mid;else hi=mid;}
         el.style.fontSize=lo+'px';
       };
-      fit(role,Math.max(8,role.clientWidth-6),Math.max(8,role.clientHeight-6),roleSize,Math.min(8,roleSize));
+      // Role badges have a dedicated readable height. Fit to width, not the
+      // badge's intrinsic text height (which previously shrank every role to ~8px).
+      fit(role,Math.max(8,role.clientWidth-12),Math.max(8,role.clientHeight-8),roleSize,Math.min(11,roleSize));
       fit(name,Math.max(8,name.parentElement.clientWidth),Math.max(8,member.clientHeight-4),nameSize,Math.min(7,nameSize));
     });
   });
