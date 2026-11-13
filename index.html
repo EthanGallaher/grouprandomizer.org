@@ -86,65 +86,23 @@ textarea { resize:vertical; min-height:90px; }
 #groupsPage:fullscreen .group-card { break-inside:avoid; }
 #groupsPage:fullscreen .member { cursor:default; pointer-events:none; }
 #groupsPage:fullscreen .member:hover { border-color:var(--line); background:white; }
-/* Fullscreen group display */
-#groupsPage:fullscreen {
-  display: block !important;
-  width: 100vw;
-  height: 100vh;
-  overflow: auto;
-  background: white;
-  padding: 18px;
-}
-#groupsPage:fullscreen > main.panel {
-  width: 100%;
-  min-height: 100%;
-  margin: 0;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-  padding: 18px 22px;
-}
+/* One-screen student presentation: layout and type are sized by fitGroupFullscreen(). */
+#groupsPage:fullscreen { display:block!important; width:100vw; height:100vh; overflow:hidden; background:white; padding:0; }
+#groupsPage:fullscreen > main.panel { width:100%; height:100%; min-height:0; margin:0; border:0; border-radius:0; box-shadow:none; padding:var(--fg-outer,12px); overflow:hidden; }
+#groupsPage:fullscreen #groupsArea { height:100%; min-height:0; overflow:hidden; }
 #groupsPage:fullscreen .groups {
-  grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
-  gap: 18px;
-  margin-top: 22px;
+  display:grid; width:100%; height:100%; min-height:0; margin:0;
+  grid-template-columns:repeat(var(--fg-cols,4),minmax(0,1fr));
+  grid-template-rows:repeat(var(--fg-rows,3),minmax(0,1fr));
+  gap:var(--fg-gap,8px);
 }
-#groupsPage:fullscreen .group-card {
-  border-width: 2px;
-}
-#groupsPage:fullscreen .group-title {
-  font-size: clamp(20px, 2vw, 30px);
-  padding: 16px 18px;
-}
-#groupsPage:fullscreen .group-title small {
-  font-size: clamp(14px, 1.3vw, 20px);
-}
-#groupsPage:fullscreen .members {
-  padding: 14px;
-  gap: 12px;
-}
-#groupsPage:fullscreen .member {
-  padding: 14px;
-  gap: 14px;
-  border-radius: 12px;
-}
-#groupsPage:fullscreen .member-name {
-  font-size: clamp(22px, 2.3vw, 36px);
-  line-height: 1.2;
-}
-#groupsPage:fullscreen .avatar {
-  min-width: 54px;
-  min-height: 54px;
-  max-width: 150px;
-  font-size: clamp(12px, 1.1vw, 18px);
-  padding: 8px 10px;
-}
-#groupsPage:fullscreen .groups-page-head h2 {
-  font-size: clamp(24px, 2.5vw, 36px);
-}
-#groupsPage:fullscreen .subline {
-  font-size: clamp(15px, 1.3vw, 20px);
-}
+#groupsPage:fullscreen .group-card { display:flex; flex-direction:column; min-width:0; min-height:0; border-width:1px; overflow:hidden; }
+#groupsPage:fullscreen .group-title { flex:none; font-size:var(--fg-title,18px); padding:var(--fg-title-pad,7px) var(--fg-pad,9px); gap:5px; white-space:nowrap; }
+#groupsPage:fullscreen .group-title small { font-size:var(--fg-small,12px); }
+#groupsPage:fullscreen .members { flex:1; min-height:0; display:grid; grid-template-rows:repeat(var(--fg-members,3),minmax(0,1fr)); padding:var(--fg-pad,9px); gap:var(--fg-member-gap,5px); }
+#groupsPage:fullscreen .member { min-height:0; min-width:0; padding:var(--fg-member-pad,5px); gap:var(--fg-member-gap,5px); border-radius:7px; }
+#groupsPage:fullscreen .member-name { font-size:var(--fg-name,18px); line-height:1.1; white-space:nowrap; overflow:visible; overflow-wrap:normal; }
+#groupsPage:fullscreen .avatar { flex:none; min-width:0; max-width:none; min-height:0; height:auto; width:var(--fg-role-width,80px); padding:3px; font-size:var(--fg-role,11px); line-height:1.1; overflow-wrap:normal; word-break:normal; }
 .random-result { margin-top:18px; padding:24px; border:2px dashed #cfd7e3; border-radius:14px; text-align:center; background:#f8faff; }
 .random-result strong { display:block; font-size:clamp(24px,4vw,36px); color:var(--navy); margin-top:8px; }
 .empty { padding:50px 20px; text-align:center; color:var(--muted); border:2px dashed #d5deea; border-radius:15px; margin-top:18px; }
@@ -1236,6 +1194,7 @@ function renderGroups() {
     wrap.append(card);
   });
   area.append(wrap);
+  if (document.fullscreenElement === $('groupsPage')) fitGroupFullscreen();
 }
 
 function showPage(which) {
@@ -1632,6 +1591,68 @@ $('addAvoidGroupBtn').addEventListener('click',() => {
 
 $('generateBtn').addEventListener('click',generate);
 const fullscreenBtn = $('fullscreenBtn');
+// Fit every group on one screen, then independently shrink long names and role labels.
+function fitGroupFullscreen() {
+  if (document.fullscreenElement !== $('groupsPage')) return;
+  const page=$('groupsPage'), grid=page.querySelector('.groups');
+  if (!grid) return;
+  const cards=[...grid.querySelectorAll('.group-card')];
+  if (!cards.length) return;
+  const n=cards.length, W=page.clientWidth, H=page.clientHeight;
+  const outer=Math.max(5,Math.min(14,Math.round(Math.min(W,H)*.012)));
+  const gap=Math.max(3,Math.min(10,Math.round(Math.min(W,H)*.008)));
+  const availableW=W-2*outer, availableH=H-2*outer;
+  const maxMembers=Math.max(1,...cards.map(c=>c.querySelectorAll('.member').length));
+  // Evaluate all possible column counts and favor the largest legible text.
+  let best=null;
+  for(let cols=1;cols<=n;cols++) {
+    const rows=Math.ceil(n/cols), cw=(availableW-gap*(cols-1))/cols, ch=(availableH-gap*(rows-1))/rows;
+    if(cw<85||ch<42) continue;
+    const name=Math.min(32,(ch-22)/(maxMembers*1.65),cw/11.5);
+    const score=name - Math.max(0,rows-4)*.5 - Math.max(0,cols-7)*.3;
+    if(!best||score>best.score) best={cols,rows,cw,ch,score};
+  }
+  if(!best) best={cols:n,rows:1,cw:availableW/n,ch:availableH};
+  const {cols,rows,cw,ch}=best;
+  const titleH=Math.max(13,Math.min(30,ch*.17));
+  const padding=Math.max(2,Math.min(10,cw*.025,ch*.035));
+  const memberGap=Math.max(2,Math.min(7,ch*.015));
+  const memberH=Math.max(8,(ch-titleH-padding*2-memberGap*(maxMembers-1))/maxMembers);
+  const nameSize=Math.max(7,Math.min(34,memberH*.48,cw*.085));
+  const roleSize=Math.max(6,Math.min(17,nameSize*.68));
+  const roleWidth=Math.max(32,Math.min(cw*.36,110));
+  const vars={
+    '--fg-outer':outer+'px','--fg-gap':gap+'px','--fg-cols':cols,'--fg-rows':rows,
+    '--fg-members':maxMembers,'--fg-title':Math.max(9,Math.min(24,titleH*.57))+'px',
+    '--fg-small':Math.max(7,Math.min(14,titleH*.42))+'px',
+    '--fg-title-pad':Math.max(2,Math.min(8,titleH*.17))+'px',
+    '--fg-pad':padding+'px','--fg-member-gap':memberGap+'px',
+    '--fg-member-pad':Math.max(1,Math.min(8,memberH*.1))+'px',
+    '--fg-name':nameSize+'px','--fg-role':roleSize+'px','--fg-role-width':roleWidth+'px'
+  };
+  Object.entries(vars).forEach(([k,v])=>page.style.setProperty(k,String(v)));
+  // Measure rendered strings and shrink their own font size rather than clipping.
+  requestAnimationFrame(()=>{
+    if(document.fullscreenElement!==page) return;
+    grid.querySelectorAll('.member').forEach(member=>{
+      const name=member.querySelector('.member-name');
+      const role=member.querySelector('.avatar');
+      if(!name||!role) return;
+      name.style.fontSize=''; role.style.fontSize='';
+      const nameBox=name.parentElement;
+      const fit=(el,maxW,maxH,base,min)=>{
+        let lo=min,hi=base;
+        const fits=(v)=>{el.style.fontSize=v+'px';return el.scrollWidth<=maxW+1 && el.scrollHeight<=maxH+1;};
+        if(fits(hi)) return;
+        for(let i=0;i<13;i++){const mid=(lo+hi)/2;if(fits(mid))lo=mid;else hi=mid;}
+        el.style.fontSize=lo+'px';
+      };
+      fit(role,Math.max(8,role.clientWidth-6),Math.max(8,role.clientHeight-6),roleSize,Math.min(5,roleSize));
+      fit(name,Math.max(8,nameBox.clientWidth),Math.max(8,member.clientHeight-4),nameSize,Math.min(5,nameSize));
+    });
+  });
+}
+window.addEventListener('resize',()=>{ if(document.fullscreenElement===$('groupsPage')) fitGroupFullscreen(); });
 async function toggleGroupFullscreen() {
   try {
     if (document.fullscreenElement === $('groupsPage')) {
@@ -1654,7 +1675,7 @@ function syncFullscreenButton() {
   );
 }
 fullscreenBtn.addEventListener('click', toggleGroupFullscreen);
-document.addEventListener('fullscreenchange', syncFullscreenButton);
+document.addEventListener('fullscreenchange', () => { syncFullscreenButton(); if(document.fullscreenElement === $('groupsPage')) requestAnimationFrame(fitGroupFullscreen); });
 $('printBtn').addEventListener('click',() => {
   if (!groups.length) { toast('Generate groups before printing.'); return; }
   window.print();
