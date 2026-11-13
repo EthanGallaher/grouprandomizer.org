@@ -251,6 +251,8 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
 .teacher-heading { grid-column:1/-1; display:flex; justify-content:space-between; align-items:center; gap:16px; padding:4px 2px 0; }
 .teacher-heading h2 { font-size:clamp(24px,2.6vw,32px); margin:3px 0; color:var(--navy); }
 .teacher-heading p { margin:0; color:var(--muted); }
+.teacher-intro { display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+.teacher-intro #openGuideBtn { padding:7px 12px; white-space:nowrap; }
 .eyebrow { font-size:11px; font-weight:850; letter-spacing:.13em; color:var(--red); }
 .school-pill { font-size:11px; font-weight:850; letter-spacing:.08em; color:var(--navy); background:#e6eefb; border:1px solid #bcd0ed; padding:10px 14px; border-radius:30px; white-space:nowrap; }
 .teacher-card { border-top:4px solid var(--blue); box-shadow:0 5px 18px #102c5a0a; }
@@ -318,6 +320,16 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
 .site-brand { display:flex; align-items:center; gap:13px; min-width:0; }
 .site-brand img { width:48px; height:48px; flex:none; border-radius:11px; }
 @media(max-width:600px) { .site-brand img { width:38px; height:38px; } }
+
+/* Interactive, non-blocking guided tour. The highlighted controls remain usable. */
+.guide-overlay[hidden] { display:none!important; }
+.guide-overlay { position:fixed; inset:0; z-index:1000; pointer-events:none; }
+.guide-dialog { position:fixed; bottom:18px; right:18px; width:min(420px,calc(100vw - 36px)); max-height:min(52vh,440px); overflow:auto; padding:20px; background:white; border:2px solid var(--blue); border-radius:16px; box-shadow:0 12px 40px #102c5a45; pointer-events:auto; }
+.guide-dialog h2 { margin:8px 0; color:var(--navy); font-size:19px; }
+.guide-dialog p { margin:8px 0 18px; font-size:14px; line-height:1.55; }
+.guide-progress { color:var(--blue); font-weight:800; font-size:12px; }
+.guide-target { position:relative; z-index:2; outline:4px solid var(--red)!important; outline-offset:5px; border-radius:9px; box-shadow:0 0 0 9px #c92e421a; }
+@media(max-width:700px) { .guide-dialog { left:12px; right:12px; bottom:12px; width:auto; max-height:43vh; } }
 </style>
 </head>
 <body>
@@ -340,7 +352,7 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
 
 <section class="page active" id="teacherPage">
 <div class="teacher-dashboard">
-<div class="teacher-heading"><div><span class="eyebrow">TEACHER WORKSPACE</span><h2>Teacher Setup</h2><p>Manage classes, students, grouping rules, and classroom roles in one place.</p></div></div>
+<div class="teacher-heading"><div><span class="eyebrow">TEACHER WORKSPACE</span><h2>Teacher Setup</h2><div class="teacher-intro"><p>Manage classes, students, grouping rules, and classroom roles in one place.</p><button class="secondary" id="openGuideBtn">Setup tutorial</button></div></div></div>
 <div class="teacher-column teacher-column-left">
 <section class="panel teacher-card class-card"><h2>1. Your classes</h2>
 <div class="field">
@@ -446,6 +458,8 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
   <input id="importFile" type="file" accept=".json,application/json" class="hidden">
 </div>
 <p class="notice">Classes are saved in this browser. Export a backup periodically.</p>
+<button class="secondary" id="privacyBtn" style="margin-top:10px">Privacy &amp; data controls</button>
+<div id="privacyPanel" class="privacy-panel hidden" style="margin-top:12px"><strong>Local-first storage</strong><p>Class names, student names, performance tiers, source names from PDF imports, separation rules, and seating assignments are saved in this browser's local storage. The app does not intentionally send this roster data to a server. PDF.js is loaded from a third-party CDN, which can receive ordinary network request information; PDF parsing occurs in the browser. Other browser extensions or users of this browser profile may be able to access local data. Backups contain student information and must be stored securely. Clearing browser data can erase your classes. This is not a guarantee of FERPA compliance; obtain district approval before importing student records.</p><button class="secondary" id="clearAllDataBtn" style="color:#b42332">Delete all local class data</button></div>
 </section>
 </div>
 </div>
@@ -468,6 +482,7 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
     <button class="primary" id="generateBtn">⤨ Randomize groups</button>
   </div>
 </div>
+<div class="field" style="max-width:360px;margin:12px 0"><label for="groupStrategy">Grouping strategy</label><select id="groupStrategy"><option value="balanced">Balanced abilities (default)</option><option value="random">Random (respect separation rules)</option><option value="similar">Similar abilities</option><option value="variety">New partners (use group history)</option></select><p class="help" id="strategyHelp">Prioritizes mixed-ability groups.</p></div>
 <div class="notice" id="balanceNote">Groups of three are used whenever possible; pairs are used when needed.</div>
 <div id="groupsArea">
   <div class="empty">Your groups will appear here.</div>
@@ -516,6 +531,7 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
       <div class="field"><label for="deskOrientation">Orientation</label>
         <select id="deskOrientation"><option value="row">Row (horizontal)</option><option value="column">Column (vertical)</option></select></div>
       <button class="secondary" id="addDeskBtn">＋ Add desks</button>
+      <div class="field"><label for="seatingStrategy">Grouping strategy</label><select id="seatingStrategy"><option value="balanced">Balanced abilities</option><option value="random">Fully random</option><option value="similar">Similar abilities</option><option value="variety">New partners</option></select></div>
       <button class="primary" id="populateDesksBtn">Populate desks</button>
       <button class="secondary" id="clearStudentsBtn">Clear students</button>
       <button class="secondary" id="clearDesksBtn">Clear desks</button>
@@ -532,6 +548,7 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
 </div>
 
 <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+<div class="guide-overlay" id="guideOverlay" hidden><section class="guide-dialog" role="dialog" aria-modal="false" aria-labelledby="guideTitle"><div class="guide-progress" id="guideProgress"></div><h2 id="guideTitle"></h2><p id="guideText"></p><div class="btnrow" style="justify-content:flex-end"><button class="secondary" id="guideClose">Close</button><button class="secondary" id="guidePrev">Back</button><button class="primary" id="guideNext">Next</button></div></section></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
@@ -577,7 +594,7 @@ function makeClass(name) {
   const c = {
     id:uid(), name:name.trim() || `Class ${db.classes.length+1}`,
     students:[], avoidPairs:[], avoidGroups:[],
-    roles:sharedRoles().slice(), seating:[]
+    roles:sharedRoles().slice(), seating:[], groupingStrategy:"balanced", groupHistory:[]
   };
   db.classes.push(c);
   db.activeId = c.id;
@@ -854,6 +871,9 @@ function render() {
   $('displayTitle').textContent = c ? `${c.name} — Groups` : 'Class groups';
   $('generateBtn').disabled = !c || c.students.length < 2;
   renderGroups();
+  const strategy=$('groupStrategy');
+  if(strategy) {strategy.value=c?.groupingStrategy || 'balanced'; updateStrategyHelp();}
+  if($('seatingStrategy')) $('seatingStrategy').value=c?.groupingStrategy || 'balanced';
   renderSeating();
 }
 
@@ -873,6 +893,26 @@ function createGroupSizes(n) {
   return sizes;
 }
 
+const strategyDescriptions={balanced:'Prioritizes mixed-ability groups.',random:'Shuffles without using ability tiers. Separation rules remain mandatory.',similar:'Prioritizes groups of students with similar performance tiers.',variety:'Prefers partners who have not worked together recently, while retaining some ability balance.'};
+function updateStrategyHelp(){ $('strategyHelp').textContent=strategyDescriptions[$('groupStrategy').value] || strategyDescriptions.balanced; }
+$('groupStrategy').addEventListener('change',()=>{const c=current();if(c){c.groupingStrategy=$('groupStrategy').value;$('seatingStrategy').value=c.groupingStrategy;save();}updateStrategyHelp();});
+$('seatingStrategy').addEventListener('change',()=>{const c=current();if(c){c.groupingStrategy=$('seatingStrategy').value;$('groupStrategy').value=c.groupingStrategy;updateStrategyHelp();save();}});
+function separationViolations(arr,c){let n=0;for(const g of arr){const ids=new Set(g.map(s=>s.id));n+=c.avoidPairs.filter(p=>p.every(id=>ids.has(id))).length;n+=c.avoidGroups.filter(rule=>rule.filter(id=>ids.has(id)).length>1).length;}return n;}
+function strategyScore(arr,c){
+ const strategy=c.groupingStrategy||'balanced';
+ if(strategy==='random')return 0;
+ if(strategy==='balanced')return arrangementScore(arr,c);
+ if(strategy==='similar')return arr.reduce((score,g)=>{const counts=tiers.map(t=>g.filter(s=>s.tier===t).length);return score+counts.reduce((sum,n)=>sum+n*n,0)*15;},0);
+ const history=(c.groupHistory||[]).slice(-20),counts=new Map();
+ for(const session of history)for(const pair of session)counts.set(pair,(counts.get(pair)||0)+1);
+ let penalty=0;
+ for(const g of arr)for(let i=0;i<g.length;i++)for(let j=i+1;j<g.length;j++){const key=[g[i].id,g[j].id].sort().join(':');penalty+=(counts.get(key)||0)*40;}
+ return arrangementScore(arr,c)*0.4-penalty;
+}
+function recordGroupHistory(c,arr){
+ const pairs=[];for(const g of arr)for(let i=0;i<g.length;i++)for(let j=i+1;j<g.length;j++)pairs.push([g[i].id,g[j].id].sort().join(':'));
+ c.groupHistory=[...(c.groupHistory||[]),pairs].slice(-20);
+}
 function arrangementScore(arr,c) {
   let score = 0;
   const totals = {High:0,Middle:0,Low:0};
@@ -914,6 +954,7 @@ function generate() {
   absentIds = new Set();
   const sizes = createGroupSizes(c.students.length);
   let best = null, bestScore = -Infinity;
+  let bestInvalid=null,bestInvalidCount=Infinity;
   const attempts = Math.min(5000,Math.max(800,c.students.length*120));
 
   for (let trial=0;trial<attempts;trial++) {
@@ -928,13 +969,20 @@ function generate() {
       pos += size;
       return g;
     });
-    const score = arrangementScore(arr,c) + Math.random()*0.06;
+    const violations=separationViolations(arr,c);
+    if(violations){if(violations<bestInvalidCount){bestInvalid=arr;bestInvalidCount=violations;}continue;}
+    const score = strategyScore(arr,c) + Math.random()*0.06;
     if (score > bestScore) {
       bestScore = score;
       best = arr;
     }
   }
 
+  if(!best){
+    $('balanceNote').textContent='No valid arrangement found within the search limit. No groups were changed. Check conflicting separation rules or retry.';
+    toast('Could not satisfy all separation rules.');return;
+  }
+  recordGroupHistory(c,best);save();
   const roles = c.roles || defaultRoles;
   groups = best.map(g => g.map((s,i) => ({
     ...s,
@@ -1467,7 +1515,7 @@ $('confirmPdfImportBtn').addEventListener('click',()=>{
     let added=0,removed=0,updated=0,firstId=null;
     for(const entry of sync.plan){
       let c=entry.c;
-      if(!c){c={id:uid(),name:entry.name,students:[],avoidPairs:[],avoidGroups:[],roles:sharedRoles().slice(),seating:[]};db.classes.push(c);}
+      if(!c){c={id:uid(),name:entry.name,students:[],avoidPairs:[],avoidGroups:[],roles:sharedRoles().slice(),seating:[],groupingStrategy:"balanced",groupHistory:[]};db.classes.push(c);}
       if(!firstId)firstId=c.id;
       const next=[],kept=new Set();
       for(const a of entry.actions){
@@ -2192,21 +2240,33 @@ $('clearStudentsBtn').addEventListener('click',() => {
   save(); renderSeating(); toast('Seating assignments cleared.');
 });
 function seatingScore(layout,c) {
-  let score = 0;
-  const groups = layout.map(g => (g.students||[]).map(id => c.students.find(s=>s.id===id)).filter(Boolean));
-  for (const group of groups) {
-    const ids = new Set(group.map(s=>s.id));
-    for (const pair of c.avoidPairs) if (pair.every(id=>ids.has(id))) score -= 100000;
-    for (const rule of c.avoidGroups) if (rule.filter(id=>ids.has(id)).length>1) score -= 100000;
-    const counts = {High:0,Middle:0,Low:0};
+  const groups=layout.map(g=>(g.students||[]).map(id=>c.students.find(s=>s.id===id)).filter(Boolean));
+  const strategy=c.groupingStrategy||'balanced';
+  if(strategy==='random') return 0;
+  if(strategy==='similar') return groups.reduce((score,g)=>{
+    const counts=tiers.map(t=>g.filter(s=>s.tier===t).length);
+    return score+counts.reduce((sum,n)=>sum+n*n,0)*15;
+  },0);
+  let score=0;
+  for(const group of groups){
+    const counts={High:0,Middle:0,Low:0};
     group.forEach(s=>counts[s.tier]++);
-    if (group.length===4) {
-      if (counts.High===1 && counts.Middle===2 && counts.Low===1) score += 90;
-      else score += (counts.High>0?12:0)+(counts.Low>0?12:0)+(counts.Middle>0?12:0);
-    } else if (group.length===3) {
-      if (counts.High && counts.Middle && counts.Low) score += 55;
-      else if (Object.values(counts).filter(n=>n>0).length===2) score += 15;
-    } else if (group.length===2 && Object.values(counts).filter(n=>n>0).length===2) score += 18;
+    if(group.length===4){
+      if(counts.High===1&&counts.Middle===2&&counts.Low===1)score+=90;
+      else score+=(counts.High>0?12:0)+(counts.Low>0?12:0)+(counts.Middle>0?12:0);
+    } else if(group.length===3){
+      if(counts.High&&counts.Middle&&counts.Low)score+=55;
+      else if(Object.values(counts).filter(n=>n>0).length===2)score+=15;
+    } else if(group.length===2&&Object.values(counts).filter(n=>n>0).length===2)score+=18;
+  }
+  if(strategy==='variety'){
+    const history=(c.groupHistory||[]).slice(-20),counts=new Map();
+    for(const session of history)for(const pair of session)counts.set(pair,(counts.get(pair)||0)+1);
+    let repeatPenalty=0;
+    for(const g of groups)for(let i=0;i<g.length;i++)for(let j=i+1;j<g.length;j++){
+      repeatPenalty+=(counts.get([g[i].id,g[j].id].sort().join(':'))||0)*40;
+    }
+    return score*.4-repeatPenalty;
   }
   return score;
 }
@@ -2234,21 +2294,77 @@ $('populateDesksBtn').addEventListener('click',() => {
       byId.get(g.id).students=shuffled.slice(pos,pos+g.size).map(s=>s.id);
       pos+=g.size;
     });
+    const candidateGroups=candidate.map(g=>g.students.map(id=>c.students.find(st=>st.id===id)).filter(Boolean));
+    if(separationViolations(candidateGroups,c)) continue;
     const score=seatingScore(candidate,c)+Math.random()*.01;
     if(score>bestScore){bestScore=score;best=candidate;}
   }
+  if(!best){toast('No valid seating arrangement found that satisfies all separation rules. Existing seats unchanged.');return;}
   rememberSeatingEdit();
   const assignments = seatingAssignments(c);
   best.forEach(g => { assignments[g.id] = g.students; });
+  recordGroupHistory(c,best.map(g=>g.students.map(id=>c.students.find(st=>st.id===id)).filter(Boolean)));
   save(); renderSeating();
   const violations=best.some(g=>{
     const ids=new Set(g.students);
     return c.avoidPairs.some(p=>p.every(id=>ids.has(id))) ||
       c.avoidGroups.some(rule=>rule.filter(id=>ids.has(id)).length>1);
   });
-  toast(violations?'Seated students; some separation rules could not be satisfied.':'Students seated successfully.');
+  toast('Students seated successfully using '+$('seatingStrategy').selectedOptions[0].textContent+'.');
 });
 
+const guideSteps = [
+  {title:'Welcome', body:'This interactive tour will take you directly to each part of the website. The highlighted controls remain usable, so you can follow along as you set up a class.', page:'teacher', target:'openGuideBtn'},
+  {title:'Create or select a class', body:'Enter a class name and select Create, or choose an existing class from the dropdown.', page:'teacher', target:'classSelect'},
+  {title:'Add students', body:'Paste student names here, one per line, then select Add students. You can also use the PowerSchool PDF importer in the next step.', page:'teacher', target:'bulkNames'},
+  {title:'Import and rank automatically', body:'Upload a PowerSchool Final Grades PDF here. Review the extracted records before confirming; existing classes can be updated.', page:'teacher', target:'classPdfUpload'},
+  {title:'Review performance tiers', body:'Review High, Middle, and Low rankings and adjust any student individually. These tiers are only visible in Teacher Setup.', page:'teacher', target:'studentList'},
+  {title:'Set separation rules', body:'Use these optional restrictions to keep particular students apart. Choose a pair or a 3+ rule.', page:'teacher', target:'avoidRuleType'},
+  {title:'Customize group roles', body:'Change the three role titles here. They are shared across all classes; in pairs, the second student covers roles 2 and 3.', page:'teacher', target:'roleList'},
+  {title:'Generate groups', body:'Select a grouping strategy, then click Randomize groups. The New partners option uses locally saved grouping history.', page:'groups', target:'groupStrategy'},
+  {title:'Build your seating chart', body:'Choose or create a template, add desks, select a grouping strategy, and click Populate desks to assign students.', page:'seating', target:'seatingStrategy'},
+  {title:'Back up and protect your data', body:'Return to Teacher Setup to export a backup. Backups contain student information, so store them securely. Privacy & data controls explains local storage and deletion.', page:'teacher', target:'exportBtn'}
+];
+let guideIndex=0;
+let guidePreviousFocus=null;
+function closeGuide(){
+  $('guideOverlay').hidden=true;
+  document.querySelectorAll('.guide-target').forEach(el=>el.classList.remove('guide-target'));
+  if(guidePreviousFocus && guidePreviousFocus.isConnected) guidePreviousFocus.focus({preventScroll:true});
+}
+function renderGuide(){
+  const step=guideSteps[guideIndex];
+  document.querySelectorAll('.guide-target').forEach(el=>el.classList.remove('guide-target'));
+  showPage(step.page);
+  $('guideProgress').textContent=`Step ${guideIndex+1} of ${guideSteps.length}`;
+  $('guideTitle').textContent=step.title;
+  $('guideText').textContent=step.body;
+  $('guidePrev').disabled=guideIndex===0;
+  $('guideNext').textContent=guideIndex===guideSteps.length-1?'Finish':'Next';
+  const target=$(step.target);
+  if(target){
+    target.classList.add('guide-target');
+    requestAnimationFrame(()=>{
+      const dialog=$('guideOverlay').querySelector('.guide-dialog');
+      const rect=target.getBoundingClientRect();
+      const dialogHeight=dialog.getBoundingClientRect().height;
+      const visibleBottom=window.innerHeight-dialogHeight-32;
+      const desiredTop=Math.max(80,visibleBottom/2);
+      window.scrollBy({top:rect.top-desiredTop,behavior:'smooth'});
+    });
+  }
+}
+$('openGuideBtn').addEventListener('click',()=>{guidePreviousFocus=document.activeElement;guideIndex=0;$('guideOverlay').hidden=false;renderGuide();$('guideNext').focus({preventScroll:true});});
+$('guideClose').addEventListener('click',closeGuide);
+$('guidePrev').addEventListener('click',()=>{guideIndex=Math.max(0,guideIndex-1);renderGuide();});
+$('guideNext').addEventListener('click',()=>{if(guideIndex===guideSteps.length-1){closeGuide();return;}guideIndex++;renderGuide();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('guideOverlay').hidden)closeGuide();});
+$('privacyBtn').addEventListener('click',()=>{$('privacyPanel').classList.toggle('hidden');});
+$('clearAllDataBtn').addEventListener('click',()=>{
+ if(!confirm('Delete ALL locally saved classes, rankings, rules, history, and seating charts? Export a backup first if needed. This cannot be undone.'))return;
+ if(!confirm('Final confirmation: permanently erase all data saved by this app in this browser?'))return;
+ localStorage.removeItem(KEY);db={classes:[],activeId:null,sharedRoles:null};groups=[];absentIds=new Set();makeClass('My Class');toast('All previous local app data deleted.');
+});
 try {
   const raw = localStorage.getItem(KEY);
   if (raw) {
@@ -2260,6 +2376,8 @@ try {
         if (!Array.isArray(c.avoidPairs)) c.avoidPairs = [];
         if (!Array.isArray(c.avoidGroups)) c.avoidGroups = [];
         if (!Array.isArray(c.roles)) c.roles = defaultRoles.slice();
+        if(!strategyDescriptions[c.groupingStrategy])c.groupingStrategy='balanced';
+        if(!Array.isArray(c.groupHistory))c.groupHistory=[];
         c.roles = c.roles.slice(0,3);
         while (c.roles.length < 3) c.roles.push(defaultRoles[c.roles.length]);
         c.students.forEach(s => {
