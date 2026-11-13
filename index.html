@@ -5,6 +5,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Balanced Group Randomizer</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#172b4d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+
 
 <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
 <link rel="apple-touch-icon" href="group-randomizer-icon.png">
@@ -467,7 +472,7 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
 </div>
 <p class="notice">Classes are saved in this browser. Export a backup periodically.</p>
 <button class="secondary" id="privacyBtn" style="margin-top:10px">Privacy &amp; data controls</button>
-<div id="privacyPanel" class="privacy-panel hidden" style="margin-top:12px"><strong>Local-first storage</strong><p>Class names, student names, performance tiers, source names from PDF imports, separation rules, and seating assignments are saved in this browser's local storage. The app does not intentionally send this roster data to a server. PDF.js is loaded from a third-party CDN, which can receive ordinary network request information; PDF parsing occurs in the browser. Other browser extensions or users of this browser profile may be able to access local data. Backups contain student information and must be stored securely. Clearing browser data can erase your classes. This is not a guarantee of FERPA compliance; obtain district approval before importing student records.</p><button class="secondary" id="clearAllDataBtn" style="color:#b42332">Delete all local class data</button></div>
+<div id="privacyPanel" class="privacy-panel hidden" style="margin-top:12px"><strong>Local-first storage</strong><p>Class names, student names, performance tiers, source names from PDF imports, separation rules, and seating assignments are saved in this browser's local storage. The app does not intentionally send this roster data to a server. The PDF reader is bundled with the app and PDF parsing occurs in the browser. Other browser extensions or users of this browser profile may be able to access local data. Backups contain student information and must be stored securely. Clearing browser data can erase your classes. Teachers should follow their school’s applicable student-data privacy and technology policies.</p><button class="secondary" id="clearAllDataBtn" style="color:#b42332">Delete all local class data</button></div>
 </section>
 </div>
 </div>
@@ -575,7 +580,7 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
 <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 <div class="guide-overlay" id="guideOverlay" hidden><section class="guide-dialog" role="dialog" aria-modal="false" aria-labelledby="guideTitle"><div class="guide-progress" id="guideProgress"></div><h2 id="guideTitle"></h2><p id="guideText"></p><div class="btnrow" style="justify-content:flex-end"><button class="secondary" id="guideClose">Close</button><button class="secondary" id="guidePrev">Back</button><button class="primary" id="guideNext">Next</button></div></section></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="./pdf.min.js"></script>
 <script>
 (() => {
 const KEY = 'balancedGroupRandomizer.v1';
@@ -1473,8 +1478,8 @@ $('classPdfUpload').addEventListener('change',async e=>{
   const panel=$('pdfImportPanel'), review=$('pdfImportReview'), status=$('pdfImportStatus');
   panel.style.display='block'; review.value=''; status.textContent='Reading PDF…'; $('pdfSyncMappings').style.display='none';
   try {
-    if(!window.pdfjsLib) throw new Error('PDF reader could not load. Connect to the internet and reload this page.');
-    pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    if(!window.pdfjsLib) throw new Error('The local PDF reader could not be loaded. Check that pdf.min.js is installed alongside index.html.');
+    pdfjsLib.GlobalWorkerOptions.workerSrc='./pdf.worker.min.js';
     const pdf=await pdfjsLib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;
     const found=[];
     for(let pageNum=1;pageNum<=pdf.numPages;pageNum++) {
@@ -2601,6 +2606,14 @@ if (!db.classes.length) makeClass('My Class');
 else render();
 
 })();
+</script>
+<script>
+// Installable app: service workers require HTTPS (GitHub Pages) or localhost.
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(err => console.warn('Offline support could not be registered:', err));
+  });
+}
 </script>
 </body>
 </html>
