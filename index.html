@@ -179,6 +179,10 @@ textarea { resize:vertical; min-height:90px; }
 .seating-marquee { position:absolute; z-index:50; pointer-events:none; border:2px dashed #2459a9; background:#2459a928; border-radius:3px; }
 /* Click two seats to swap students, including an occupied and empty seat. */
 body:not(.ipad-presentation) .seating-room:not(:fullscreen) .desk { cursor:pointer; }
+ .desk.seat-locked { border:2px solid #bf3549; background:#fff3f4; position:relative; }
+.desk .seat-lock-icon { position:absolute; top:1px; right:2px; font-size:11px; line-height:1; }
+.seat-action-menu { position:fixed; z-index:9999; display:flex; gap:8px; align-items:center; background:white; border:1px solid #9daec4; border-radius:12px; padding:8px; box-shadow:0 8px 28px #18223040; }
+.seat-action-menu button { padding:9px 13px; min-height:38px; }
 .desk.swap-selected { outline:3px solid #2459a9; outline-offset:-2px; background:#dbeafe; box-shadow:0 0 0 3px #2459a966; }
 
 .desk.empty-seat { color:#98a2b3; font-weight:400; }
@@ -647,7 +651,7 @@ body.ipad-presentation .ipad-exit-presentation {display:block;}
 <section class="page" id="seatingPage">
   <main class="panel">
     <div class="groups-page-head">
-      <div><h2>Seating Chart</h2><div class="subline">Desk positions and priorities are shared across classes; student assignments stay separate.</div></div>
+      <div><h2>Seating Chart</h2><div class="subline">Desk positions and priorities are shared across classes; student assignments stay separate. "Populate" attempts to divide High, Middle, and Low students between groups.</div></div>
       <div class="btnrow"><label for="seatingClassSelect">Class</label>
         <select id="seatingClassSelect" style="width:auto;min-width:170px"></select></div>
     </div>
@@ -2255,6 +2259,36 @@ function seatingDimensions(g) {
 }
 const nameMeasureCanvas = document.createElement('canvas');
 let pendingSeatSwap = null;
+let seatActionMenu = null;
+function seatingLocks(c=current()) {
+  if (!c) return {};
+  if (!c.seatingLocksByTemplate || typeof c.seatingLocksByTemplate !== 'object') c.seatingLocksByTemplate={};
+  const id=db.activeSeatingTemplateId;
+  if (!c.seatingLocksByTemplate[id]) c.seatingLocksByTemplate[id]={};
+  return c.seatingLocksByTemplate[id];
+}
+function closeSeatActionMenu() { if(seatActionMenu)seatActionMenu.remove(); seatActionMenu=null; }
+function showSeatActionMenu(desk,groupId,seatIndex,student) {
+  closeSeatActionMenu();
+  const menu=document.createElement('div'); menu.className='seat-action-menu';
+  menu.setAttribute('role','group'); menu.setAttribute('aria-label','Actions for '+student.name);
+  const swap=document.createElement('button');swap.type='button';swap.textContent='⇄ Swap';
+  swap.addEventListener('click',()=>{closeSeatActionMenu();swapSeatingSeats(groupId,seatIndex);toast('Select another seat to swap.');});
+  const locks=seatingLocks();const isLocked=locks[student.id]?.groupId===groupId&&locks[student.id]?.seatIndex===seatIndex;
+  const lock=document.createElement('button');lock.type='button';lock.textContent=isLocked?'🔓 Unlock':'🔒 Lock';
+  lock.addEventListener('click',()=>{
+    rememberSeatingEdit();
+    if(isLocked)delete locks[student.id];
+    else locks[student.id]={groupId,seatIndex};
+    closeSeatActionMenu();save();renderSeating();toast(isLocked?'Seat unlocked.':'Student locked in this seat.');
+  });
+  menu.append(swap,lock);document.body.append(menu);seatActionMenu=menu;
+  const rect=desk.getBoundingClientRect();
+  const width=menu.offsetWidth,height=menu.offsetHeight;
+  menu.style.left=Math.max(8,Math.min(window.innerWidth-width-8,rect.left+rect.width/2-width/2))+'px';
+  menu.style.top=(rect.bottom+height+8<window.innerHeight?rect.bottom+5:Math.max(8,rect.top-height-5))+'px';
+}
+document.addEventListener('pointerdown',e=>{if(seatActionMenu&&!seatActionMenu.contains(e.target)&&!e.target.closest('.desk'))closeSeatActionMenu();});
 const selectedDeskGroups = new Set();
 // Bounded undo history for seating edits. Each entry includes the template layout
 // and assignments for every class, so deleting desks can be undone completely.
@@ -2264,7 +2298,7 @@ function rememberSeatingEdit() {
   seatingUndoHistory.push(JSON.stringify({
     templates:db.seatingTemplates,
     activeTemplateId:db.activeSeatingTemplateId,
-    assignments:db.classes.map(c=>({id:c.id,byTemplate:c.seatingAssignmentsByTemplate || {}}))
+    assignments:db.classes.map(c=>({id:c.id,byTemplate:c.seatingAssignmentsByTemplate || {},locks:c.seatingLocksByTemplate || {}}))
   }));
   if (seatingUndoHistory.length>60) seatingUndoHistory.shift();
 }
@@ -2275,9 +2309,9 @@ function undoSeatingEdit() {
   db.activeSeatingTemplateId=snapshot.activeTemplateId;
   snapshot.assignments.forEach(a=>{
     const c=db.classes.find(c=>c.id===a.id);
-    if(c) c.seatingAssignmentsByTemplate=a.byTemplate;
+    if(c) { c.seatingAssignmentsByTemplate=a.byTemplate; c.seatingLocksByTemplate=a.locks || {}; }
   });
-  pendingSeatSwap=null;
+  pendingSeatSwap=null;closeSeatActionMenu();
   clearDeskGroupSelection();
   save(); renderSeating(); toast('Seating chart change undone.');
   return true;
@@ -2430,6 +2464,11 @@ $('seatingRoom').addEventListener('pointerdown',e => {
 });
 function swapSeatingSeats(groupId,seatIndex) {
   if (document.fullscreenElement) return;
+  const locks=seatingLocks(),assignments=seatingAssignments();
+  const targetId=(assignments[groupId]||[])[seatIndex];
+  if(targetId && locks[targetId]?.groupId===groupId && locks[targetId]?.seatIndex===seatIndex) {
+    toast('Unlock this student before swapping.');return;
+  }
   const chosen = {groupId,seatIndex,classId:current()?.id,templateId:db.activeSeatingTemplateId};
   if (pendingSeatSwap && (pendingSeatSwap.classId !== chosen.classId || pendingSeatSwap.templateId !== chosen.templateId))
     pendingSeatSwap = null;
@@ -2444,7 +2483,8 @@ function swapSeatingSeats(groupId,seatIndex) {
     renderSeating(); // Clicking the selected seat again cancels the swap.
     return;
   }
-  const assignments = seatingAssignments();
+  const firstId=(assignments[first.groupId]||[])[first.seatIndex];
+  if(firstId && locks[firstId]?.groupId===first.groupId && locks[firstId]?.seatIndex===first.seatIndex){toast('Unlock this student before swapping.');renderSeating();return;}
   rememberSeatingEdit();
   const firstSeats = assignments[first.groupId] || (assignments[first.groupId] = []);
   const secondSeats = assignments[groupId] || (assignments[groupId] = []);
@@ -2458,6 +2498,7 @@ function swapSeatingSeats(groupId,seatIndex) {
 }
 
 function renderSeating() {
+  closeSeatActionMenu();
   renderSeatingTemplates();
   if (pendingSeatSwap && (pendingSeatSwap.classId !== current()?.id ||
       pendingSeatSwap.templateId !== db.activeSeatingTemplateId ||
@@ -2511,6 +2552,10 @@ function renderSeating() {
         if (assignments) delete assignments[g.id];
       });
       normalizeSeatingPriorities(activeSeatingTemplate().layout);
+      db.classes.forEach(cl=>{
+        const locks=cl.seatingLocksByTemplate?.[db.activeSeatingTemplateId];
+        if(locks)for(const [studentId,place] of Object.entries(locks))if(place.groupId===g.id)delete locks[studentId];
+      });
       save(); renderSeating();
     });
     el.append(del);
@@ -2532,12 +2577,20 @@ function renderSeating() {
         desk.style.fontSize = `${fontSize}px`;
       }
       desk.title = student ? student.name : 'Empty seat';
+      const lockInfo=student&&seatingLocks()[student.id];
+      if(lockInfo?.groupId===g.id && lockInfo?.seatIndex===i){
+        desk.classList.add('seat-locked');
+        const lockIcon=document.createElement('span');lockIcon.className='seat-lock-icon';lockIcon.textContent='🔒';
+        desk.append(lockIcon);
+      }
       if (pendingSeatSwap?.groupId === g.id && pendingSeatSwap.seatIndex === i)
         desk.classList.add('swap-selected');
       desk.addEventListener('pointerdown', e => e.stopPropagation());
       desk.addEventListener('click', e => {
         e.stopPropagation();
-        swapSeatingSeats(g.id,i);
+        if(pendingSeatSwap) swapSeatingSeats(g.id,i);
+        else if(student)showSeatActionMenu(desk,g.id,i,student);
+        else toast('Select an occupied seat and choose Swap first.');
       });
       el.append(desk);
       seats++;
@@ -2659,12 +2712,14 @@ $('clearDesksBtn').addEventListener('click',() => {
   db.classes.forEach(cl => {
     if (cl.seatingAssignmentsByTemplate) cl.seatingAssignmentsByTemplate[db.activeSeatingTemplateId] = {};
   });
+  db.classes.forEach(cl=>{if(cl.seatingLocksByTemplate)cl.seatingLocksByTemplate[db.activeSeatingTemplateId]={};});
   save(); renderSeating();
   toast('All desks cleared.');
 });
 $('clearStudentsBtn').addEventListener('click',() => {
   rememberSeatingEdit();
   current().seatingAssignmentsByTemplate[db.activeSeatingTemplateId] = {};
+  current().seatingLocksByTemplate && (current().seatingLocksByTemplate[db.activeSeatingTemplateId]={});
   save(); renderSeating(); toast('Seating assignments cleared.');
 });
 function seatingScore(layout,c) {
@@ -2709,13 +2764,62 @@ $('populateDesksBtn').addEventListener('click',() => {
   normalizeSeatingPriorities(layout);
   const ordered = [...layout].sort((a,b)=>a.priority-b.priority);
   let best=null, bestScore=-Infinity;
+  const locks=seatingLocks(c), currentAssignments=seatingAssignments(c);
+  const validIds=new Set(c.students.map(st=>st.id));
+  const lockedByGroup=new Map(ordered.map(g=>[g.id,Array(g.size).fill(null)]));
+  const lockedIds=new Set();
+  for(const [id,place] of Object.entries(locks)){
+    const slots=lockedByGroup.get(place.groupId);
+    if(!validIds.has(id)||!slots||!Number.isInteger(place.seatIndex)||place.seatIndex<0||place.seatIndex>=slots.length)continue;
+    if((currentAssignments[place.groupId]||[])[place.seatIndex]!==id)continue;
+    if(slots[place.seatIndex])continue;
+    slots[place.seatIndex]=id;lockedIds.add(id);
+  }
+  // Build indivisible together-rule components, placing anchored members in their fixed groups.
+  const blocks=togetherComponents(c,c.togetherGroups||[],c.students);
+  const fixedGroup=new Map();
+  for(const g of ordered)for(const id of lockedByGroup.get(g.id))if(id)fixedGroup.set(id,g.id);
+  const anchored=[],floating=[];
+  let conflict=false;
+  for(const block of blocks){
+    const destinations=new Set(block.map(st=>fixedGroup.get(st.id)).filter(Boolean));
+    if(destinations.size>1){conflict=true;break;}
+    if(destinations.size)anchored.push({groupId:[...destinations][0],students:block.filter(st=>!lockedIds.has(st.id))});
+    else floating.push(block);
+  }
+  if(conflict){toast('Locked seats conflict with Keep Together rules. Unlock or move a student.');return;}
   const attempts=Math.min(6000,Math.max(1200,c.students.length*140));
-  for (let trial=0;trial<attempts;trial++) {
-    const arranged=arrangeTogether(c.students,ordered.map(g=>g.size),c);
-    if(!arranged)continue;
-    const candidate=layout.map(g=>({...g,students:[]}));
+  for(let trial=0;trial<attempts;trial++) {
+    const candidate=layout.map(g=>({...g,students:lockedByGroup.get(g.id).slice()}));
     const byId=new Map(candidate.map(g=>[g.id,g]));
-    ordered.forEach((g,i)=>{byId.get(g.id).students=arranged[i].map(s=>s.id);});
+    let valid=true;
+    for(const item of anchored){
+      const slots=byId.get(item.groupId).students;
+      const vacancies=slots.map((id,i)=>id?null:i).filter(i=>i!==null);
+      if(vacancies.length<item.students.length){valid=false;break;}
+      item.students.forEach((st,i)=>{slots[vacancies[i]]=st.id;});
+    }
+    if(!valid)continue;
+    const orderedBlocks=floating.slice().sort((a,b)=>b.length-a.length||Math.random()-.5);
+    // Backtrack through the available desk groups while enforcing Keep Apart rules.
+    function placeBlock(i){
+      if(i===orderedBlocks.length)return true;
+      const block=orderedBlocks[i],choices=ordered.slice();
+      for(let j=choices.length-1;j>0;j--){const k=Math.floor(Math.random()*(j+1));[choices[j],choices[k]]=[choices[k],choices[j]];}
+      for(const g of choices){
+        const slots=byId.get(g.id).students;
+        const free=slots.map((id,k)=>id?null:k).filter(k=>k!==null);
+        if(free.length<block.length)continue;
+        block.forEach((st,k)=>{slots[free[k]]=st.id;});
+        const people=slots.filter(Boolean).map(id=>c.students.find(st=>st.id===id));
+        if(!separationViolations([people],c)&&placeBlock(i+1))return true;
+        block.forEach((st,k)=>{slots[free[k]]=null;});
+      }
+      return false;
+    }
+    if(!placeBlock(0))continue;
+    // Preserve actual seat indexes (including gaps) for locked students.
+    for(const g of candidate)g.students=g.students.map(id=>id||null);
     const candidateGroups=candidate.map(g=>g.students.map(id=>c.students.find(st=>st.id===id)).filter(Boolean));
     if(separationViolations(candidateGroups,c)||togetherViolations(candidateGroups,c)) continue;
     const score=seatingScore(candidate,c)+Math.random()*.01;
