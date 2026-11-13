@@ -2734,6 +2734,8 @@ function renderGuide(){
   }
 }
 function startSetupGuide(){guidePreviousFocus=document.activeElement;guideIndex=0;$('guideOverlay').hidden=false;renderGuide();$('guideNext').focus({preventScroll:true});}
+// Allow the separately scoped welcome screen to start the existing walkthrough.
+document.addEventListener('bgr:start-setup-guide', startSetupGuide);
 $('guideClose').addEventListener('click',closeGuide);
 $('guidePrev').addEventListener('click',()=>{guideIndex=Math.max(0,guideIndex-1);renderGuide();});
 $('guideNext').addEventListener('click',()=>{if(guideIndex===guideSteps.length-1){closeGuide();return;}guideIndex++;renderGuide();});
@@ -2962,7 +2964,7 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
   $('welcomePdf').addEventListener('click',() => focusSetup('classPdfUpload'));
   $('welcomePaste').addEventListener('click',() => focusSetup('bulkNames'));
   $('welcomeManual').addEventListener('click',() => focusSetup('newClassName'));
-  $('welcomeTutorial').addEventListener('click',() => { dismiss(); startSetupGuide(); });
+  $('welcomeTutorial').addEventListener('click',() => { dismiss(); document.dispatchEvent(new Event('bgr:start-setup-guide')); });
   dialog.addEventListener('close',() => {
     try { localStorage.setItem(SEEN_KEY,'1'); } catch (_) {}
   });
