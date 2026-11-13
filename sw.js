@@ -1,7 +1,7 @@
-const CACHE = 'bgr-pwa-v22';
+const CACHE = 'bgr-pwa-v24';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './group-randomizer-app-v19-192.png', './group-randomizer-app-v19-512.png', './group-randomizer-icon.png', './favicon.png', './apple-touch-icon.png', './pdf.min.js', './pdf.worker.min.js'];
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(SHELL)).then(() => self.skipWaiting()));
+  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(SHELL)));
 });
 self.addEventListener('activate', event => {
   event.waitUntil(Promise.all([
@@ -31,4 +31,9 @@ self.addEventListener('fetch', event => {
       return response;
     } catch (_) { return Response.error(); }
   })());
+});
+
+// Activate an already downloaded update only after the teacher confirms.
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
 });

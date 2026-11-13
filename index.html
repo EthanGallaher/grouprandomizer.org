@@ -360,13 +360,23 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
 .backup-reminder {margin-top:12px;padding:11px 13px;background:#fff3db;border:1px solid #ebc87d;border-radius:10px;font-size:13px;}
 .restore-preview {margin-top:12px;padding:14px;border:1px solid #a8bbd7;background:#f2f6fd;border-radius:10px;}
 .restore-preview .btnrow {margin:10px 0;flex-wrap:wrap;}
+
+.app-update-banner {position:sticky;top:0;z-index:200;background:#e9f2ff;color:#172b4d;padding:10px 18px;display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;border-bottom:2px solid #2459a9;font-size:14px;}
+.app-update-banner[hidden],.install-app-btn[hidden] {display:none!important;}
+.app-update-banner button {padding:6px 11px;font-size:12px;}
+.feedback-dialog {border:1px solid #dfe5ed;border-radius:14px;padding:22px;width:min(94vw,540px);max-height:90vh;}
+.feedback-dialog::backdrop {background:rgba(15,25,42,.55);}
+.feedback-dialog label {display:block;margin:12px 0 5px;font-weight:700;}
+.feedback-dialog textarea,.feedback-dialog select {width:100%;box-sizing:border-box;}
+.feedback-actions {display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;}
+.feedback-actions button {font-size:12px;padding:8px 10px;}
 </style>
 </head>
 <body>
 <header class="top">
   <div class="top-inner">
     <div class="site-brand"><img src="group-randomizer-icon.png" alt="" width="48" height="48"><h1>Balanced Group Randomizer</h1></div>
-    <div class="install-actions"><button type="button" class="install-app-btn" id="installAppBtn" hidden>Install Desktop App</button><div class="save-state" id="saveState">Saved on this device</div></div>
+    <div class="install-actions"><button type="button" class="install-app-btn" id="feedbackBtn">Feedback</button><button type="button" class="install-app-btn" id="installAppBtn" hidden>Install Desktop App</button><div class="save-state" id="saveState">Saved on this device</div></div>
   </div>
 </header>
 
@@ -374,6 +384,27 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
   <h2 id="installAppTitle">Install Balanced Group Randomizer</h2>
   <div id="installAppInstructions"></div><p><button type="button" class="secondary" id="confirmInstalledBtn">I installed the app</button></p>
   <div class="install-dialog-actions"><button type="button" class="secondary" id="closeInstallDialog">Close</button></div>
+</dialog>
+<div id="updateBanner" class="app-update-banner" role="status" hidden>
+  <span>A new version of Balanced Group Randomizer is ready.</span>
+  <button type="button" id="applyUpdateBtn">Restart to Update</button>
+  <button type="button" id="dismissUpdateBtn" aria-label="Dismiss update reminder">Later</button>
+</div>
+<dialog id="feedbackDialog" class="feedback-dialog" aria-labelledby="feedbackTitle">
+  <h2 id="feedbackTitle">Report a problem or suggest an improvement</h2>
+  <p>Describe what happened or what you would like changed. Student names and classroom data are not included automatically.</p>
+  <label for="feedbackType">Feedback type</label>
+  <select id="feedbackType"><option value="Problem">Report a problem</option><option value="Suggestion">Suggest an improvement</option></select>
+  <label for="feedbackMessage">Your feedback</label>
+  <textarea id="feedbackMessage" rows="5" placeholder="What happened? What would help?" maxlength="5000"></textarea>
+  <p class="help">Select Send Email to open your email app with the report addressed to egallaher@clevelandschools.org. Review the message and press Send in your email app. No student information is attached automatically.</p>
+  <div class="feedback-actions">
+    <button type="button" class="primary" id="emailFeedbackBtn">Send Email</button>
+    <button type="button" class="secondary" id="copyFeedbackBtn">Copy Feedback</button>
+    <button type="button" class="secondary" id="downloadFeedbackBtn">Save as Text</button>
+    <button type="button" class="secondary" id="closeFeedbackBtn">Close</button>
+  </div>
+  <p id="feedbackStatus" role="status" aria-live="polite"></p>
 </dialog>
 <nav class="page-nav">
   <button class="secondary active" id="teacherTab">Teacher Setup</button>
@@ -2790,9 +2821,91 @@ updateBackupStatus();
 // Installable app: service workers require HTTPS (GitHub Pages) or localhost.
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(err => console.warn('Offline support could not be registered:', err));
+    navigator.serviceWorker.register('./sw.js').then(registration => {
+      let refreshing = false;
+      const banner = document.getElementById('updateBanner');
+      const showUpdate = () => {
+        if (registration.waiting && navigator.serviceWorker.controller) banner.hidden = false;
+      };
+      showUpdate();
+      registration.addEventListener('updatefound', () => {
+        const worker = registration.installing;
+        if (!worker) return;
+        worker.addEventListener('statechange', () => {
+          if (worker.state === 'installed') showUpdate();
+        });
+      });
+      document.getElementById('applyUpdateBtn').addEventListener('click', () => {
+        if (registration.waiting) {
+          document.getElementById('applyUpdateBtn').disabled = true;
+          registration.waiting.postMessage({type:'SKIP_WAITING'});
+        }
+      });
+      document.getElementById('dismissUpdateBtn').addEventListener('click', () => { banner.hidden = true; });
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (refreshing) return;
+        refreshing = true;
+        window.location.reload();
+      });
+      // Check when the teacher returns online or reopens the app.
+      window.addEventListener('online', () => registration.update().catch(() => {}));
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && navigator.onLine) registration.update().catch(() => {});
+      });
+      // A periodic check while the app stays open (once per hour).
+      setInterval(() => { if (navigator.onLine) registration.update().catch(() => {}); }, 60*60*1000);
+    }).catch(err => console.warn('Offline support could not be registered:', err));
   });
 }
+</script>
+<script>
+(() => {
+  const dialog = document.getElementById('feedbackDialog');
+  const message = document.getElementById('feedbackMessage');
+  const status = document.getElementById('feedbackStatus');
+  const content = () => {
+    const kind = document.getElementById('feedbackType').value;
+    const body = message.value.trim();
+    return body ? `Balanced Group Randomizer — ${kind}\n\n${body}\n\nApp version: 24\nDevice: ${navigator.userAgent}\n` : '';
+  };
+  document.getElementById('feedbackBtn').addEventListener('click', () => {
+    status.textContent = '';
+    dialog.showModal();
+  });
+  document.getElementById('closeFeedbackBtn').addEventListener('click', () => dialog.close());
+  document.getElementById('emailFeedbackBtn').addEventListener('click', () => {
+    const body = message.value.trim();
+    if (!body) { status.textContent = 'Please describe your feedback first.'; return; }
+    const kind = document.getElementById('feedbackType').value;
+    const subject = `Balanced Group Randomizer — ${kind}`;
+    const url = 'mailto:egallaher@clevelandschools.org?subject=' +
+      encodeURIComponent(subject) + '&body=' + encodeURIComponent(content());
+    if (url.length > 2000) {
+      status.textContent = 'This report is too long for a reliable email link. Use Copy Feedback and paste it into an email to egallaher@clevelandschools.org.';
+      return;
+    }
+    status.textContent = 'Opening your email application. Review the message and press Send there.';
+    window.location.href = url;
+  });
+  document.getElementById('copyFeedbackBtn').addEventListener('click', async () => {
+    const text = content();
+    if (!text) { status.textContent = 'Please describe your feedback first.'; return; }
+    try {
+      await navigator.clipboard.writeText(text);
+      status.textContent = 'Copied. Paste it into a message to the app owner.';
+    } catch (_) { status.textContent = 'Copy was blocked. Use Save as Text instead.'; }
+  });
+  document.getElementById('downloadFeedbackBtn').addEventListener('click', () => {
+    const text = content();
+    if (!text) { status.textContent = 'Please describe your feedback first.'; return; }
+    const url = URL.createObjectURL(new Blob([text],{type:'text/plain'}));
+    const a = document.createElement('a');
+    a.href = url; a.download = 'balanced-group-randomizer-feedback.txt';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    status.textContent = 'Feedback saved. Send the text file to the app owner.';
+  });
+})();
 </script>
 </body>
 </html>
