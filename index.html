@@ -588,7 +588,7 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
   <div class="btnrow actions">
     <label for="displayClassSelect">Class</label>
     <select id="displayClassSelect" style="width:auto;min-width:170px;max-width:240px"></select>
-    <button class="secondary" id="backTeacherBtn">Teacher Setup</button>
+    
     <button class="secondary" id="printBtn">Print groups</button>
     <button class="secondary" id="fullscreenBtn">⛶ Full screen</button>
     <button class="primary" id="generateBtn">⤨ Randomize groups</button>
@@ -612,7 +612,7 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
       <div class="btnrow actions">
         <label for="randomClassSelect">Class</label>
         <select id="randomClassSelect" style="width:auto;min-width:170px;max-width:240px"></select>
-        <button class="secondary" id="randomBackTeacherBtn">Teacher Setup</button>
+        
       </div>
     </div>
     <button class="primary" id="pickRandomStudentBtn">Pick a random student</button>
@@ -1506,8 +1506,8 @@ $('teacherTab').addEventListener('click',() => showPage('teacher'));
 $('groupsTab').addEventListener('click',() => showPage('groups'));
 $('randomStudentTab').addEventListener('click',() => showPage('randomStudent'));
 $('seatingTab').addEventListener('click',() => showPage('seating'));
-$('randomBackTeacherBtn').addEventListener('click',() => showPage('teacher'));
-$('backTeacherBtn').addEventListener('click',() => showPage('teacher'));
+
+
 
 $('renameClassBtn').addEventListener('click',() => {
   const c = current();
