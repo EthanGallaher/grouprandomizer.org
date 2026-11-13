@@ -306,6 +306,11 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
 .seating-tool-row { display:flex;align-items:flex-end;gap:9px;flex-wrap:wrap; }
 .seating-tool-row .field { min-width:135px;flex:1 1 145px;margin:0; }
 .seating-tool-row .strategy-field { flex:2 1 205px; }
+/* Keep the template picker and New action visually separated. */
+#templateControls { column-gap:16px; row-gap:12px; }
+#templateControls #addSeatingTemplateBtn { margin-left:8px; }
+/* Highlight the entire seating setup area during the guided tour. */
+#seatingSetupControls.guide-target { border-radius:16px; outline-offset:7px; }
 .seating-tool-row button { min-height:42px;white-space:nowrap; }
 .seating-tool-section .danger-outline { color:#ad2638; }
 .seating-present-section { grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;background:#eaf1fd; }
@@ -500,7 +505,7 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
       <div class="btnrow"><label for="seatingClassSelect">Class</label>
         <select id="seatingClassSelect" style="width:auto;min-width:170px"></select></div>
     </div>
-    <div class="seating-toolbar">
+    <div class="seating-toolbar" id="seatingSetupControls">
       <section class="seating-tool-section" aria-label="Seating chart templates">
         <div class="seating-tool-heading"><span class="tool-number">1</span><h3>Layout templates</h3></div>
         <div class="seating-tool-row" id="templateControls">
@@ -2391,7 +2396,7 @@ const guideSteps = [
   {title:'Set separation rules', body:'Use these optional restrictions to keep particular students apart. Choose a pair or a 3+ rule.', page:'teacher', target:'avoidRuleType'},
   {title:'Customize group roles', body:'Change the three role titles here. They are shared across all classes; in pairs, the second student covers roles 2 and 3.', page:'teacher', target:'roleList'},
   {title:'Generate groups', body:'Select a grouping strategy, then click Randomize groups. The New partners option uses locally saved grouping history.', page:'groups', target:'groupStrategy'},
-  {title:'Build your seating chart', body:'Choose or create a template, add desks, select a grouping strategy, and click Populate desks to assign students.', page:'seating', target:'seatingStrategy'},
+  {title:'Build your seating chart', body:'Choose or create a template, add desks, select a grouping strategy, and click Populate desks to assign students.', page:'seating', target:'seatingSetupControls'},
   {title:'Back up and protect your data', body:'Return to Teacher Setup to export a backup. Backups contain student information, so store them securely. Privacy & data controls explains local storage and deletion.', page:'teacher', target:'exportBtn'}
 ];
 let guideIndex=0;
