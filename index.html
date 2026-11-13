@@ -83,42 +83,42 @@ textarea { resize:vertical; min-height:90px; }
 .member { cursor:pointer; }
 .member:hover { border-color:var(--red); background:#fff8f8; }
 /* Fullscreen is a clean, read-only student presentation. */
-#groupsPage:fullscreen .groups-page-head,
-#groupsPage:fullscreen #groupStrategy,
-#groupsPage:fullscreen #strategyHelp,
-#groupsPage:fullscreen #balanceNote,
-#groupsPage:fullscreen .field { display:none!important; }
-#groupsPage:fullscreen .group-card { break-inside:avoid; }
-#groupsPage:fullscreen .member { cursor:default; pointer-events:none; }
-#groupsPage:fullscreen .member:hover { border-color:var(--line); background:white; }
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .groups-page-head,
+#groupsPage:is(:fullscreen,.ipad-fullscreen) #groupStrategy,
+#groupsPage:is(:fullscreen,.ipad-fullscreen) #strategyHelp,
+#groupsPage:is(:fullscreen,.ipad-fullscreen) #balanceNote,
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .field { display:none!important; }
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .group-card { break-inside:avoid; }
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .member { cursor:default; pointer-events:none; }
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .member:hover { border-color:var(--line); background:white; }
 /* One-screen student presentation: layout and type are sized by fitGroupFullscreen(). */
-#groupsPage:fullscreen { display:block!important; width:100vw; height:100vh; overflow:hidden; background:white; padding:0; }
-#groupsPage:fullscreen > main.panel { width:100%; height:100%; min-height:0; margin:0; border:0; border-radius:0; box-shadow:none; padding:var(--fg-outer,12px); overflow:hidden; }
-#groupsPage:fullscreen #groupsArea { height:100%; min-height:0; overflow:hidden; }
-#groupsPage:fullscreen .groups {
+#groupsPage:is(:fullscreen,.ipad-fullscreen) { display:block!important; width:100vw; height:100vh; overflow:hidden; background:white; padding:0; }
+#groupsPage:is(:fullscreen,.ipad-fullscreen) > main.panel { width:100%; height:100%; min-height:0; margin:0; border:0; border-radius:0; box-shadow:none; padding:var(--fg-outer,12px); overflow:hidden; }
+#groupsPage:is(:fullscreen,.ipad-fullscreen) #groupsArea { height:100%; min-height:0; overflow:hidden; }
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .groups {
   display:grid; width:100%; height:100%; min-height:0; margin:0;
   grid-template-columns:repeat(var(--fg-cols,4),minmax(0,1fr));
   grid-template-rows:repeat(var(--fg-rows,3),minmax(0,1fr));
   gap:var(--fg-gap,8px);
 }
-#groupsPage:fullscreen .group-card { display:flex; flex-direction:column; min-width:0; min-height:0; border-width:1px; overflow:hidden; }
-#groupsPage:fullscreen .group-title { flex:none; font-size:var(--fg-title,18px); padding:var(--fg-title-pad,7px) var(--fg-pad,9px); gap:5px; white-space:nowrap; }
-#groupsPage:fullscreen .group-title small { font-size:var(--fg-small,12px); }
-#groupsPage:fullscreen .members { flex:1; min-height:0; display:grid; grid-template-rows:repeat(var(--fg-members,3),minmax(0,1fr)); padding:var(--fg-pad,9px); gap:var(--fg-member-gap,5px); }
-#groupsPage:fullscreen .member { min-height:0; min-width:0; padding:var(--fg-member-pad,5px); gap:var(--fg-member-gap,5px); border-radius:7px; }
-#groupsPage:fullscreen .member-name { font-size:var(--fg-name,18px); line-height:1.1; white-space:nowrap; overflow:visible; overflow-wrap:normal; }
-#groupsPage:fullscreen .avatar { flex:none; min-width:0; max-width:none; min-height:0; height:var(--fg-role-height,48px); width:var(--fg-role-width,90px); padding:4px 6px; font-size:var(--fg-role,16px); line-height:1.15; overflow-wrap:break-word; word-break:normal; }
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .group-card { display:flex; flex-direction:column; min-width:0; min-height:0; border-width:1px; overflow:hidden; }
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .group-title { flex:none; font-size:var(--fg-title,18px); padding:var(--fg-title-pad,7px) var(--fg-pad,9px); gap:5px; white-space:nowrap; }
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .group-title small { font-size:var(--fg-small,12px); }
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .members { flex:1; min-height:0; display:grid; grid-template-rows:repeat(var(--fg-members,3),minmax(0,1fr)); padding:var(--fg-pad,9px); gap:var(--fg-member-gap,5px); }
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .member { min-height:0; min-width:0; padding:var(--fg-member-pad,5px); gap:var(--fg-member-gap,5px); border-radius:7px; }
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .member-name { font-size:var(--fg-name,18px); line-height:1.1; white-space:nowrap; overflow:visible; overflow-wrap:normal; }
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .avatar { flex:none; min-width:0; max-width:none; min-height:0; height:var(--fg-role-height,48px); width:var(--fg-role-width,90px); padding:4px 6px; font-size:var(--fg-role,16px); line-height:1.15; overflow-wrap:break-word; word-break:normal; }
 /* Absent students remain accessible without disturbing the four-column group grid. */
 .groups-shell {display:grid;grid-template-columns:minmax(0,1fr) 185px;gap:12px;align-items:start;}
 .groups-shell > .groups {min-width:0;}
 .absent-sidebar {border:1px solid #f2c4c8;background:#fff7f8;border-radius:12px;padding:12px;min-width:0;}
 .absent-sidebar h3 {margin:0;font-size:15px;color:#a52d39;}
 .absent-student {display:block;width:100%;margin-top:7px;text-align:left;padding:9px;overflow-wrap:anywhere;font-size:13px;}
-#groupsPage:fullscreen .groups-shell {height:100%;min-height:0;grid-template-columns:minmax(0,1fr);gap:0;}
-#groupsPage:fullscreen .groups-shell > .groups {height:100%;min-height:0;}
-#groupsPage:fullscreen .absent-sidebar {display:none!important;}
-#groupsPage:fullscreen .absent-sidebar h3 {font-size:clamp(13px,1.4vw,20px);}
-#groupsPage:fullscreen .absent-student {font-size:clamp(11px,1vw,16px);}
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .groups-shell {height:100%;min-height:0;grid-template-columns:minmax(0,1fr);gap:0;}
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .groups-shell > .groups {height:100%;min-height:0;}
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .absent-sidebar {display:none!important;}
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .absent-sidebar h3 {font-size:clamp(13px,1.4vw,20px);}
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .absent-student {font-size:clamp(11px,1vw,16px);}
 @media(max-width:700px){.groups-shell{grid-template-columns:1fr;}.absent-sidebar{order:-1;}}
 .random-result { margin-top:18px; padding:24px; border:2px dashed #cfd7e3; border-radius:14px; text-align:center; background:#f8faff; }
 .random-result strong { display:block; font-size:clamp(24px,4vw,36px); color:var(--navy); margin-top:8px; }
@@ -140,19 +140,19 @@ textarea { resize:vertical; min-height:90px; }
 /* Seating chart */
 
 /* Only the classroom canvas enters fullscreen; no toolbars or buttons. */
-.seating-scroll:fullscreen {
+.seating-scroll:is(:fullscreen,.ipad-fullscreen) {
   width:100vw; height:100vh; max-width:none;
   padding:0; margin:0; overflow:hidden;
   display:flex; align-items:center; justify-content:center;
   background:#101c32;
 }
-.seating-scroll:fullscreen .seating-room {
+.seating-scroll:is(:fullscreen,.ipad-fullscreen) .seating-room {
   flex:none; border-radius:0; margin:0;
   zoom:var(--seating-fullscreen-zoom,1);
 }
-.seating-scroll:fullscreen .desk-delete,
-.seating-scroll:fullscreen .desk-priority { display:none!important; }
-.seating-scroll:fullscreen .desk-group { cursor:default; }
+.seating-scroll:is(:fullscreen,.ipad-fullscreen) .desk-delete,
+.seating-scroll:is(:fullscreen,.ipad-fullscreen) .desk-priority { display:none!important; }
+.seating-scroll:is(:fullscreen,.ipad-fullscreen) .desk-group { cursor:default; }
 @media(max-width:1150px) { .seating-scroll { overflow:auto; } }
 
 .seating-controls { display:flex; align-items:end; gap:10px; flex-wrap:wrap; margin:14px 0; }
@@ -178,7 +178,7 @@ textarea { resize:vertical; min-height:90px; }
 .desk-group.multi-selected { outline:3px solid #2459a9; outline-offset:2px; background:#dceafe; }
 .seating-marquee { position:absolute; z-index:50; pointer-events:none; border:2px dashed #2459a9; background:#2459a928; border-radius:3px; }
 /* Click two seats to swap students, including an occupied and empty seat. */
-body .seating-room:not(:fullscreen) .desk { cursor:pointer; }
+body:not(.ipad-presentation) .seating-room:not(:fullscreen) .desk { cursor:pointer; }
 .desk.swap-selected { outline:3px solid #2459a9; outline-offset:-2px; background:#dbeafe; box-shadow:0 0 0 3px #2459a966; }
 
 .desk.empty-seat { color:#98a2b3; font-weight:400; }
@@ -386,6 +386,27 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
 .welcome-privacy strong {font-size:13px;color:var(--navy);}
 .welcome-privacy p {font-size:12px;margin:6px 0 0;}
 @media(max-width:600px) {.welcome-dialog {padding:16px;}.welcome-dialog h2 {font-size:21px;}}
+
+/* iPadOS does not support requestFullscreen() for arbitrary page elements.
+   This fixed-position presentation uses the same layout without the browser API. */
+body.ipad-presentation { overflow:hidden!important; }
+#groupsPage.ipad-fullscreen {
+  position:fixed!important; inset:0!important; z-index:9998!important;
+  width:100vw!important; height:100vh!important; height:100dvh!important;
+  margin:0!important; padding:0!important; background:white!important;
+}
+.seating-scroll.ipad-fullscreen {
+  position:fixed!important; inset:0!important; z-index:9998!important;
+  width:100vw!important; height:100vh!important; height:100dvh!important;
+  margin:0!important; background:white!important;
+}
+.ipad-exit-presentation {
+  display:none; position:fixed; z-index:10000; top:max(8px,env(safe-area-inset-top));
+  right:max(8px,env(safe-area-inset-right)); border:1px solid #a9bad2;
+  background:#fff; color:#172b4d; box-shadow:0 2px 9px #0002;
+  padding:7px 11px; font-size:12px; border-radius:10px;
+}
+body.ipad-presentation .ipad-exit-presentation {display:block;}
 </style>
 </head>
 <body>
@@ -1893,9 +1914,37 @@ $('addTogetherBtn').addEventListener('click',()=>{
 
 $('generateBtn').addEventListener('click',generate);
 const fullscreenBtn = $('fullscreenBtn');
+let ipadPresentationTarget = null;
+const isPresentation = target => document.fullscreenElement === target || (ipadPresentationTarget === target && target.classList.contains('ipad-fullscreen'));
+function exitIpadPresentation() {
+  if (!ipadPresentationTarget) return;
+  const target = ipadPresentationTarget;
+  target.classList.remove('ipad-fullscreen');
+  ipadPresentationTarget = null;
+  document.body.classList.remove('ipad-presentation');
+  if (target.id === 'groupsPage') {
+    syncFullscreenButton();
+    target.querySelectorAll('.member-name,.avatar').forEach(el => el.style.removeProperty('font-size'));
+  } else {
+    $('seatingRoom').style.removeProperty('--seating-fullscreen-zoom');
+  }
+}
+function enterIpadPresentation(target) {
+  exitIpadPresentation();
+  ipadPresentationTarget = target;
+  document.body.classList.add('ipad-presentation');
+  target.classList.add('ipad-fullscreen');
+  requestAnimationFrame(() => {
+    if (target.id === 'groupsPage') fitGroupFullscreen();
+    else fitSeatingFullscreen();
+  });
+}
+document.getElementById('ipadExitPresentation').addEventListener('click', exitIpadPresentation);
+document.addEventListener('keydown', event => { if (event.key === 'Escape' && ipadPresentationTarget) exitIpadPresentation(); });
+window.addEventListener('resize', () => { if (ipadPresentationTarget === $('groupsPage')) fitGroupFullscreen(); });
 // Fit every group on one screen, then independently shrink long names and role labels.
 function fitGroupFullscreen() {
-  if (document.fullscreenElement !== $('groupsPage')) return;
+  if (!isPresentation($('groupsPage'))) return;
   const page=$('groupsPage'), grid=page.querySelector('.groups');
   if (!grid) return;
   const cards=[...grid.querySelectorAll('.group-card')];
@@ -1930,7 +1979,7 @@ function fitGroupFullscreen() {
   Object.entries(vars).forEach(([k,v])=>page.style.setProperty(k,String(v)));
   // Measure rendered strings and shrink their own font size rather than clipping.
   requestAnimationFrame(()=>{
-    if(document.fullscreenElement!==page) return;
+    if(!isPresentation(page)) return;
     grid.querySelectorAll('.member').forEach(member=>{
       const name=member.querySelector('.member-name');
       const role=member.querySelector('.avatar');
@@ -1969,28 +2018,22 @@ function fitGroupFullscreen() {
 }
 window.addEventListener('resize',()=>{ if(document.fullscreenElement===$('groupsPage')) fitGroupFullscreen(); });
 async function toggleGroupFullscreen() {
-  try {
-    if (document.fullscreenElement === $('groupsPage')) {
-      await document.exitFullscreen();
-    } else {
-      await $('groupsPage').requestFullscreen();
-    }
-  } catch (err) {
-    toast('Full screen is not available in this browser.');
+  const target = $('groupsPage');
+  if (ipadPresentationTarget === target) { exitIpadPresentation(); return; }
+  if (document.fullscreenElement === target) { await document.exitFullscreen(); return; }
+  if (typeof target.requestFullscreen === 'function') {
+    try { await target.requestFullscreen(); return; } catch (_) { /* iPadOS fallback */ }
   }
+  enterIpadPresentation(target);
+  syncFullscreenButton();
 }
 function syncFullscreenButton() {
-  const isFullscreen = document.fullscreenElement === $('groupsPage');
-  fullscreenBtn.textContent = isFullscreen
-    ? '⤢ Exit full screen'
-    : '⛶ Full screen';
-  fullscreenBtn.setAttribute(
-    'aria-label',
-    isFullscreen ? 'Exit full screen' : 'Make group display fullscreen'
-  );
+  const active = isPresentation($('groupsPage'));
+  fullscreenBtn.textContent = active ? '⤢ Exit full screen' : '⛶ Full screen';
+  fullscreenBtn.setAttribute('aria-label',active ? 'Exit full screen' : 'Make group display fullscreen');
 }
 fullscreenBtn.addEventListener('click', toggleGroupFullscreen);
-document.addEventListener('fullscreenchange', () => { syncFullscreenButton(); if(document.fullscreenElement === $('groupsPage')) requestAnimationFrame(fitGroupFullscreen); });
+document.addEventListener('fullscreenchange', () => { syncFullscreenButton(); if(isPresentation($('groupsPage'))) requestAnimationFrame(fitGroupFullscreen); });
 $('printBtn').addEventListener('click',() => {
   if (!groups.length) { toast('Generate groups before printing.'); return; }
   window.print();
@@ -2576,7 +2619,7 @@ $('addDeskBtn').addEventListener('click',() => {
 });
 const seatingFullscreenCanvas = document.querySelector('#seatingPage .seating-scroll');
 function fitSeatingFullscreen() {
-  if (document.fullscreenElement !== seatingFullscreenCanvas) return;
+  if (!isPresentation(seatingFullscreenCanvas)) return;
   const room = $('seatingRoom');
   const zoom = Math.min(
     seatingFullscreenCanvas.clientWidth / 1100,
@@ -2585,13 +2628,12 @@ function fitSeatingFullscreen() {
   room.style.setProperty('--seating-fullscreen-zoom', String(zoom));
 }
 $('seatingFullscreenBtn').addEventListener('click',async () => {
-  try {
-    if (document.fullscreenElement === seatingFullscreenCanvas) {
-      await document.exitFullscreen();
-    } else {
-      await seatingFullscreenCanvas.requestFullscreen();
-    }
-  } catch(e) { toast('Full screen is not available in this browser.'); }
+  if (ipadPresentationTarget === seatingFullscreenCanvas) { exitIpadPresentation(); return; }
+  if (document.fullscreenElement === seatingFullscreenCanvas) { await document.exitFullscreen(); return; }
+  if (typeof seatingFullscreenCanvas.requestFullscreen === 'function') {
+    try { await seatingFullscreenCanvas.requestFullscreen(); return; } catch (_) { /* iPadOS fallback */ }
+  }
+  enterIpadPresentation(seatingFullscreenCanvas);
 });
 document.addEventListener('fullscreenchange',() => {
   if (document.fullscreenElement === seatingFullscreenCanvas) {
@@ -2979,5 +3021,6 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
   else if (!seen) { try { localStorage.setItem(SEEN_KEY,'1'); } catch (_) {} }
 })();
 </script>
+<button type="button" id="ipadExitPresentation" class="ipad-exit-presentation" aria-label="Exit student presentation">✕ Exit fullscreen</button>
 </body>
 </html>
