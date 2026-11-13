@@ -77,6 +77,15 @@ textarea { resize:vertical; min-height:90px; }
 .member-name { font-weight:700; overflow-wrap:anywhere; }
 .member { cursor:pointer; }
 .member:hover { border-color:var(--red); background:#fff8f8; }
+/* Fullscreen is a clean, read-only student presentation. */
+#groupsPage:fullscreen .groups-page-head,
+#groupsPage:fullscreen #groupStrategy,
+#groupsPage:fullscreen #strategyHelp,
+#groupsPage:fullscreen #balanceNote,
+#groupsPage:fullscreen .field { display:none!important; }
+#groupsPage:fullscreen .group-card { break-inside:avoid; }
+#groupsPage:fullscreen .member { cursor:default; pointer-events:none; }
+#groupsPage:fullscreen .member:hover { border-color:var(--line); background:white; }
 /* Fullscreen group display */
 #groupsPage:fullscreen {
   display: block !important;
@@ -194,16 +203,15 @@ textarea { resize:vertical; min-height:90px; }
 .desk-group.multi-selected { outline:3px solid #2459a9; outline-offset:2px; background:#dceafe; }
 .seating-marquee { position:absolute; z-index:50; pointer-events:none; border:2px dashed #2459a9; background:#2459a928; border-radius:3px; }
 /* Click two seats to swap students, including an occupied and empty seat. */
-body:not(.student-seating-view) .seating-room:not(:fullscreen) .desk { cursor:pointer; }
+body .seating-room:not(:fullscreen) .desk { cursor:pointer; }
 .desk.swap-selected { outline:3px solid #2459a9; outline-offset:-2px; background:#dbeafe; box-shadow:0 0 0 3px #2459a966; }
 
 .desk.empty-seat { color:#98a2b3; font-weight:400; }
 .desk-group .desk-delete { position:absolute; right:-7px; top:-9px; width:20px; height:20px;
   border-radius:50%; padding:0; background:#c63b46; color:white; z-index:2; }
-body.student-seating-view .desk-priority,
-body.student-seating-view .desk-delete { display:none!important; }
-body.student-seating-view #seatingPage .seating-controls > :not(#studentSeatingViewBtn):not(#printSeatingBtn):not(#seatingFullscreenBtn),\nbody.student-seating-view #templateControls { display:none!important; }
-body.student-seating-view .desk-group { cursor:default; }
+
+
+
 .desk-priority { position:absolute; left:5px; top:-25px; display:flex; align-items:center; gap:5px;
   padding:3px 7px; background:#172b4d; color:white; border-radius:7px 7px 0 0;
   font-size:10px; font-weight:700; cursor:default; }
@@ -330,6 +338,22 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
 .guide-progress { color:var(--blue); font-weight:800; font-size:12px; }
 .guide-target { position:relative; z-index:2; outline:4px solid var(--red)!important; outline-offset:5px; border-radius:9px; box-shadow:0 0 0 9px #c92e421a; }
 @media(max-width:700px) { .guide-dialog { left:12px; right:12px; bottom:12px; width:auto; max-height:43vh; } }
+
+/* Clear, responsive seating chart toolbar. */
+.seating-toolbar { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:16px 0 12px; }
+.seating-tool-section { min-width:0;background:#f7f9fd;border:1px solid var(--line);border-radius:13px;padding:14px; }
+.seating-tool-heading { display:flex;align-items:center;gap:9px;margin-bottom:12px; }
+.seating-tool-heading h3 { font-size:14px;color:var(--navy);margin:0; }
+.tool-number { background:var(--blue);color:white;border-radius:50%;width:23px;height:23px;display:grid;place-items:center;font-size:12px;font-weight:800; }
+.seating-tool-row { display:flex;align-items:flex-end;gap:9px;flex-wrap:wrap; }
+.seating-tool-row .field { min-width:135px;flex:1 1 145px;margin:0; }
+.seating-tool-row .strategy-field { flex:2 1 205px; }
+.seating-tool-row button { min-height:42px;white-space:nowrap; }
+.seating-tool-section .danger-outline { color:#ad2638; }
+.seating-present-section { grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;background:#eaf1fd; }
+.seating-present-section .seating-tool-heading { margin:0; }
+@media(max-width:950px){ .seating-toolbar { grid-template-columns:1fr; } }
+@media(max-width:600px){ .seating-tool-row button { flex:1 1 auto; } }
 </style>
 </head>
 <body>
@@ -518,26 +542,43 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
       <div class="btnrow"><label for="seatingClassSelect">Class</label>
         <select id="seatingClassSelect" style="width:auto;min-width:170px"></select></div>
     </div>
-    <div class="seating-controls" id="templateControls">
-      <div class="field"><label for="seatingTemplateSelect">Templates</label>
-        <select id="seatingTemplateSelect" style="min-width:190px"></select></div>
-      <button class="secondary" id="addSeatingTemplateBtn">＋ Add template</button>
-      <button class="secondary" id="renameSeatingTemplateBtn">Rename</button>
-      <button class="secondary" id="deleteSeatingTemplateBtn" style="color:#c63b46">Delete template</button>
-    </div>
-    <div class="seating-controls">
-      <div class="field"><label for="deskSize">Desk group</label>
-        <select id="deskSize"><option value="1">1 desk</option><option value="2">2 desks</option><option value="3">3 desks</option><option value="4">4 desks (2×2)</option></select></div>
-      <div class="field"><label for="deskOrientation">Orientation</label>
-        <select id="deskOrientation"><option value="row">Row (horizontal)</option><option value="column">Column (vertical)</option></select></div>
-      <button class="secondary" id="addDeskBtn">＋ Add desks</button>
-      <div class="field"><label for="seatingStrategy">Grouping strategy</label><select id="seatingStrategy"><option value="balanced">Balanced abilities</option><option value="random">Fully random</option><option value="similar">Similar abilities</option><option value="variety">New partners</option></select></div>
-      <button class="primary" id="populateDesksBtn">Populate desks</button>
-      <button class="secondary" id="clearStudentsBtn">Clear students</button>
-      <button class="secondary" id="clearDesksBtn">Clear desks</button>
-      <button class="secondary" id="studentSeatingViewBtn" aria-pressed="false">Student View</button>
-      <button class="secondary" id="seatingFullscreenBtn">⛶ Full screen</button>
-      <button class="secondary" id="printSeatingBtn">Print seating chart</button>
+    <div class="seating-toolbar">
+      <section class="seating-tool-section" aria-label="Seating chart templates">
+        <div class="seating-tool-heading"><span class="tool-number">1</span><h3>Layout templates</h3></div>
+        <div class="seating-tool-row" id="templateControls">
+          <div class="field"><label for="seatingTemplateSelect">Saved layout</label>
+            <select id="seatingTemplateSelect" style="min-width:180px"></select></div>
+          <button class="secondary" id="addSeatingTemplateBtn">＋ New</button>
+          <button class="secondary" id="renameSeatingTemplateBtn">Rename</button>
+          <button class="secondary danger-outline" id="deleteSeatingTemplateBtn">Delete template</button>
+        </div>
+      </section>
+      <section class="seating-tool-section" aria-label="Desk arrangement">
+        <div class="seating-tool-heading"><span class="tool-number">2</span><h3>Arrange desks</h3></div>
+        <div class="seating-tool-row">
+          <div class="field"><label for="deskSize">Desk group</label>
+            <select id="deskSize"><option value="1">1 desk</option><option value="2">2 desks</option><option value="3">3 desks</option><option value="4">4 desks (2×2)</option></select></div>
+          <div class="field"><label for="deskOrientation">Orientation</label>
+            <select id="deskOrientation"><option value="row">Row (horizontal)</option><option value="column">Column (vertical)</option></select></div>
+          <button class="secondary" id="addDeskBtn">＋ Add desks</button>
+          <button class="secondary danger-outline" id="clearDesksBtn">Clear desks</button>
+        </div>
+      </section>
+      <section class="seating-tool-section" aria-label="Assign students">
+        <div class="seating-tool-heading"><span class="tool-number">3</span><h3>Assign students</h3></div>
+        <div class="seating-tool-row">
+          <div class="field strategy-field"><label for="seatingStrategy">Grouping strategy</label><select id="seatingStrategy"><option value="balanced">Balanced abilities</option><option value="random">Fully random</option><option value="similar">Similar abilities</option><option value="variety">New partners</option></select></div>
+          <button class="primary" id="populateDesksBtn">Populate desks</button>
+          <button class="secondary" id="clearStudentsBtn">Clear students</button>
+        </div>
+      </section>
+      <section class="seating-tool-section seating-present-section" aria-label="Present or print seating chart">
+        <div class="seating-tool-heading"><h3>Present &amp; print</h3></div>
+        <div class="seating-tool-row">
+          <button class="primary" id="seatingFullscreenBtn">⛶ Student fullscreen</button>
+          <button class="secondary" id="printSeatingBtn">Print seating chart</button>
+        </div>
+      </section>
     </div>
     <div class="seating-note" id="seatingStatus">Add desks to create your classroom layout.</div>
     <div class="seating-scroll"><div class="seating-room" id="seatingRoom" aria-label="Draggable classroom desk layout"><div class="front-of-class">FRONT OF CLASS</div></div></div>
@@ -1939,7 +1980,7 @@ document.addEventListener('keydown', e => {
   }
 });
 function seatingEditable() {
-  return !document.fullscreenElement && !document.body.classList.contains('student-seating-view');
+  return !document.fullscreenElement;
 }
 function clearDeskGroupSelection() {
   selectedDeskGroups.clear();
@@ -1995,7 +2036,7 @@ $('seatingRoom').addEventListener('pointerdown',e => {
   room.addEventListener('pointercancel',end);
 });
 function swapSeatingSeats(groupId,seatIndex) {
-  if (document.fullscreenElement || document.body.classList.contains('student-seating-view')) return;
+  if (document.fullscreenElement) return;
   const chosen = {groupId,seatIndex,classId:current()?.id,templateId:db.activeSeatingTemplateId};
   if (pendingSeatSwap && (pendingSeatSwap.classId !== chosen.classId || pendingSeatSwap.templateId !== chosen.templateId))
     pendingSeatSwap = null;
@@ -2183,11 +2224,6 @@ $('addDeskBtn').addEventListener('click',() => {
   rememberSeatingEdit();
   layout.push(g);
   save(); renderSeating();
-});
-$('studentSeatingViewBtn').addEventListener('click',() => {
-  const enabled = document.body.classList.toggle('student-seating-view');
-  $('studentSeatingViewBtn').textContent = enabled ? 'Exit Student View' : 'Student View';
-  $('studentSeatingViewBtn').setAttribute('aria-pressed',String(enabled));
 });
 const seatingFullscreenCanvas = document.querySelector('#seatingPage .seating-scroll');
 function fitSeatingFullscreen() {
