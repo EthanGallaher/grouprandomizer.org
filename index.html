@@ -1612,8 +1612,8 @@ function fitGroupFullscreen() {
   const memberGap=Math.max(2,Math.min(7,ch*.015));
   const memberH=Math.max(8,(ch-titleH-padding*2-memberGap*(maxMembers-1))/maxMembers);
   const nameSize=Math.max(7,Math.min(34,memberH*.48,cw*.085));
-  const roleSize=Math.max(13,Math.min(20,nameSize*.65));
-  const roleWidth=Math.max(78,Math.min(cw*.31,118));
+  const roleSize=Math.max(15,Math.min(22,nameSize*.72));
+  const roleWidth=Math.max(90,Math.min(cw*.34,132));
   const roleHeight=Math.max(27,Math.min(54,memberH*.56));
   const vars={
     '--fg-outer':outer+'px','--fg-gap':gap+'px','--fg-cols':cols,'--fg-rows':rows,
@@ -1643,7 +1643,23 @@ function fitGroupFullscreen() {
       };
       // Role badges have a dedicated readable height. Fit to width, not the
       // badge's intrinsic text height (which previously shrank every role to ~8px).
-      fit(role,Math.max(8,role.clientWidth-12),Math.max(8,role.clientHeight-8),roleSize,Math.min(11,roleSize));
+      // The badge's scrollWidth includes padding. Comparing it against
+      // clientWidth minus padding made EVERY badge fail, shrinking labels to 11px.
+      // Measure the actual text instead, so short roles retain the full font size.
+      const label=role.textContent.trim();
+      const canvas=fitGroupFullscreen.measureCanvas||(fitGroupFullscreen.measureCanvas=document.createElement('canvas'));
+      const ctx=canvas.getContext('2d');
+      const cs=getComputedStyle(role);
+      const room=Math.max(8,role.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight)-2);
+      let size=roleSize;
+      const weight=cs.fontWeight||'800';
+      const family=cs.fontFamily||'system-ui';
+      while(size>11){
+        ctx.font=`${weight} ${size}px ${family}`;
+        if(ctx.measureText(label).width<=room)break;
+        size-=.5;
+      }
+      role.style.fontSize=size+'px';
       fit(name,Math.max(8,name.parentElement.clientWidth),Math.max(8,member.clientHeight-4),nameSize,Math.min(7,nameSize));
     });
   });
