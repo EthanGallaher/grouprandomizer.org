@@ -109,9 +109,9 @@ textarea { resize:vertical; min-height:90px; }
 .absent-sidebar {border:1px solid #f2c4c8;background:#fff7f8;border-radius:12px;padding:12px;min-width:0;}
 .absent-sidebar h3 {margin:0;font-size:15px;color:#a52d39;}
 .absent-student {display:block;width:100%;margin-top:7px;text-align:left;padding:9px;overflow-wrap:anywhere;font-size:13px;}
-#groupsPage:fullscreen .groups-shell {height:100%;min-height:0;grid-template-columns:minmax(0,1fr) minmax(125px,14vw);gap:8px;}
+#groupsPage:fullscreen .groups-shell {height:100%;min-height:0;grid-template-columns:minmax(0,1fr);gap:0;}
 #groupsPage:fullscreen .groups-shell > .groups {height:100%;min-height:0;}
-#groupsPage:fullscreen .absent-sidebar {height:100%;overflow:auto;padding:9px;}
+#groupsPage:fullscreen .absent-sidebar {display:none!important;}
 #groupsPage:fullscreen .absent-sidebar h3 {font-size:clamp(13px,1.4vw,20px);}
 #groupsPage:fullscreen .absent-student {font-size:clamp(11px,1vw,16px);}
 @media(max-width:700px){.groups-shell{grid-template-columns:1fr;}.absent-sidebar{order:-1;}}
@@ -1739,7 +1739,7 @@ function fitGroupFullscreen() {
   const cards=[...grid.querySelectorAll('.group-card')];
   if (!cards.length) return;
   const shell=page.querySelector('.groups-shell');
-  const n=cards.length, W=shell?.querySelector('.groups')?.clientWidth||page.clientWidth, H=page.clientHeight;
+  const n=cards.length, W=page.clientWidth, H=page.clientHeight;
   const outer=Math.max(5,Math.min(14,Math.round(Math.min(W,H)*.012)));
   const gap=Math.max(3,Math.min(10,Math.round(Math.min(W,H)*.008)));
   const availableW=W-2*outer, availableH=H-2*outer;
