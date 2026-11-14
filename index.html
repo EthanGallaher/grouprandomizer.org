@@ -7,8 +7,6 @@
 <title>Balanced Group Randomizer</title>
 <link rel="manifest" href="./manifest.webmanifest">
 <meta name="theme-color" content="#172b4d">
-<!-- Public OAuth Client ID (not a secret). Google account sign-in uses this client. -->
-<meta name="bgr-google-client-id" content="36100521309-g8m5ftgpu4722dj25r5oo9gm1brc9e0f.apps.googleusercontent.com">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
@@ -2254,15 +2252,6 @@ document.addEventListener('bgr:cloud-ready',googleIdentityControls);
 googleIdentityControls();
 $('googleLocalExportBtn').addEventListener('click',()=> $('exportBtn').click());
 $('googleLocalImportBtn').addEventListener('click',()=> $('importBtn').click());
-if (GOOGLE_CLIENT_ID) {
-  // Load the official Google Identity Services library. It is not used for student-data transfer.
-  const googleScript = document.createElement('script');
-  googleScript.src = 'https://accounts.google.com/gsi/client';
-  googleScript.async = true;
-  googleScript.onerror = () => googleIdentityStatus('Google sign-in could not load; you can continue using local mode.',true);
-  document.head.appendChild(googleScript);
-} else googleIdentityStatus('Google OAuth Client ID is not configured. Local mode still works.');
-googleIdentityControls();
 
 // Templates are shared between classes; student assignments belong to each class and template.
 function ensureSeatingTemplates() {
