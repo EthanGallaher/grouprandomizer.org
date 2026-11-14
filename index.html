@@ -412,6 +412,19 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
 .cloud-pair-code {font-size:clamp(27px,5vw,40px);font-weight:900;letter-spacing:.12em;color:var(--navy);margin:10px 0;text-align:center;font-variant-numeric:tabular-nums;}
 .cloud-danger {color:#ad2638!important;border-color:#e9bac4!important}
 @media(max-width:700px) { .cloud-sync-grid { grid-template-columns:1fr; } }
+.cloud-compact-head { justify-content:space-between; gap:12px; }
+.cloud-compact-head h2 { margin:0; }
+.cloud-info-btn {
+  width:34px;height:34px;min-width:34px;padding:0;border-radius:50%;
+  border:1px solid #a9bfdf;background:#eef4ff;color:var(--navy);
+  font-size:19px;font-weight:850;line-height:1;display:grid;place-items:center;
+}
+.cloud-info-btn:hover,.cloud-info-btn:focus-visible,.cloud-info-btn[aria-expanded="true"] {background:#dceaff;border-color:var(--blue);outline-offset:2px;}
+.cloud-info-btn.cloud-needs-attention { background:#fff2df;border-color:#d48b35;color:#7a4200;box-shadow:0 0 0 3px #f2c99055; }
+#cloudAdvancedContent[hidden] {display:none!important;}
+#cloudAdvancedContent {margin-top:12px;border-top:1px solid var(--line);padding-top:12px;}
+.cloud-advanced-intro .cloud-beta {display:inline-block;margin:0 0 6px;}
+
 
 /* iPadOS does not support requestFullscreen() for arbitrary page elements.
    This fixed-position presentation uses the same layout without the browser API. */
@@ -463,7 +476,7 @@ body.ipad-presentation .ipad-exit-presentation {display:block;}
     <button type="button" id="welcomeManual" class="welcome-choice"><strong>Create a class manually</strong><span>Name a new class and add students when you're ready.</span></button>
   </div>
   <div class="welcome-privacy"><strong><span aria-hidden="true">🔒</span> Your classroom data is stored locally by default</strong><p>Rosters, tiers, seating charts, and grouping settings are saved in this browser's local storage. Cloud sync is disabled until you explicitly enable it. If enabled, classroom records are encrypted inside this browser before being transferred to your Firebase cloud database. The decryption key stays on authorized devices; other devices must be approved once. Data may be lost if browser storage is cleared or the device is reset. Export backups to a school-approved secure location; backups contain student information. The feedback email opens your email app only when you choose to send it.</p></div>
-  <div class="welcome-footer"><button type="button" class="secondary" id="welcomeTutorial">Take the setup tutorial</button><button type="button" class="secondary" id="welcomeSkip">Skip for now</button></div>
+  <div class="welcome-footer"><button type="button" class="secondary" id="welcomeTutorial">Take the setup tutorial</button></div>
 </dialog>
 <dialog id="feedbackDialog" class="feedback-dialog" aria-labelledby="feedbackTitle">
   <h2 id="feedbackTitle">Report a problem or suggest an improvement</h2>
@@ -622,19 +635,28 @@ body.ipad-presentation .ipad-exit-presentation {display:block;}
 </section>
 </div>
 <section class="panel teacher-card cloud-card" id="googleCloudPanel" aria-label="Google and cloud sync beta">
-  <div class="cloud-head"><h2>Google Account &amp; Cloud Sync</h2><span class="cloud-beta">BETA · OPT-IN</span></div>
-  <p class="help">Sign in with Google once on each device. Your first device keeps a private encryption key; new devices are approved once from an existing device by matching an 8-digit code. No additional password is required. Your classes remain saved locally.</p>
-  <p class="cloud-warning"><strong>Use fictional student data for testing.</strong> Classroom records are encrypted before uploading; Firebase receives ciphertext, not readable rosters. Google sign-in is for account access, not the encryption key. To add an iPad, approve its pairing request on your Mac once. Losing every authorized device means losing access to encrypted cloud data. This beta is not security-audited or district-approved.</p>
+  <div class="cloud-head cloud-compact-head">
+    <h2>Google Account &amp; Cloud Sync</h2>
+    <button type="button" id="cloudInfoBtn" class="cloud-info-btn" aria-label="Show cloud sync details and controls" aria-expanded="false" aria-controls="cloudAdvancedContent" title="Cloud sync details, status, pairing and settings">?</button>
+  </div>
   <div class="cloud-controls" style="margin-top:11px">
     <button type="button" class="primary" id="googleConnectBtn">Connect Google account</button>
-    <button type="button" class="secondary hidden" id="googleDisconnectBtn">Disconnect Google</button>
-    <span class="help" id="googleAccountStatus">Not connected</span>
   </div>
-  <p class="cloud-sync-status" id="googleSyncStatus" role="status" aria-live="polite">Student data is stored only on this device. Cloud sync is off.</p>
-  <label class="cloud-test-confirm" style="display:flex;align-items:flex-start;gap:10px;margin:12px 0;padding:12px;border:1px solid #d5dfed;border-radius:10px;background:#f4f7fc">
+  <label class="cloud-test-confirm" style="display:flex;align-items:flex-start;gap:10px;margin:12px 0 4px;padding:12px;border:1px solid #d5dfed;border-radius:10px;background:#f4f7fc">
     <input id="cloudFictionalConfirm" type="checkbox" style="width:19px;height:19px;flex-shrink:0;margin-top:2px">
-    <span><strong>Enable fictional-data testing</strong><br><span class="help">I confirm that every name and record in this browser is invented and does not identify an actual student. This permits test names such as Apple, Banana, and Cherry without renaming them. Do not select for real student data.</span></span>
+    <span><strong>Enable fictional-data testing</strong><br><span class="help">I confirm that every name and record in this browser is invented and does not identify an actual student. Do not select for real student data.</span></span>
   </label>
+  <div id="cloudAdvancedContent" hidden>
+    <div class="cloud-advanced-intro">
+      <span class="cloud-beta">BETA · OPT-IN</span>
+      <p class="help">Sign in with Google once on each device. The first device keeps a private encryption key; new devices must be authorized once by matching an 8-digit code. Classroom data remains saved locally.</p>
+      <p class="cloud-warning"><strong>Use fictional student data for testing.</strong> Firebase receives encrypted classroom records, not readable rosters. Google sign-in is not the encryption key. If you lose every authorized device, encrypted cloud data may become inaccessible. This beta has not been security-audited or district-approved.</p>
+    </div>
+    <div class="cloud-controls" style="margin-top:11px">
+      <button type="button" class="secondary hidden" id="googleDisconnectBtn">Disconnect Google</button>
+      <span class="help" id="googleAccountStatus">Not connected</span>
+    </div>
+    <p class="cloud-sync-status" id="googleSyncStatus" role="status" aria-live="polite">Student data is stored only on this device. Cloud sync is off.</p>
   <div id="cloudPanelDetails" class="cloud-detail" aria-live="polite">
     <strong id="cloudModeLabel">Cloud sync is not configured</strong>
     <p class="help" id="cloudModeHelp">A Firebase project and secure Firestore rules are required before sync can be enabled.</p>
@@ -674,6 +696,7 @@ body.ipad-presentation .ipad-exit-presentation {display:block;}
       <button type="button" class="secondary" id="googleLocalExportBtn">Export local backup</button>
       <button type="button" class="secondary" id="googleLocalImportBtn">Import local backup</button>
     </div>
+  </div>
   </div>
 </section>
 </div>
@@ -782,7 +805,19 @@ body.ipad-presentation .ipad-exit-presentation {display:block;}
 <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 <div class="guide-overlay" id="guideOverlay" hidden><section class="guide-dialog" role="dialog" aria-modal="false" aria-labelledby="guideTitle"><div class="guide-progress" id="guideProgress"></div><h2 id="guideTitle"></h2><p id="guideText"></p><div class="btnrow" style="justify-content:flex-end"><button class="secondary" id="guideClose">Close</button><button class="secondary" id="guidePrev">Back</button><button class="primary" id="guideNext">Next</button></div></section></div>
 
-<script>window.__bgrHadPriorData = (() => { try { return localStorage.getItem('balancedGroupRandomizer.v1') !== null; } catch (_) { return true; } })();</script>
+<script>
+// Remember that onboarding started before the app writes its starter class.
+// The pending marker survives a service-worker reload and is cleared only by a deliberate choice.
+window.__bgrHadPriorData = (() => {
+  try {
+    const had = localStorage.getItem('balancedGroupRandomizer.v1') !== null;
+    if (!had && localStorage.getItem('balancedGroupRandomizer.welcomeSeen.v1') !== '1') {
+      localStorage.setItem('balancedGroupRandomizer.welcomePending.v1', '1');
+    }
+    return had;
+  } catch (_) { return true; }
+})();
+</script>
 <script src="./pdf.min.js"></script>
 <button type="button" id="ipadExitPresentation" class="ipad-exit-presentation" aria-label="Exit student presentation">✕ Exit fullscreen</button>
 <script>
@@ -2226,10 +2261,38 @@ $('restoreReplaceBtn').addEventListener('click', () => {
 // Identity-only Google pilot. Never upload class data or request Google Drive access.
 // This browser-only connection is a user-interface test, not authorization for a database.
 // Production sync will require an approved storage provider and server-verified credentials.
+// Normal view stays compact. All pairing, recovery, settings and status controls
+// remain in the DOM, available via the question-mark button.
+const cloudInfoButton = $('cloudInfoBtn');
+const cloudAdvancedContent = $('cloudAdvancedContent');
+let cloudAutoOpenedDetails = false;
+function setCloudDetailsOpen(open, automatic=false) {
+  cloudAdvancedContent.hidden = !open;
+  cloudInfoButton.setAttribute('aria-expanded', String(open));
+  cloudInfoButton.setAttribute('aria-label',open?'Hide cloud sync details and controls':'Show cloud sync details and controls');
+  cloudInfoButton.title = open?'Hide cloud sync details':'Cloud sync details, status, pairing and settings';
+  cloudAutoOpenedDetails = automatic && open;
+}
+cloudInfoButton.addEventListener('click', () => setCloudDetailsOpen(cloudAdvancedContent.hidden));
+document.addEventListener('bgr:cloud-attention', event => {
+  const kind=event.detail?.kind;
+  if(kind==='setup' || kind==='pair' || kind==='conflict' || kind==='pair-request') {
+    cloudInfoButton.classList.add('cloud-needs-attention');
+    setCloudDetailsOpen(true,true); // Required first-time setup, key pairing or conflict actions.
+    cloudInfoButton.title='Cloud sync needs attention — open details';
+  } else if(kind==='active') {
+    cloudInfoButton.classList.remove('cloud-needs-attention');
+    // Return to the compact view after an automatic first-time setup or pairing.
+    // Do not override details opened intentionally with the question-mark button.
+    if (cloudAutoOpenedDetails) setCloudDetailsOpen(false);
+  }
+});
+
 let googleIdentityBusy = false;
 function googleIdentityStatus(message, isError=false) {
   $('googleSyncStatus').textContent = message;
   $('googleSyncStatus').dataset.error = isError ? 'true' : 'false';
+  if (isError) setCloudDetailsOpen(true);
 }
 function googleIdentityControls() {
   const connected = !!window.BGRSync?.signedIn;
@@ -3108,7 +3171,7 @@ window.BGRSyncBridge = {
 </script>
 <!-- Optional Firebase sync module. If Firebase isn't configured, local-only app still works. -->
 <script src="./firebase-config.js"></script>
-<script type="module" src="./cloud-sync.js?v=43"></script>
+<script type="module" src="./cloud-sync.js?v=44"></script>
 <script>
 // Offer the native PWA install prompt when supported, otherwise explain the browser-specific steps.
 (() => {
@@ -3205,6 +3268,12 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
       document.getElementById('dismissUpdateBtn').addEventListener('click', () => { banner.hidden = true; });
       navigator.serviceWorker.addEventListener('controllerchange', () => {
         if (refreshing) return;
+        // A first-time visitor must finish or dismiss the welcome dialog first.
+        // Reloading while it is open can make the onboarding vanish unexpectedly.
+        if (document.getElementById('welcomeDialog')?.open) {
+          banner.hidden = false;
+          return;
+        }
         refreshing = true;
         window.location.reload();
       });
@@ -3269,15 +3338,20 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
 })();
 </script>
 <script>
-// First-launch guidance is separate from class data and never resets it.
+// First-launch onboarding: stay open until the visitor selects X or a setup action.
 (() => {
   const SEEN_KEY = 'balancedGroupRandomizer.welcomeSeen.v1';
-  const DATA_KEY = 'balancedGroupRandomizer.v1';
+  const PENDING_KEY = 'balancedGroupRandomizer.welcomePending.v1';
   const dialog = document.getElementById('welcomeDialog');
   const $ = id => document.getElementById(id);
+  let explicitlyClosed = false;
   function dismiss() {
-    try { localStorage.setItem(SEEN_KEY,'1'); } catch (_) {}
-    dialog.close();
+    explicitlyClosed = true;
+    try {
+      localStorage.setItem(SEEN_KEY, '1');
+      localStorage.removeItem(PENDING_KEY);
+    } catch (_) {}
+    if (dialog.open) dialog.close();
   }
   function focusSetup(targetId) {
     dismiss();
@@ -3288,25 +3362,30 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
       setTimeout(() => { try { target.focus({preventScroll:true}); } catch (_) { target.focus(); } }, 250);
     }
   }
-  $('welcomeClose').addEventListener('click',dismiss);
-  $('welcomeSkip').addEventListener('click',dismiss);
-  $('welcomeHelpBtn').addEventListener('click',() => dialog.showModal());
-  $('welcomePdf').addEventListener('click',() => focusSetup('classPdfUpload'));
-  $('welcomePaste').addEventListener('click',() => focusSetup('bulkNames'));
-  $('welcomeManual').addEventListener('click',() => focusSetup('newClassName'));
-  $('welcomeTutorial').addEventListener('click',() => { dismiss(); document.dispatchEvent(new Event('bgr:start-setup-guide')); });
-  dialog.addEventListener('close',() => {
-    try { localStorage.setItem(SEEN_KEY,'1'); } catch (_) {}
+  $('welcomeClose').addEventListener('click', dismiss);
+  $('welcomeHelpBtn').addEventListener('click', () => { if (!dialog.open) dialog.showModal(); });
+  $('welcomePdf').addEventListener('click', () => focusSetup('classPdfUpload'));
+  $('welcomePaste').addEventListener('click', () => focusSetup('bulkNames'));
+  $('welcomeManual').addEventListener('click', () => focusSetup('newClassName'));
+  $('welcomeTutorial').addEventListener('click', () => { dismiss(); document.dispatchEvent(new Event('bgr:start-setup-guide')); });
+  // Esc and browser-generated dismissal are NOT a visitor's selection.
+  dialog.addEventListener('cancel', event => event.preventDefault());
+  dialog.addEventListener('close', () => {
+    // Do not mark onboarding complete because of an unexpected programmatic close.
+    if (!explicitlyClosed) queueMicrotask(() => { if (!dialog.open) dialog.showModal(); });
   });
-  // Existing users should never be interrupted, including those with an empty starter class.
   const existing = window.__bgrHadPriorData !== false;
-  // The app creates its starter class during initialization; detect prior use from
-  // the saved data rather than treating that starter class as user onboarding.
-  // A separate marker is written on the first visit to prevent repeat prompts.
-  let seen = false;
-  try { seen = localStorage.getItem(SEEN_KEY) === '1'; } catch (_) {}
-  if (!seen && !existing) dialog.showModal();
-  else if (!seen) { try { localStorage.setItem(SEEN_KEY,'1'); } catch (_) {} }
+  let seen = false, pending = false;
+  try {
+    seen = localStorage.getItem(SEEN_KEY) === '1';
+    pending = localStorage.getItem(PENDING_KEY) === '1';
+  } catch (_) {}
+  if (!seen && (pending || !existing)) {
+    if (!dialog.open) dialog.showModal();
+  } else if (!seen && existing) {
+    // Long-time users with an existing classroom should not see first-run onboarding.
+    try { localStorage.setItem(SEEN_KEY, '1'); } catch (_) {}
+  }
 })();
 </script>
 

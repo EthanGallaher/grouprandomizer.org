@@ -52,11 +52,17 @@ function view(mode){
     $('cloudUseThisBtn').hidden=!!(bound&&bound!==user?.uid);
     $('cloudUseThisBtn').textContent=lastServer?'Replace encrypted cloud with this device':'Enable encrypted sync with this device';
   }
+  if(mode==='pair'||mode==='conflict'||(mode==='setup'&&user)) {
+    document.dispatchEvent(new CustomEvent('bgr:cloud-attention',{detail:{kind:mode}}));
+  } else if(mode==='active') {
+    document.dispatchEvent(new CustomEvent('bgr:cloud-attention',{detail:{kind:'active'}}));
+  }
 }
 function showPairHost(){
   const panel=$('cloudPairHostPanel');
   if(!user||!key||(!pairHost&&!pendingPairRequests.length)){panel.hidden=true;return;}
   panel.hidden=false;
+  document.dispatchEvent(new CustomEvent('bgr:cloud-attention',{detail:{kind:'pair-request'}}));
   const latest=pendingPairRequests[0];
   $('cloudPairReviewBtn').hidden=!!pairHost||!latest;
   $('cloudPairApproveBtn').hidden=!pairHost;
