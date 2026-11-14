@@ -1,0 +1,103 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function teacherOwner(uid) {
+      return request.auth != null
+        && request.auth.uid == uid
+        && request.auth.token.firebase.sign_in_provider == 'google.com';
+    }
+    match /teacherCloud/{teacherUid} {
+      function encryptedVault() {
+        return request.resource.data.keys().hasOnly(['schema','iv','ciphertext','revision','writer','updatedAt'])
+          && request.resource.data.keys().hasAll(['schema','iv','ciphertext','revision','writer','updatedAt'])
+          && request.resource.data.schema == 'bgr-e2ee-v1'
+          && request.resource.data.iv is string
+          && request.resource.data.iv.size() == 16
+          && request.resource.data.ciphertext is string
+          && request.resource.data.ciphertext.size() > 40
+          && request.resource.data.ciphertext.size() < 750000
+          && request.resource.data.writer is string
+          && request.resource.data.writer.size() < 100
+          && request.resource.data.revision is int
+          && request.resource.data.updatedAt == request.time;
+      }
+      allow get: if teacherOwner(teacherUid);
+      allow list: if false;
+      allow create: if teacherOwner(teacherUid)
+        && encryptedVault() && request.resource.data.revision == 1;
+      allow update: if teacherOwner(teacherUid)
+        && resource.data.schema == 'bgr-e2ee-v1'
+        && encryptedVault()
+        && request.resource.data.revision == resource.data.revision + 1;
+      allow delete: if teacherOwner(teacherUid);
+
+      // Only Google-authenticated owner can create and read device-pairing requests.
+      // Requests contain ephemeral ECDH public keys and an encrypted copy of the vault key;
+      // never store the vault key or any classroom data in plaintext here.
+      match /pairRequests/{requestId} {
+        function validPairFields() {
+          return request.resource.data.keys().hasOnly([
+              'schema','status','requester','requestPublicKey','hostPublicKey',
+              'envelope','createdAt','updatedAt'])
+            && request.resource.data.keys().hasAll([
+              'schema','status','requester','requestPublicKey','createdAt','updatedAt'])
+            && request.resource.data.schema == 1
+            && request.resource.data.status in ['pending','challenge','ready','complete']
+            && request.resource.data.requester is string
+            && request.resource.data.requester.size() <= 64
+            && request.resource.data.requestPublicKey is string
+            && request.resource.data.requestPublicKey.size() >= 80
+            && request.resource.data.requestPublicKey.size() <= 150
+            && request.resource.data.updatedAt == request.time;
+        }
+        function hasPublicKey() {
+          return request.resource.data.keys().hasAny(['hostPublicKey'])
+            && request.resource.data.hostPublicKey is string
+            && request.resource.data.hostPublicKey.size() >= 80
+            && request.resource.data.hostPublicKey.size() <= 150;
+        }
+        function hasEnvelope() {
+          return request.resource.data.keys().hasAny(['envelope'])
+            && request.resource.data.envelope is map
+            && request.resource.data.envelope.keys().hasOnly(['iv','ciphertext'])
+            && request.resource.data.envelope.keys().hasAll(['iv','ciphertext'])
+            && request.resource.data.envelope.iv is string
+            && request.resource.data.envelope.iv.size() == 16
+            && request.resource.data.envelope.ciphertext is string
+            && request.resource.data.envelope.ciphertext.size() >= 60
+            && request.resource.data.envelope.ciphertext.size() <= 100;
+        }
+        function stageTransition() {
+          return (resource.data.status == 'pending'
+                  && request.resource.data.status == 'challenge'
+                  && hasPublicKey()
+                  && !request.resource.data.keys().hasAny(['envelope']))
+              || (resource.data.status == 'challenge'
+                  && request.resource.data.status == 'ready'
+                  && hasPublicKey() && hasEnvelope()
+                  && request.resource.data.hostPublicKey == resource.data.hostPublicKey)
+              || (resource.data.status == 'ready'
+                  && request.resource.data.status == 'complete'
+                  && hasPublicKey() && hasEnvelope()
+                  && request.resource.data.hostPublicKey == resource.data.hostPublicKey
+                  && request.resource.data.envelope == resource.data.envelope);
+        }
+        allow get, list: if teacherOwner(teacherUid);
+        allow create: if teacherOwner(teacherUid)
+          && exists(/databases/$(database)/documents/teacherCloud/$(teacherUid))
+          && request.resource.data.keys().size() == 6
+          && validPairFields()
+          && request.resource.data.status == 'pending'
+          && request.resource.data.createdAt == request.time;
+        allow update: if teacherOwner(teacherUid)
+          && validPairFields()
+          && request.resource.data.createdAt == resource.data.createdAt
+          && request.resource.data.requester == resource.data.requester
+          && request.resource.data.requestPublicKey == resource.data.requestPublicKey
+          && request.time < resource.data.createdAt + duration.value(10,'m')
+          && stageTransition();
+        allow delete: if teacherOwner(teacherUid);
+      }
+    }
+  }
+}
