@@ -861,19 +861,34 @@ function toast(message) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => $('toast').classList.add('hidden'), 2600);
 }
+// The chosen class is a personal viewing preference, not a shared classroom edit.
+// Compare persisted classroom CONTENT before notifying cloud sync. This also
+// prevents harmless re-saves of unchanged data from causing false conflicts.
+function cloudContentString(record) {
+  const copy = {...record};
+  delete copy.activeId;
+  return JSON.stringify(copy);
+}
 function save() {
   try {
-    localStorage.setItem(KEY, JSON.stringify(db));
-    // Persist unsynced-change marker even when offline, Firebase has not loaded,
-    // or the page closes before the debounce timer fires.
-    const owner = localStorage.getItem('bgr.cloud.boundAccount');
-    if (owner) {
-      const syncKey = 'bgr.cloud.syncState.' + owner;
-      try { const state = JSON.parse(localStorage.getItem(syncKey) || '{}');
-        if (state.enabled) {state.dirty = true; localStorage.setItem(syncKey, JSON.stringify(state));}
-      } catch (_) {}
+    const previous = localStorage.getItem(KEY);
+    let classroomChanged = true;
+    if (previous !== null) {
+      try { classroomChanged = cloudContentString(JSON.parse(previous)) !== cloudContentString(db); }
+      catch (_) { classroomChanged = true; }
     }
-    document.dispatchEvent(new Event('bgr:local-save'));
+    localStorage.setItem(KEY, JSON.stringify(db));
+    if (classroomChanged) {
+      // Persist unsynced-change marker even offline or if the page closes early.
+      const owner = localStorage.getItem('bgr.cloud.boundAccount');
+      if (owner) {
+        const syncKey = 'bgr.cloud.syncState.' + owner;
+        try { const state = JSON.parse(localStorage.getItem(syncKey) || '{}');
+          if (state.enabled) {state.dirty = true; localStorage.setItem(syncKey, JSON.stringify(state));}
+        } catch (_) {}
+      }
+      document.dispatchEvent(new Event('bgr:local-save'));
+    }
     $('saveState').textContent = '✓ Saved on this device';
     updateBackupStatus();
   } catch(e) {
@@ -3080,7 +3095,9 @@ window.BGRSyncBridge = {
   backup: (label = 'bgr-local-before-cloud-restore') => downloadBackup(db,label),
   apply: (snapshot) => {
     const next = validateBackup(JSON.parse(JSON.stringify(snapshot)));
+    const deviceSelectedClass = db.activeId;
     db = next;
+    if (db.classes.some(c => c.id === deviceSelectedClass)) db.activeId = deviceSelectedClass;
     if (!db.classes.some(c => c.id === db.activeId)) db.activeId = db.classes[0]?.id || null;
     groups=[]; absentIds=new Set(); absentOrigins=new Map();
     syncRolesAcrossClasses(); save(); render();
@@ -3091,7 +3108,7 @@ window.BGRSyncBridge = {
 </script>
 <!-- Optional Firebase sync module. If Firebase isn't configured, local-only app still works. -->
 <script src="./firebase-config.js"></script>
-<script type="module" src="./cloud-sync.js?v=42"></script>
+<script type="module" src="./cloud-sync.js?v=43"></script>
 <script>
 // Offer the native PWA install prompt when supported, otherwise explain the browser-specific steps.
 (() => {

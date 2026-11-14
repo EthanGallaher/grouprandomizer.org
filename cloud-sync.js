@@ -66,10 +66,30 @@ function showPairHost(){
     ?'Compare this 8-digit number with the new device. Only approve if BOTH screens match and you initiated the pairing.'
     :`New device asking for access: ${latest?.requester||'Unidentified device'}. Verify it belongs to you before proceeding.`;
 }
-async function localFingerprint(){
-  const bytes=new TextEncoder().encode(JSON.stringify(bridge.read()));
+async function fingerprintFor(snapshot, includeSelection=false){
+  const stable={...snapshot};
+  if(!includeSelection)delete stable.activeId;
+  const bytes=new TextEncoder().encode(JSON.stringify(stable));
   const digest=await crypto.subtle.digest('SHA-256',bytes);
   return Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');
+}
+async function localFingerprint(){return fingerprintFor(bridge.read());}
+async function migrateLegacyFingerprint(){
+  if(!state.fingerprint||state.fingerprintFormat==='content-v2')return;
+  const snapshot=bridge.read();
+  // v42 hashed activeId. Check every existing class as the previous selection;
+  // if one matches exactly, only navigation changed and there are no unsynced edits.
+  const selections=[snapshot.activeId,null,...snapshot.classes.map(c=>c.id)];
+  for(const selected of new Set(selections)){
+    if(await fingerprintFor({...snapshot,activeId:selected},true)===state.fingerprint){
+      state.fingerprint=await fingerprintFor(snapshot);
+      state.fingerprintFormat='content-v2';
+      state.dirty=false;
+      persist();
+      return;
+    }
+  }
+  // Unknown differences must continue to be treated as unsynced edits.
 }
 function metaKey(){return STATE_PREFIX+user.uid;}
 function readState(){try{return {...{enabled:false,rev:0,dirty:false},...JSON.parse(localStorage.getItem(metaKey())||'{}')};}catch(_){return {enabled:false,rev:0,dirty:false};}}
@@ -128,7 +148,7 @@ async function applyRemote(remote,backup=true,guard=null){
   if(backup)bridge.backup('bgr-local-before-encrypted-cloud-restore');
   skipLocalSave=true;
   try {bridge.apply(parsed);}finally{skipLocalSave=false;}
-  state.rev=remote.revision;state.dirty=false;state.fingerprint=await localFingerprint();persist();
+  state.rev=remote.revision;state.dirty=false;state.fingerprint=await localFingerprint();state.fingerprintFormat='content-v2';persist();
 }
 function markConflict(message){
   conflict=true;active=false;clearTimeout(debounce);stopAutoChecks();
@@ -176,7 +196,7 @@ async function push(){
     });
     if(!user||user.uid!==owner||guardEpoch!==epoch)return;
     succeeded=true;state.rev=expected+1;state.dirty=JSON.stringify(bridge.read())!==before;
-    if(!state.dirty)state.fingerprint=await localFingerprint();
+    if(!state.dirty){state.fingerprint=await localFingerprint();state.fingerprintFormat='content-v2';}
     persist();showActive();
   }catch(err){
     if(!user||user.uid!==owner||guardEpoch!==epoch)return;
@@ -205,7 +225,9 @@ async function received(remote){
       markConflict('Local classes changed since the last upload; the cloud version was not allowed to overwrite them.');return;
     }
     const guard={owner,epoch:guardEpoch,rev:state.rev,fingerprint};
-    await applyRemote(remote,true,guard);
+    // Routine autosync replaces only a verified, clean local revision.
+    // Never trigger a plaintext JSON download for every incoming change (especially on iOS).
+    await applyRemote(remote,false,guard);
     if(active&&user?.uid===owner&&epoch===guardEpoch)showActive();
   }catch(err){
     if(user?.uid===owner&&epoch===guardEpoch)markConflict('Cannot safely restore this cloud revision: '+err.message);
@@ -281,6 +303,7 @@ async function loadAccount(){
     const remote=cloudData(await getDocFromServer(doc(firestore,'teacherCloud',owner)));
     if(!user||user.uid!==owner||guardEpoch!==epoch)return;
     key=loadedKey;lastServer=remote;
+    await migrateLegacyFingerprint();
     if(remote&&!key){pairReadyView();return;}
     if(remote&&key)await parseRemote(remote); // Fail closed if the local key is wrong.
     if(key)watchPairRequests(owner);
@@ -302,8 +325,8 @@ async function loadAccount(){
       }
       if(remote){
         // Reconnect to the latest cloud revision on every Google sign-in.
-        // A local backup is saved if the cloud revision differs from this device's last revision.
-        await applyRemote(remote,remote.revision!==state.rev);
+        // No downloadable plaintext backup is needed for a verified clean auto-refresh.
+        await applyRemote(remote,false);
         showActive();listen();return;
       }
       if(state.rev>0){markConflict('Encrypted cloud copy has disappeared. Automatic upload is paused.');return;}
