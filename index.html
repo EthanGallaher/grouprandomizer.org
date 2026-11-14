@@ -393,7 +393,7 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
 .welcome-privacy p {font-size:12px;margin:6px 0 0;}
 @media(max-width:600px) {.welcome-dialog {padding:16px;}.welcome-dialog h2 {font-size:21px;}}
 
-/* Optional encrypted Google Drive backups. Student information never appears in HTML attributes. */
+/* Optional Google account pilot. No student data is transferred to cloud storage. */
 .cloud-card { border-top-color:#1856ad; }
 .cloud-head { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
 .cloud-head h2 { margin:0; }
@@ -459,7 +459,7 @@ body.ipad-presentation .ipad-exit-presentation {display:block;}
     <button type="button" id="welcomePaste" class="welcome-choice"><strong>Paste a student roster</strong><span>Add student names to the selected class, one per line.</span></button>
     <button type="button" id="welcomeManual" class="welcome-choice"><strong>Create a class manually</strong><span>Name a new class and add students when you're ready.</span></button>
   </div>
-  <div class="welcome-privacy"><strong><span aria-hidden="true">🔒</span> Your data stays local unless you opt into encrypted Google Drive backups</strong><p>Rosters, tiers, seating charts, and grouping settings are saved in this browser's local storage. The app does not automatically upload them to a cloud account. If you use Google Drive Sync, backups are encrypted locally using an app-specific passkey before upload. Optional auto-save only operates while unlocked and explicitly enabled. Data may be lost if browser storage is cleared or the device is reset. Export backups to a school-approved secure location; backups contain student information. The feedback email opens your email app only when you choose to send it.</p></div>
+  <div class="welcome-privacy"><strong><span aria-hidden="true">🔒</span> Your classroom data stays on this device</strong><p>Rosters, tiers, seating charts, and grouping settings are saved in this browser's local storage. The app does not automatically upload them to a cloud account. Google account connection does not upload or synchronize classroom information. Data may be lost if browser storage is cleared or the device is reset. Export backups to a school-approved secure location; backups contain student information. The feedback email opens your email app only when you choose to send it.</p></div>
   <div class="welcome-footer"><button type="button" class="secondary" id="welcomeTutorial">Take the setup tutorial</button><button type="button" class="secondary" id="welcomeSkip">Skip for now</button></div>
 </dialog>
 <dialog id="feedbackDialog" class="feedback-dialog" aria-labelledby="feedbackTitle">
@@ -615,46 +615,28 @@ body.ipad-presentation .ipad-exit-presentation {display:block;}
   <p class="help">Replacing restores all settings and classes from the backup. A safety copy of your current data will download first.</p>
 </div>
 <button class="secondary" id="privacyBtn" style="margin-top:10px">Privacy &amp; data controls</button>
-<div id="privacyPanel" class="privacy-panel hidden" style="margin-top:12px"><strong>Local-first storage</strong><p>Class names, student names, performance tiers, source names from PDF imports, separation rules, and seating assignments are saved in this browser's local storage. The app processes rosters locally; Google Drive Sync uploads only passkey-encrypted snapshots to the selected Google account’s app-data folder, and Google receives associated file metadata. Passkey-derived encryption keys are not uploaded. Losing the passkey can make backups unrecoverable. The PDF reader is bundled with the app and PDF parsing occurs in the browser. Other browser extensions or users of this browser profile may be able to access local data. Backups contain student information and must be stored securely. Clearing browser data can erase your classes. Teachers should follow their school’s applicable student-data privacy and technology policies.</p><button class="secondary" id="clearAllDataBtn" style="color:#b42332">Delete all local class data</button></div>
+<div id="privacyPanel" class="privacy-panel hidden" style="margin-top:12px"><strong>Local-first storage</strong><p>Class names, student names, performance tiers, source names from PDF imports, separation rules, and seating assignments are saved in this browser's local storage. The Google account pilot only requests basic identity information (your email address and profile); it does not send rosters, rankings, class settings or seating charts to Google Drive or to an application server. Your Google account connection is only active for this page session. The PDF reader is bundled with the app and PDF parsing occurs in the browser. Other browser extensions or users of this browser profile may be able to access local data. Backups contain student information and must be stored securely. Clearing browser data can erase your classes. Teachers should follow their school’s applicable student-data privacy and technology policies.</p><button class="secondary" id="clearAllDataBtn" style="color:#b42332">Delete all local class data</button></div>
 </section>
 </div>
-<section class="panel teacher-card cloud-card" id="googleCloudPanel" aria-label="Passwordless encrypted Google Drive backups">
-  <div class="cloud-head"><h2>Google Drive Sync</h2><span class="cloud-beta">PILOT · PASSKEY ENCRYPTION</span></div>
-  <p class="help">Sign in with Google, then use an app-specific passkey (Touch ID, Face ID, or your device's unlock) to encrypt and unlock backups. <strong>No separate app password.</strong> Encryption and grouping stay in your browser; only encrypted snapshots go to the teacher's Google Drive.</p>
-  <p class="cloud-warning">Use fictional students until district approval. This pilot requires a passkey provider that supports WebAuthn PRF and makes the same passkey available on your other devices. If the passkey is lost or unavailable, cloud backups cannot be decrypted. Google sign-in alone cannot recover them.</p>
+<section class="panel teacher-card cloud-card" id="googleCloudPanel" aria-label="Google account pilot">
+  <div class="cloud-head"><h2>Google Account</h2><span class="cloud-beta">DISTRICT PILOT · LOCAL DATA ONLY</span></div>
+  <p class="help">Try connecting a Google account without any additional passcode. This stage checks Google authorization only. <strong>Signing in does not back up, transfer, or synchronize your classes.</strong></p>
+  <p class="cloud-warning">Use fictional students while testing. All student names, rankings, grouping rules and seating charts remain in local browser storage. Do not treat this as an approved cloud-storage service.</p>
   <div class="cloud-controls" style="margin-top:11px">
-    <button type="button" class="primary" id="googleConnectBtn">Connect Google Drive</button>
-    <button type="button" class="secondary hidden" id="googleDisconnectBtn">Disconnect</button>
+    <button type="button" class="primary" id="googleConnectBtn">Connect Google account</button>
+    <button type="button" class="secondary hidden" id="googleDisconnectBtn">Disconnect Google</button>
     <span class="help" id="googleAccountStatus">Not connected</span>
   </div>
-  <p class="cloud-sync-status" id="googleSyncStatus" role="status" aria-live="polite">No cloud access until you connect.</p>
-  <div class="cloud-step" style="margin:12px 0" aria-label="Passkey setup and unlock">
-    <h3>1. Secure with your device's passkey</h3>
-    <p class="help" id="cloudPasskeyHelp">Connect Google first to check for a passkey vault.</p>
+  <p class="cloud-sync-status" id="googleSyncStatus" role="status" aria-live="polite">No Google account connected. Your existing classes remain on this device.</p>
+  <div class="cloud-step" style="margin-top:12px">
+    <h3>Move your data safely for now</h3>
+    <p class="help">Until the district approves a cloud-storage design, use the existing local backup and restore controls. Backups contain identifiable student data; store them only where your district permits.</p>
     <div class="btnrow" style="margin-top:10px">
-      <button type="button" class="primary hidden" id="cloudPasskeySetupBtn">Create passkey vault</button>
-      <button type="button" class="primary hidden" id="cloudPasskeyUnlockBtn">Unlock with passkey</button>
+      <button type="button" class="secondary" id="googleLocalExportBtn">Export local backup</button>
+      <button type="button" class="secondary" id="googleLocalImportBtn">Import local backup</button>
     </div>
   </div>
-  <div class="cloud-sync-grid">
-    <section class="cloud-step" aria-label="Save an encrypted backup">
-      <h3>2. Save encrypted backup</h3>
-      <p class="help">Save a dated, passkey-encrypted snapshot. Earlier snapshots remain unchanged. Cloud uploads only start after you choose to save.</p>
-      <button type="button" class="primary" id="cloudSaveBtn" disabled>Save encrypted backup</button>
-      <div class="field" style="margin-top:13px">
-        <label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0"><input type="checkbox" id="cloudAutoSave" style="width:auto" disabled> Auto-save changes while connected</label>
-        <p class="help">Available after your first save or restore. Stops if newer changes appear from another device, or Google authorization expires.</p>
-      </div>
-    </section>
-    <section class="cloud-step" aria-label="Restore an encrypted backup">
-      <h3>3. Restore on another device</h3>
-      <button type="button" class="secondary" id="cloudListBtn" disabled>Find my backups</button>
-      <div class="field"><label for="cloudBackupSelect">Choose backup snapshot</label><select id="cloudBackupSelect" disabled><option>Connect and unlock first</option></select></div>
-      <button type="button" class="primary" id="cloudRestoreBtn" disabled>Decrypt &amp; review restore</button>
-      <p class="help">Restoring requires your confirmation and keeps a downloadable safety copy of existing local data.</p>
-    </section>
-  </div>
-  <p class="help" style="margin-top:10px">This is an experimental feature, not certified for student records. Avoid clearing or losing all your synced passkeys. Export a local backup to a school-approved secure location while testing.</p>
+  <p class="help" style="margin-top:10px">Future release: Google sign-in with district-approved automatic synchronization, conflict protection, and deletion controls. Nothing is uploaded by this pilot.</p>
 </section>
 </div>
 </div>
@@ -846,7 +828,6 @@ function save() {
     localStorage.setItem(KEY, JSON.stringify(db));
     $('saveState').textContent = '✓ Saved on this device';
     updateBackupStatus();
-    window.__bgrCloudLocalChanged?.();
   } catch(e) {
     $('saveState').textContent = 'Could not save — export a backup';
   }
@@ -2130,13 +2111,11 @@ $('exportBtn').addEventListener('click', () => {
 });
 $('importBtn').addEventListener('click', () => $('importFile').click());
 function closeRestorePreview() {
-  window.__bgrCloudDiscardPreview?.();
   pendingRestore = null;
   $('restorePreview').classList.add('hidden');
 }
 $('restoreCancelBtn').addEventListener('click',closeRestorePreview);
 $('importFile').addEventListener('change', async e => {
-  window.__bgrCloudDiscardPreview?.();
   const file = e.target.files[0];
   e.target.value = '';
   if (!file) return;
@@ -2166,7 +2145,7 @@ $('restoreMergeBtn').addEventListener('click', () => {
   });
   syncRolesAcrossClasses();
   save(); render();
-  window.__bgrCloudRestoreCompleted?.(); closeRestorePreview();
+  closeRestorePreview();
   toast('Classes added. Existing classes preserved.');
 });
 $('restoreReplaceBtn').addEventListener('click', () => {
@@ -2177,378 +2156,89 @@ $('restoreReplaceBtn').addEventListener('click', () => {
   if (!db.classes.some(c => c.id === db.activeId)) db.activeId = db.classes[0]?.id || null;
   syncRolesAcrossClasses();
   save(); render();
-  window.__bgrCloudRestoreCompleted?.(); closeRestorePreview();
+  closeRestorePreview();
   toast('Backup restored. A safety copy of previous data was downloaded.');
 });
 
-// Passwordless encrypted Google Drive pilot. Google OAuth only authorizes Drive.
-// An app-specific WebAuthn passkey with PRF derives the AES key in this browser.
-// The key is not written to Google Drive, localStorage, or the application server.
-const CLOUD_CLIENT_ID = (document.querySelector('meta[name="bgr-google-client-id"]')?.content || '').trim();
-const CLOUD_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
-const CLOUD_PROFILE_NAME = 'bgr-passkey-profile-v1.json';
-const CLOUD_PREFIX = 'bgr-passkey-classroom-v1-';
-const CLOUD_FORMAT = 'bgr-passkey-classroom';
-const CLOUD_CONTEXT = new TextEncoder().encode('Balanced Group Randomizer passkey vault v1');
-let cloudToken = '', cloudExpiresAt = 0, cloudTokenClient = null, cloudSdkPromise = null;
-let cloudBusy = false, cloudProfile = null, cloudProfileFileId = null, cloudKey = null;
-let cloudBackups = [], cloudLastSyncedId = null, cloudAutoEnabled = false, cloudSyncTimer = null;
-let cloudPendingRestoreId = null, cloudSyncInFlight = false, cloudDirty = false, cloudChangeSequence = 0;
-function cloudStatus(message, isError=false) {
+// Identity-only Google pilot. Never upload class data or request Google Drive access.
+// This browser-only connection is a user-interface test, not authorization for a database.
+// Production sync will require an approved storage provider and server-verified credentials.
+const GOOGLE_CLIENT_ID = (document.querySelector('meta[name="bgr-google-client-id"]')?.content || '').trim();
+const GOOGLE_IDENTITY_SCOPE = 'openid email profile';
+let googleAccessToken = '', googleIdentityTokenClient = null, googleIdentityBusy = false;
+function googleIdentityStatus(message, isError=false) {
   $('googleSyncStatus').textContent = message;
   $('googleSyncStatus').dataset.error = isError ? 'true' : 'false';
 }
-function cloudReady() { return !!cloudToken && Date.now() < cloudExpiresAt; }
-function cloudControls() {
-  const ready=cloudReady(), unlocked=!!cloudKey;
-  $('googleConnectBtn').textContent=ready?'Switch Google account':'Connect Google Drive';
-  $('googleDisconnectBtn').classList.toggle('hidden',!ready);
-  $('googleAccountStatus').textContent=!ready?'Not connected':unlocked?'Passkey unlocked · encrypted sync ready':'Drive connected · passkey locked';
-  $('cloudPasskeySetupBtn').disabled=!ready||cloudBusy||!!cloudProfile;
-  $('cloudPasskeyUnlockBtn').disabled=!ready||cloudBusy||!cloudProfile;
-  $('cloudPasskeySetupBtn').classList.toggle('hidden',!ready||!!cloudProfile);
-  $('cloudPasskeyUnlockBtn').classList.toggle('hidden',!ready||!cloudProfile||unlocked);
-  $('cloudSaveBtn').disabled=!ready||!unlocked||cloudBusy;
-  $('cloudListBtn').disabled=!ready||!unlocked||cloudBusy;
-  $('cloudBackupSelect').disabled=!ready||!unlocked||cloudBusy||!cloudBackups.length;
-  $('cloudRestoreBtn').disabled=!ready||!unlocked||cloudBusy||!cloudBackups.length;
-  $('googleConnectBtn').disabled=!CLOUD_CLIENT_ID||cloudBusy;
-  $('googleDisconnectBtn').disabled=cloudBusy;
-  $('cloudAutoSave').disabled=!ready||!unlocked||cloudBusy||!cloudLastSyncedId;
-  if(!cloudBusy) $('cloudAutoSave').checked=cloudAutoEnabled;
-  $('cloudPasskeyHelp').textContent = !ready ? 'Connect Google first to check for a passkey vault.'
-    : !cloudProfile ? 'No passkey vault found. Create one on your first trusted device.'
-    : unlocked ? 'Unlocked for this session. Your passkey remains in your device password manager.'
-    : 'Unlock using the passkey you created previously. On another device, it must be synced or available for cross-device authentication.';
+function googleIdentityControls() {
+  $('googleConnectBtn').disabled = !GOOGLE_CLIENT_ID || googleIdentityBusy;
+  $('googleConnectBtn').textContent = googleAccessToken ? 'Switch Google account' : 'Connect Google account';
+  $('googleDisconnectBtn').classList.toggle('hidden', !googleAccessToken);
 }
-function cloudClearSyncTimer() { if(cloudSyncTimer) clearTimeout(cloudSyncTimer); cloudSyncTimer=null; }
-function cloudForgetSession() {
-  cloudClearSyncTimer();
-  cloudToken=''; cloudExpiresAt=0; cloudKey=null; cloudProfile=null; cloudProfileFileId=null;
-  cloudAutoEnabled=false; cloudDirty=false; cloudLastSyncedId=null; cloudPendingRestoreId=null;
-  cloudBackups=[];
-  $('cloudBackupSelect').replaceChildren(new Option('Connect and unlock first',''));
-  cloudControls();
+function googleIdentityEnd() {
+  googleAccessToken = '';
+  $('googleAccountStatus').textContent = 'Not connected';
+  googleIdentityControls();
 }
-async function cloudLoadSdk() {
-  if(window.google?.accounts?.oauth2) return;
-  if(!cloudSdkPromise) cloudSdkPromise = new Promise((resolve,reject)=>{
-    const script=document.createElement('script');
-    script.src='https://accounts.google.com/gsi/client';script.async=true;
-    script.onload=()=>window.google?.accounts?.oauth2?resolve():reject(new Error('Google sign-in did not initialize.'));
-    script.onerror=()=>reject(new Error('Could not load Google sign-in. Check your network.'));
-    document.head.appendChild(script);
-  }).catch(e=>{cloudSdkPromise=null;throw e;});
-  await cloudSdkPromise;
-}
-function cloudConnect() {
-  if(!CLOUD_CLIENT_ID) {cloudStatus('The website owner must configure the public Google OAuth Client ID.',true);return;}
-  if(location.protocol!=='https:'&&location.hostname!=='localhost') {cloudStatus('Open the deployed HTTPS website for Google sign-in and passkeys.',true);return;}
-  if(!window.google?.accounts?.oauth2) {
-    cloudStatus('Loading Google sign-in. Select Connect again when it is ready.');
-    cloudLoadSdk().then(()=>cloudStatus('Google sign-in is ready. Select Connect again.')).catch(e=>cloudStatus(e.message,true));
-    return;
-  }
-  try {
-    if(!cloudTokenClient) cloudTokenClient=google.accounts.oauth2.initTokenClient({
-      client_id:CLOUD_CLIENT_ID,scope:CLOUD_SCOPE,
-      callback: async response=>{
-        if(!response?.access_token||response.error||!google.accounts.oauth2.hasGrantedAllScopes(response,CLOUD_SCOPE)) {
-          cloudForgetSession();cloudStatus('Google Drive permission was not granted.',true);return;
-        }
-        cloudForgetSession();
-        cloudToken=response.access_token;
-        cloudExpiresAt=Date.now()+Math.max(0,Number(response.expires_in||3600)-60)*1000;
-        cloudBusy=true;cloudControls();cloudStatus('Connected. Checking this Google account for a passkey vault…');
-        try {
-          const found=await cloudListByName(CLOUD_PROFILE_NAME);
-          if(found.length>1) throw new Error('Multiple passkey vault profiles were found. No changes made. Contact the developer.');
-          if(found.length){
-            cloudProfileFileId=found[0].id;
-            const profileText=await cloudGetFile(cloudProfileFileId);
-            const profile=JSON.parse(profileText);
-            if(!cloudValidProfile(profile)) throw new Error('The stored passkey vault profile is invalid.');
-            cloudProfile=profile;
-            cloudStatus('Google Drive connected. Select Unlock with passkey to access encrypted backups.');
-          } else {
-            cloudStatus('Google Drive connected. Select Create passkey vault to start encrypted backups.');
-          }
-        } catch(e) {cloudStatus(e.message||'Could not check Drive for a passkey profile.',true);}
-        finally {cloudBusy=false;cloudControls();}
-      },
-      error_callback:()=>cloudStatus('Google authorization was cancelled or blocked.',true)
-    });
-    cloudTokenClient.requestAccessToken({prompt:'select_account'});
-  } catch(_) { cloudStatus('Could not open Google sign-in. Check OAuth settings.',true); }
-}
-$('googleConnectBtn').addEventListener('click',cloudConnect);
-$('googleDisconnectBtn').addEventListener('click',()=>{
-  const token=cloudToken;cloudForgetSession();
-  if(token&&window.google?.accounts?.oauth2) google.accounts.oauth2.revoke(token,()=>{});
-  cloudStatus('Disconnected. Local classes remain available; cloud files were not deleted.');
-});
-async function cloudApi(url,options={}) {
-  if(!cloudReady()) {cloudForgetSession();throw new Error('Google authorization expired. Reconnect Google Drive.');}
-  const headers=new Headers(options.headers||{});headers.set('Authorization','Bearer '+cloudToken);
-  const res=await fetch(url,{...options,headers,cache:'no-store',credentials:'omit'});
-  if(res.status===401) {cloudForgetSession();throw new Error('Google authorization expired. Reconnect Google Drive.');}
-  if(!res.ok){
-    if(res.status===403) throw new Error('Google Drive permission denied. District administrators may need to approve this application.');
-    if(res.status===429) throw new Error('Google Drive is busy. Try again soon.');
-    throw new Error('Google Drive request failed (HTTP '+res.status+').');
-  }
-  return res;
-}
-function cloudToBase64(bytes){
-  let parts=[];for(let i=0;i<bytes.length;i+=0x8000) parts.push(String.fromCharCode(...bytes.subarray(i,i+0x8000)));
-  return btoa(parts.join(''));
-}
-function cloudFromBase64(value){return Uint8Array.from(atob(value),c=>c.charCodeAt(0));}
-function cloudB64Url(bytes){return cloudToBase64(bytes).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
-function cloudFromB64Url(value){return cloudFromBase64(value.replace(/-/g,'+').replace(/_/g,'/')+'='.repeat((4-value.length%4)%4));}
-function cloudRandom(bytes){return crypto.getRandomValues(new Uint8Array(bytes));}
-async function cloudListByName(name) {
-  const result=[];let pageToken='';
-  do {
-    const params=new URLSearchParams({spaces:'appDataFolder',pageSize:'100',fields:'nextPageToken,files(id,name,modifiedTime,size)',q:"name = '"+name+"' and trashed = false"});
-    if(pageToken) params.set('pageToken',pageToken);
-    const response=await cloudApi('https://www.googleapis.com/drive/v3/files?'+params);
-    const data=await response.json();result.push(...(data.files||[]).filter(f=>f.name===name));
-    pageToken=data.nextPageToken||'';
-    if(result.length>30) throw new Error('Too many vault profiles. Contact the developer.');
-  }while(pageToken);
-  return result;
-}
-async function cloudList() {
-  const result=[];let pageToken='';
-  do {
-    const params=new URLSearchParams({spaces:'appDataFolder',pageSize:'100',fields:'nextPageToken,files(id,name,modifiedTime,size)',q:"name contains '"+CLOUD_PREFIX+"' and trashed = false"});
-    if(pageToken) params.set('pageToken',pageToken);
-    const response=await cloudApi('https://www.googleapis.com/drive/v3/files?'+params);
-    const data=await response.json();result.push(...(data.files||[]).filter(f=>f.name?.startsWith(CLOUD_PREFIX)));
-    pageToken=data.nextPageToken||'';
-    if(result.length>1000) throw new Error('Too many snapshots. Contact the developer.');
-  }while(pageToken);
-  return result.sort((a,b)=>String(b.modifiedTime||'').localeCompare(String(a.modifiedTime||'')));
-}
-async function cloudGetFile(id){
-  const response=await cloudApi('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(id)+'?alt=media');
-  const len=Number(response.headers.get('content-length')||0);
-  if(len>20*1024*1024) throw new Error('Cloud file exceeds the size limit.');
-  const text=await response.text();
-  if(text.length>20*1024*1024) throw new Error('Cloud file exceeds the size limit.');
-  return text;
-}
-async function cloudCreateFile(name,content){
-  const boundary='bgr-'+cloudB64Url(cloudRandom(18));
-  const metadata=JSON.stringify({name,mimeType:'application/json',parents:['appDataFolder']});
-  const blob=new Blob([
-    '--'+boundary+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+metadata+'\r\n',
-    '--'+boundary+'\r\nContent-Type: application/json\r\n\r\n',content,'\r\n--'+boundary+'--\r\n'
-  ],{type:'multipart/related; boundary='+boundary});
-  const response=await cloudApi('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,modifiedTime',{method:'POST',body:blob});
-  return response.json();
-}
-function cloudValidProfile(p){
-  return p?.format==='bgr-passkey-profile'&&p.version===1&&
-    typeof p.credentialId==='string'&&/^[a-zA-Z0-9_-]{20,700}$/.test(p.credentialId)&&
-    typeof p.salt==='string'&&typeof p.verifyIv==='string'&&typeof p.verifyData==='string'&&
-    cloudFromBase64(p.salt).length===32&&cloudFromBase64(p.verifyIv).length===12;
-}
-async function cloudCryptoKey(prfOutput){
-  const bytes=new Uint8Array(prfOutput);
-  if(bytes.length!==32) throw new Error('The passkey did not provide a valid encryption key.');
-  return crypto.subtle.importKey('raw',bytes,{name:'AES-GCM'},false,['encrypt','decrypt']);
-}
-async function cloudVerifyKey(key,profile){
-  const decoded=await crypto.subtle.decrypt({name:'AES-GCM',iv:cloudFromBase64(profile.verifyIv),additionalData:CLOUD_CONTEXT},key,cloudFromBase64(profile.verifyData));
-  if(new TextDecoder().decode(decoded)!=='bgr-passkey-vault-v1') throw new Error('Passkey verification failed.');
-}
-async function cloudPasskeyCreate() {
-  if(!window.PublicKeyCredential||!navigator.credentials?.create) throw new Error('This browser does not support passkeys. No cloud data was uploaded.');
-  const salt=cloudRandom(32);
-  const credential=await navigator.credentials.create({publicKey:{
-    challenge:cloudRandom(32),rp:{name:'Balanced Group Randomizer'},
-    user:{id:cloudRandom(32),name:'BGR secure data',displayName:'Balanced Group Randomizer'},
-    pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],attestation:'none',
-    authenticatorSelection:{residentKey:'required',userVerification:'required'},timeout:60000,
-    extensions:{prf:{eval:{first:salt}},credProps:true}
-  }});
-  if(!credential) throw new Error('Passkey creation was cancelled.');
-  let output=credential.getClientExtensionResults()?.prf?.results?.first;
-  // Some authenticators only return PRF results during an assertion, not registration.
-  if(!output){
-    const assertion=await cloudPasskeyGet(cloudB64Url(new Uint8Array(credential.rawId)),salt);
-    output=assertion.getClientExtensionResults()?.prf?.results?.first;
-  }
-  if(!output) throw new Error('This passkey provider does not support encryption (WebAuthn PRF). Nothing was uploaded. Try Safari with iCloud Keychain.');
-  const key=await cloudCryptoKey(output);
-  const iv=cloudRandom(12);
-  const verifier=await crypto.subtle.encrypt({name:'AES-GCM',iv,additionalData:CLOUD_CONTEXT},key,new TextEncoder().encode('bgr-passkey-vault-v1'));
-  const profile={format:'bgr-passkey-profile',version:1,credentialId:cloudB64Url(new Uint8Array(credential.rawId)),
-    salt:cloudToBase64(salt),verifyIv:cloudToBase64(iv),verifyData:cloudToBase64(new Uint8Array(verifier)),createdAt:new Date().toISOString()};
-  return {key,profile};
-}
-async function cloudPasskeyGet(id,salt){
-  return navigator.credentials.get({publicKey:{challenge:cloudRandom(32),timeout:60000,
-    allowCredentials:[{type:'public-key',id:cloudFromB64Url(id)}],userVerification:'required',
-    extensions:{prf:{eval:{first:salt}}}
-  }});
-}
-async function cloudPasskeyUnlock(profile){
-  if(!window.PublicKeyCredential||!navigator.credentials?.get) throw new Error('This browser cannot unlock passkeys.');
-  const assertion=await cloudPasskeyGet(profile.credentialId,cloudFromBase64(profile.salt));
-  if(!assertion) throw new Error('Passkey prompt was cancelled.');
-  if(cloudB64Url(new Uint8Array(assertion.rawId))!==profile.credentialId) throw new Error('Different passkey selected.');
-  const output=assertion.getClientExtensionResults()?.prf?.results?.first;
-  if(!output) throw new Error('Passkey encryption is unsupported on this device (PRF extension unavailable). No cloud data was changed.');
-  const key=await cloudCryptoKey(output);
-  try{await cloudVerifyKey(key,profile);}catch(_){throw new Error('This passkey could not unlock the vault. Check synced passkeys on this device.');}
-  return key;
-}
-async function cloudEncrypt(snapshot){
-  if(!cloudKey) throw new Error('Unlock your passkey first.');
-  const plain=new TextEncoder().encode(JSON.stringify(snapshot));
-  if(plain.length>10*1024*1024) throw new Error('Classroom backup exceeds 10 MB.');
-  const iv=cloudRandom(12);
-  const ciphertext=await crypto.subtle.encrypt({name:'AES-GCM',iv,additionalData:new TextEncoder().encode(CLOUD_FORMAT+'-v1')},cloudKey,plain);
-  return JSON.stringify({format:CLOUD_FORMAT,version:1,createdAt:new Date().toISOString(),
-    encryption:'AES-256-GCM (passkey PRF)',iv:cloudToBase64(iv),data:cloudToBase64(new Uint8Array(ciphertext))});
-}
-async function cloudDecrypt(text){
-  if(!cloudKey) throw new Error('Unlock your passkey first.');
-  const value=JSON.parse(text);
-  if(value?.format!==CLOUD_FORMAT||value.version!==1||typeof value.iv!=='string'||typeof value.data!=='string') throw new Error('Unsupported snapshot format.');
-  const iv=cloudFromBase64(value.iv),data=cloudFromBase64(value.data);
-  if(iv.length!==12||data.length>11*1024*1024) throw new Error('Invalid or oversized snapshot.');
-  let plain;
-  try {plain=await crypto.subtle.decrypt({name:'AES-GCM',iv,additionalData:new TextEncoder().encode(CLOUD_FORMAT+'-v1')},cloudKey,data);}
-  catch(_){throw new Error('Snapshot cannot be decrypted. No local data was changed.');}
-  return validateBackup(JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(plain)));
-}
-async function cloudPopulateBackups() {
-  cloudBackups=await cloudList();
-  const picker=$('cloudBackupSelect');picker.replaceChildren();
-  if(!cloudBackups.length) picker.add(new Option('No passkey-encrypted backups yet',''));
-  cloudBackups.forEach((entry,i)=>{
-    const when=entry.modifiedTime?new Date(entry.modifiedTime).toLocaleString():'Unknown date';
-    picker.add(new Option(when+' · snapshot '+(i+1),entry.id));
+function googleIdentityFetchProfile(accessToken) {
+  return fetch('https://openidconnect.googleapis.com/v1/userinfo', {
+    headers: { Authorization: 'Bearer ' + accessToken },
+    cache: 'no-store'
+  }).then(async response => {
+    if(!response.ok) throw new Error('Google account verification failed (HTTP '+response.status+').');
+    return response.json();
   });
-  cloudControls();
 }
-function cloudBusySet(value){cloudBusy=value;cloudControls();}
-$('cloudPasskeySetupBtn').addEventListener('click',async()=>{
-  if(!cloudReady()||cloudProfile||cloudBusy) return;
-  if(!confirm('Create an app-specific passkey for this Google Drive vault? You may use Touch ID, Face ID, or a device unlock prompt. Make sure the passkey will be available on your other devices.'))return;
-  cloudBusySet(true);cloudStatus('Creating and testing your app-specific passkey…');
-  try{
-    const already=await cloudListByName(CLOUD_PROFILE_NAME);
-    if(already.length) throw new Error('A vault already exists in this Google account. Reconnect to load it.');
-    const {key,profile}=await cloudPasskeyCreate();
-    const result=await cloudCreateFile(CLOUD_PROFILE_NAME,JSON.stringify(profile));
-    cloudProfile=profile;cloudProfileFileId=result.id;cloudKey=key;
-    cloudStatus('Passkey vault created and unlocked. Save your first encrypted backup below.');
-  }catch(e){cloudStatus(e.message||'Could not create a passkey vault.',true);}
-  finally{cloudBusySet(false);}
-});
-$('cloudPasskeyUnlockBtn').addEventListener('click',async()=>{
-  if(!cloudReady()||!cloudProfile||cloudBusy)return;
-  cloudBusySet(true);cloudStatus('Unlocking locally with your synced passkey…');
-  try{
-    cloudKey=await cloudPasskeyUnlock(cloudProfile);
-    await cloudPopulateBackups();
-    // Important: an unlocked device must restore or explicitly save before auto-save is enabled.
-    cloudStatus('Passkey unlocked. You can find snapshots and restore one, or save from this device.');
-  }catch(e){cloudStatus(e.message||'Could not unlock your passkey.',true);}
-  finally{cloudBusySet(false);}
-});
-async function cloudSaveSnapshot(auto=false){
-  if(!cloudReady()||!cloudKey)throw new Error('Connect Google Drive and unlock your passkey.');
-  if(!auto&&!confirm('Save a NEW encrypted copy of all local classes to your Google Drive? Existing cloud snapshots will remain unchanged.'))return false;
-  // Read Drive first, so an older device cannot silently overwrite a newer one.
-  const all=await cloudList(),latest=all[0]?.id||null;
-  if(latest&&latest!==cloudLastSyncedId) {
-    cloudAutoEnabled=false;
-    throw new Error('A newer or unreviewed backup exists in Drive. Find and restore the latest snapshot before saving from this device. Your local data is safe.');
+function googleIdentityStart() {
+  if (!GOOGLE_CLIENT_ID) { googleIdentityStatus('Website owner must configure a public Google OAuth Client ID.',true); return; }
+  if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+    googleIdentityStatus('Open your deployed HTTPS website to test Google sign-in.',true); return;
   }
-  const savedRevision=cloudChangeSequence;
-  const payload=await cloudEncrypt(db);
-  const stamp=new Date().toISOString().replace(/[:.]/g,'-');
-  const name=CLOUD_PREFIX+stamp+'-'+cloudB64Url(cloudRandom(6))+'.json';
-  const saved=await cloudCreateFile(name,payload);
-  cloudLastSyncedId=saved.id;
-  if(cloudChangeSequence===savedRevision)cloudDirty=false;
-  cloudBackups=[];cloudControls();
-  return true;
+  if (!window.google?.accounts?.oauth2) {
+    googleIdentityStatus('Google sign-in library is loading. Please select Connect again in a moment.',true); return;
+  }
+  if (!googleIdentityTokenClient) {
+    googleIdentityTokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: GOOGLE_IDENTITY_SCOPE,
+      callback: async response => {
+        if (response.error || !response.access_token) {
+          googleIdentityStatus('Google access was not granted. '+(response.error || ''),true);return;
+        }
+        googleIdentityBusy = true; googleIdentityControls();
+        try {
+          const profile = await googleIdentityFetchProfile(response.access_token);
+          if (!profile.email || profile.email_verified !== true) throw new Error('Google did not return a verified email address.');
+          googleAccessToken = response.access_token;
+          $('googleAccountStatus').textContent = profile.email;
+          googleIdentityStatus('Google account connected for this session. Classroom data remains on this device; cloud sync is not enabled.');
+        } catch (error) {
+          googleIdentityEnd(); googleIdentityStatus(error.message || 'Could not load account information.',true);
+        } finally { googleIdentityBusy = false; googleIdentityControls(); }
+      },
+      error_callback: () => googleIdentityStatus('Google sign-in was cancelled or blocked. Try again.',true)
+    });
+  }
+  googleIdentityTokenClient.requestAccessToken({prompt:'select_account'});
 }
-async function cloudDoSave(auto=false){
-  if(cloudBusy||cloudSyncInFlight) return;
-  cloudSyncInFlight=true;cloudBusySet(true);
-  if(!auto)cloudStatus('Encrypting locally and saving a new Drive snapshot…');
-  try{
-    const success=await cloudSaveSnapshot(auto);
-    if(success)cloudStatus('Encrypted backup saved to Google Drive '+new Date().toLocaleTimeString()+'.');
-  }catch(e){cloudAutoEnabled=false;cloudStatus(e.message||'Could not save encrypted backup.',true);}
-  finally{cloudSyncInFlight=false;cloudBusySet(false);if(cloudDirty&&cloudAutoEnabled)cloudScheduleAutosave();}
-}
-$('cloudSaveBtn').addEventListener('click',()=>cloudDoSave(false));
-$('cloudListBtn').addEventListener('click',async()=>{
-  cloudBusySet(true);cloudStatus('Finding encrypted snapshots in Google Drive…');
-  try{await cloudPopulateBackups();cloudStatus(cloudBackups.length+' encrypted snapshot(s) found. Select one to review.');}
-  catch(e){cloudStatus(e.message||'Could not find backups.',true);}
-  finally{cloudBusySet(false);}
+$('googleConnectBtn').addEventListener('click',googleIdentityStart);
+$('googleDisconnectBtn').addEventListener('click',()=> {
+  const token=googleAccessToken;
+  googleIdentityEnd();
+  if(token && window.google?.accounts?.oauth2?.revoke) google.accounts.oauth2.revoke(token,()=>{});
+  googleIdentityStatus('Google disconnected. Local classroom data was not changed.');
 });
-$('cloudRestoreBtn').addEventListener('click',async()=>{
-  const id=$('cloudBackupSelect').value;
-  if(!cloudBackups.some(f=>f.id===id)) {cloudStatus('Select a backup first.',true);return;}
-  cloudBusySet(true);cloudAutoEnabled=false;cloudClearSyncTimer();cloudStatus('Downloading and decrypting locally…');
-  try{
-    pendingRestore=await cloudDecrypt(await cloudGetFile(id));
-    cloudPendingRestoreId=id;
-    const count=pendingRestore.classes.reduce((sum,c)=>sum+c.students.length,0);
-    $('restoreSummary').textContent=`Passkey-unlocked Drive snapshot: ${pendingRestore.classes.length} classes, ${count} students. Choose Add classes or Replace all. No local data has changed yet.`;
-    $('restorePreview').classList.remove('hidden');
-    $('restorePreview').scrollIntoView({behavior:'smooth',block:'center'});
-    cloudStatus('Snapshot decrypted. Review the restore choices. Your current local classes are preserved until you confirm.');
-  }catch(e){closeRestorePreview();cloudPendingRestoreId=null;cloudStatus(e.message||'Could not decrypt snapshot.',true);}
-  finally{cloudBusySet(false);}
-});
-$('cloudAutoSave').addEventListener('change',async()=>{
-  if(!$('cloudAutoSave').checked){cloudAutoEnabled=false;cloudClearSyncTimer();cloudControls();cloudStatus('Automatic backup paused. Local saving continues.');return;}
-  if(!cloudReady()||!cloudKey||!cloudLastSyncedId) {cloudAutoEnabled=false;cloudControls();cloudStatus('First save or restore a verified snapshot before enabling auto-save.',true);return;}
-  // Do not activate against a newer cloud revision.
-  cloudBusySet(true);
-  try{
-    const latest=(await cloudList())[0]?.id||null;
-    if(latest!==cloudLastSyncedId)throw new Error('Drive contains changes from another device. Review and restore the newest snapshot first.');
-    cloudAutoEnabled=true;cloudStatus('Automatic encrypted backup enabled while this page remains connected and unlocked.');
-    if(cloudDirty)cloudScheduleAutosave();
-  }catch(e){cloudAutoEnabled=false;cloudStatus(e.message,true);}
-  finally{cloudBusySet(false);if(cloudDirty&&cloudAutoEnabled)cloudScheduleAutosave();}
-});
-function cloudScheduleAutosave(){
-  if(!cloudAutoEnabled||!cloudReady()||!cloudKey)return;
-  cloudClearSyncTimer();cloudSyncTimer=setTimeout(()=>{
-    cloudSyncTimer=null;
-    if(cloudBusy||cloudSyncInFlight){cloudScheduleAutosave();return;}
-    void cloudDoSave(true);
-  },3000);
-}
-function cloudMarkLocalChange(){
-  if(!cloudKey||!cloudReady()) return;
-  cloudChangeSequence++;cloudDirty=true;cloudScheduleAutosave();
-}
-// Expose only a controlled hook to the save() function; no student data leaves without opt-in.
-window.__bgrCloudLocalChanged = cloudMarkLocalChange;
-window.__bgrCloudDiscardPreview = function(){cloudPendingRestoreId=null;};
-window.__bgrCloudRestoreCompleted = function(){
-  if(!cloudPendingRestoreId)return;
-  cloudLastSyncedId=cloudPendingRestoreId;cloudPendingRestoreId=null;
-  cloudAutoEnabled=false;cloudDirty=false;cloudClearSyncTimer();cloudControls();
-  cloudStatus('Classes restored. Auto-save is off until you explicitly enable it.');
-};
-if(!CLOUD_CLIENT_ID) cloudStatus('Google OAuth Client ID is not configured. Local mode still works.');
-cloudControls();
+$('googleLocalExportBtn').addEventListener('click',()=> $('exportBtn').click());
+$('googleLocalImportBtn').addEventListener('click',()=> $('importBtn').click());
+if (GOOGLE_CLIENT_ID) {
+  // Load the official Google Identity Services library. It is not used for student-data transfer.
+  const googleScript = document.createElement('script');
+  googleScript.src = 'https://accounts.google.com/gsi/client';
+  googleScript.async = true;
+  googleScript.onerror = () => googleIdentityStatus('Google sign-in could not load; you can continue using local mode.',true);
+  document.head.appendChild(googleScript);
+} else googleIdentityStatus('Google OAuth Client ID is not configured. Local mode still works.');
+googleIdentityControls();
 
 // Templates are shared between classes; student assignments belong to each class and template.
 function ensureSeatingTemplates() {
@@ -3483,7 +3173,7 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
   const content = () => {
     const kind = document.getElementById('feedbackType').value;
     const body = message.value.trim();
-    return body ? `Balanced Group Randomizer — ${kind}\n\n${body}\n\nApp version: 24\nDevice: ${navigator.userAgent}\n` : '';
+    return body ? `Balanced Group Randomizer — ${kind}\n\n${body}\n\nApp version: 25\nDevice: ${navigator.userAgent}\n` : '';
   };
   document.getElementById('feedbackBtn').addEventListener('click', () => {
     status.textContent = '';
