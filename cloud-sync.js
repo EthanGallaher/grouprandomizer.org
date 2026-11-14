@@ -16,12 +16,16 @@ const STATE_PREFIX='bgr.cloud.syncState.';
 const BOUND_KEY='bgr.cloud.boundAccount';
 const DEMO_NAME=/^(fictional|imaginary|demo|test)[\s_-]/i;
 const PAIR_LIFETIME_MS=10*60*1000;
+// Browser timers may pause when devices sleep. The Firestore listener is the
+// fast path; an independent server check runs every two minutes while visible.
+const AUTO_CHECK_MS=2*60*1000;
+const FICTIONAL_ACK_PREFIX='bgr.cloud.fictionalTesting.';
 const tabId=freshId();
 let auth, firestore, user=null, key=null;
 let state={enabled:false,rev:0,dirty:false};
 let active=false,busy=false,conflict=false,lastServer=null;
 let unlisten=null,unlistenPairs=null,unlistenJoin=null;
-let debounce=null,retry=null,skipLocalSave=false,epoch=0;
+let debounce=null,retry=null,autoTimer=null,checking=false,receiving=false,skipLocalSave=false,epoch=0;
 let pendingPairRequests=[],pairHost=null,pairJoin=null;
 const ui=(message,error=false)=>{
   $('cloudModeHelp').textContent=message;
@@ -69,10 +73,21 @@ async function localFingerprint(){
 }
 function metaKey(){return STATE_PREFIX+user.uid;}
 function readState(){try{return {...{enabled:false,rev:0,dirty:false},...JSON.parse(localStorage.getItem(metaKey())||'{}')};}catch(_){return {enabled:false,rev:0,dirty:false};}}
+function restoreFictionalAcknowledgement(){
+  // This is a test-only consent on this browser/account. It is NOT PII detection.
+  const checkbox=$('cloudFictionalConfirm');
+  if(checkbox)checkbox.checked=!!user&&localStorage.getItem(FICTIONAL_ACK_PREFIX+user.uid)==='true';
+}
+function beginAutoChecks(){
+  if(!autoTimer&&active)autoTimer=setInterval(()=>void automaticCheck(),AUTO_CHECK_MS);
+}
+function stopAutoChecks(){
+  if(autoTimer){clearInterval(autoTimer);autoTimer=null;}
+}
 function persist(){if(user)localStorage.setItem(metaKey(),JSON.stringify(state));}
 function bindAccount(){localStorage.setItem(BOUND_KEY,user.uid);}
 function safelyStop(){
-  active=false;conflict=false;clearTimeout(debounce);clearTimeout(retry);
+  active=false;conflict=false;clearTimeout(debounce);clearTimeout(retry);stopAutoChecks();
   if(unlisten){unlisten();unlisten=null;}
 }
 function stopPairing(){
@@ -103,24 +118,30 @@ async function downloadRemoteBackup(remote,label){
   link.href=url;link.download=label+'-'+new Date().toISOString().slice(0,10)+'.json';
   document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);
 }
-async function applyRemote(remote,backup=true){
+async function applyRemote(remote,backup=true,guard=null){
   const parsed=await parseRemote(remote);
+  // Another local edit may happen while decryption is running. Never lose it.
+  if(guard&&(!active||!user||user.uid!==guard.owner||epoch!==guard.epoch||
+     state.dirty||state.rev!==guard.rev||(await localFingerprint())!==guard.fingerprint)){
+    throw Error('Local classroom data changed while downloading cloud updates.');
+  }
   if(backup)bridge.backup('bgr-local-before-encrypted-cloud-restore');
   skipLocalSave=true;
   try {bridge.apply(parsed);}finally{skipLocalSave=false;}
   state.rev=remote.revision;state.dirty=false;state.fingerprint=await localFingerprint();persist();
 }
 function markConflict(message){
-  conflict=true;active=false;clearTimeout(debounce);
+  conflict=true;active=false;clearTimeout(debounce);stopAutoChecks();
   $('googleSyncStatus').textContent='Encrypted sync paused: resolve the conflict.';
   title('Two devices changed classrooms');
   ui(message||'Choose which copy to keep; nothing has been overwritten.',true);
   view('conflict');
 }
 function showActive(){
-  $('googleSyncStatus').textContent='End-to-end encrypted sync is enabled. Only this teacher’s authorized devices hold the key.';
+  $('googleSyncStatus').textContent='Encrypted auto-sync ON · updates upload as you edit · cloud checked every 2 minutes while the app is visible.';
+  beginAutoChecks();
   title(state.dirty?'Encrypted sync — saving changes':'End-to-end encrypted sync is on');
-  ui(state.dirty?'Changes are saved on this device; encrypted cloud upload is pending.':'The latest encrypted cloud version loads automatically when you sign in on this authorized device. Firebase only receives encrypted classroom content.');
+  ui(state.dirty?'Changes are saved on this device; encrypted cloud upload is pending.':'Automatic sync is running: updates arrive as they are saved, with a cloud check every two minutes while the app is visible. Resuming the app checks immediately. Firebase receives encrypted data only.');
   view('active');
 }
 function schedulePush(delay=1200){
@@ -171,12 +192,24 @@ async function push(){
   }finally{busy=false;if(succeeded&&active&&state.dirty&&!conflict)schedulePush(300);}
 }
 async function received(remote){
-  if(!active||!user||!key||!remote||remote.revision<=state.rev)return;
+  if(receiving||!active||!user||!key||!remote||remote.revision<=state.rev)return;
+  const owner=user.uid,guardEpoch=epoch;
   if(remote.writer===tabId){if(busy)return;state.rev=remote.revision;persist();return;}
-  lastServer=remote;
-  if(state.dirty||busy){markConflict('Encrypted updates arrived while this device had local unsynced edits.');return;}
-  try{await applyRemote(remote,true);showActive();}
-  catch(err){markConflict('Cannot decrypt or validate this cloud revision: '+err.message);}
+  receiving=true;
+  try{
+    lastServer=remote;
+    if(state.dirty||busy){markConflict('Encrypted updates arrived while this device had local unsynced edits.');return;}
+    const fingerprint=await localFingerprint();
+    if(state.fingerprint&&fingerprint!==state.fingerprint){
+      state.dirty=true;persist();
+      markConflict('Local classes changed since the last upload; the cloud version was not allowed to overwrite them.');return;
+    }
+    const guard={owner,epoch:guardEpoch,rev:state.rev,fingerprint};
+    await applyRemote(remote,true,guard);
+    if(active&&user?.uid===owner&&epoch===guardEpoch)showActive();
+  }catch(err){
+    if(user?.uid===owner&&epoch===guardEpoch)markConflict('Cannot safely restore this cloud revision: '+err.message);
+  }finally{receiving=false;}
 }
 function listen(){
   if(unlisten)unlisten();
@@ -188,8 +221,43 @@ function listen(){
       if(!remote){if(state.rev>0)markConflict('Encrypted cloud backup was deleted. Local data is safe.');return;}
       void received(remote);
     }catch(err){safelyStop();title('Encrypted sync disabled');ui(err.message,true);view('none');}
-  },err=>ui('Encrypted cloud listener failed: '+err.message,true));
+  },err=>{
+    // An active visible device can recover using the periodic server check.
+    unlisten=null;
+    ui('Live updates temporarily disconnected; automatic cloud checks will keep retrying. '+err.message,true);
+  });
 }
+async function automaticCheck(){
+  if(checking||receiving||!active||!user||!key||conflict||busy||
+     document.visibilityState==='hidden'||!navigator.onLine)return;
+  checking=true;
+  const owner=user.uid,guardEpoch=epoch;
+  try{
+    if(state.fingerprint&&!state.dirty&&(await localFingerprint())!==state.fingerprint){
+      state.dirty=true;persist();
+    }
+    const remote=cloudData(await getDocFromServer(doc(firestore,'teacherCloud',owner)));
+    if(!active||!user||user.uid!==owner||epoch!==guardEpoch||conflict)return;
+    lastServer=remote;
+    if(!remote){
+      if(state.rev>0){markConflict('Encrypted cloud version was removed. Local data is safe.');return;}
+    }else if(remote.revision>state.rev){
+      await received(remote);
+    }else if(remote.revision<state.rev){
+      markConflict('Cloud revision moved backwards; automatic sync paused to protect your newer local data.');return;
+    }
+    if(active&&!conflict){
+      if(!unlisten)listen();
+      if(state.dirty)schedulePush(300);
+    }
+  }catch(err){
+    if(active&&user?.uid===owner&&epoch===guardEpoch){
+      ui('Automatic sync check could not reach the cloud. Your classes remain saved here; it will retry. '+err.message,true);
+    }
+  }finally{checking=false;}
+}
+function checkIfVisible(){if(active&&document.visibilityState!=='hidden')void automaticCheck();}
+
 function pairReadyView(){
   $('googleSyncStatus').textContent='Google connected; encrypted cloud data needs authorization from an existing device.';
   title('Authorize this device once');
@@ -475,7 +543,7 @@ $('cloudUseThisBtn').addEventListener('click',()=>void beginFromLocal().catch(e=
 $('cloudUseRemoteBtn').addEventListener('click',()=>void beginFromCloud().catch(e=>ui(e.message,true)));
 $('cloudConflictRemoteBtn').addEventListener('click',()=>void resolveKeepCloud().catch(e=>ui(e.message,true)));
 $('cloudConflictLocalBtn').addEventListener('click',()=>void resolveKeepLocal().catch(e=>ui(e.message,true)));
-$('cloudSyncNowBtn').addEventListener('click',()=>void manuallySync().catch(e=>ui(e.message,true)));
+$('cloudSyncNowBtn').addEventListener('click',()=>void automaticCheck());
 $('cloudStopBtn').addEventListener('click',stopSync);
 $('cloudDeleteBtn').addEventListener('click',()=>void deleteCloud().catch(e=>ui(e.message,true)));
 $('cloudPairRequestBtn').addEventListener('click',()=>void startJoin().catch(e=>ui('Pairing request failed: '+e.message,true)));
@@ -484,12 +552,17 @@ $('cloudPairCancelBtn').addEventListener('click',()=>void cancelJoin());
 $('cloudPairReviewBtn').addEventListener('click',()=>void reviewJoin().catch(e=>ui('Could not review new device: '+e.message,true)));
 $('cloudPairApproveBtn').addEventListener('click',()=>void approveHost().catch(e=>ui('Device approval failed: '+e.message,true)));
 $('cloudPairRejectBtn').addEventListener('click',()=>void rejectHost().catch(e=>ui('Could not reject pairing: '+e.message,true)));
+$('cloudFictionalConfirm')?.addEventListener('change',()=>{
+  if(user)localStorage.setItem(FICTIONAL_ACK_PREFIX+user.uid,String($('cloudFictionalConfirm').checked));
+  if(active&&state.dirty&&$('cloudFictionalConfirm').checked)schedulePush(200);
+});
 document.addEventListener('bgr:local-save',()=>{
   if(skipLocalSave||!user||!active||conflict)return;
   state.dirty=true;persist();schedulePush();
 });
-window.addEventListener('online',()=>{if(active&&state.dirty)schedulePush(150);});
-window.addEventListener('focus',()=>{if(active)void manuallySync();});
+window.addEventListener('online',checkIfVisible);
+window.addEventListener('focus',checkIfVisible);
+document.addEventListener('visibilitychange',checkIfVisible);
 
 if(configured&&bridge){
   try{
@@ -500,9 +573,11 @@ if(configured&&bridge){
       if(previous!==next?.uid){
         ++epoch;safelyStop();stopPairing();key=null;
         if(next){
+          restoreFictionalAcknowledgement();
           document.dispatchEvent(new CustomEvent('bgr:cloud-auth',{detail:{email:next.email,uid:next.uid}}));
           void loadAccount();
         }else{
+          restoreFictionalAcknowledgement();
           title('Sign in with Google to unlock this device’s encrypted classrooms');
           ui('Your locally saved classes remain accessible.');view('none');
           document.dispatchEvent(new CustomEvent('bgr:cloud-auth',{detail:{email:null,uid:null}}));

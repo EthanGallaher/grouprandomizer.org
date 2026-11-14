@@ -656,7 +656,8 @@ body.ipad-presentation .ipad-exit-presentation {display:block;}
       <div class="cloud-controls"><button type="button" class="secondary" id="cloudPairReviewBtn">Review new device</button><button type="button" class="primary" id="cloudPairApproveBtn" hidden>Approve matching number and share key</button><button type="button" class="secondary cloud-danger" id="cloudPairRejectBtn" hidden>Reject request</button></div>
     </div>
     <div id="cloudActiveActions" hidden>
-      <button type="button" class="secondary" id="cloudSyncNowBtn">Sync now</button>
+      <p class="help">No Sync button is needed. Both authorized devices upload changes automatically and check the cloud about every two minutes while the app is open and visible. They also check when you return to the app. Background or sleeping devices may pause until opened again. Conflicting edits still require your decision.</p>
+      <button type="button" class="secondary" id="cloudSyncNowBtn">Check now (optional)</button>
       <button type="button" class="secondary" id="cloudStopBtn">Turn off sync on this device</button>
     </div>
     <div id="cloudConflictActions" hidden>
@@ -3090,7 +3091,7 @@ window.BGRSyncBridge = {
 </script>
 <!-- Optional Firebase sync module. If Firebase isn't configured, local-only app still works. -->
 <script src="./firebase-config.js"></script>
-<script type="module" src="./cloud-sync.js?v=41"></script>
+<script type="module" src="./cloud-sync.js?v=42"></script>
 <script>
 // Offer the native PWA install prompt when supported, otherwise explain the browser-specific steps.
 (() => {
