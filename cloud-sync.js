@@ -72,6 +72,12 @@ function showPairHost(){
     ?'Compare this 8-digit number with the new device. Only approve if BOTH screens match and you initiated the pairing.'
     :`New device asking for access: ${latest?.requester||'Unidentified device'}. Verify it belongs to you before proceeding.`;
 }
+// Content comparisons exclude the local-only selected-class preference.
+function contentSignature(snapshot){
+  const copy={...snapshot};
+  delete copy.activeId;
+  return JSON.stringify(copy);
+}
 async function fingerprintFor(snapshot, includeSelection=false){
   const stable={...snapshot};
   if(!includeSelection)delete stable.activeId;
@@ -109,6 +115,21 @@ function beginAutoChecks(){
 }
 function stopAutoChecks(){
   if(autoTimer){clearInterval(autoTimer);autoTimer=null;}
+}
+function renderVerifiedTransfer(){
+  const target=$('cloudLastSuccess');
+  if(!target)return;
+  if(!user){target.textContent='Sign in to see the last verified encrypted cloud transfer for this device.';return;}
+  const when=Number(state.lastVerifiedTransferAt||0);
+  if(!when){target.textContent='No verified encrypted cloud transfer on this device yet.';return;}
+  const operation=state.lastVerifiedTransferKind==='upload'?'uploaded to':'restored from';
+  target.textContent=`Last verified encrypted transfer: ${operation} cloud on ${new Date(when).toLocaleString()}. This timestamp records an actual completed transfer, not merely a local save.`;
+}
+function rememberVerifiedTransfer(kind){
+  state.lastVerifiedTransferAt=Date.now();
+  state.lastVerifiedTransferKind=kind;
+  persist();
+  renderVerifiedTransfer();
 }
 function persist(){if(user)localStorage.setItem(metaKey(),JSON.stringify(state));}
 function bindAccount(){localStorage.setItem(BOUND_KEY,user.uid);}
@@ -154,7 +175,8 @@ async function applyRemote(remote,backup=true,guard=null){
   if(backup)bridge.backup('bgr-local-before-encrypted-cloud-restore');
   skipLocalSave=true;
   try {bridge.apply(parsed);}finally{skipLocalSave=false;}
-  state.rev=remote.revision;state.dirty=false;state.fingerprint=await localFingerprint();state.fingerprintFormat='content-v2';persist();
+  state.rev=remote.revision;state.dirty=false;state.fingerprint=await localFingerprint();state.fingerprintFormat='content-v2';
+  rememberVerifiedTransfer('download');persist();
 }
 function markConflict(message){
   conflict=true;active=false;clearTimeout(debounce);stopAutoChecks();
@@ -164,6 +186,7 @@ function markConflict(message){
   view('conflict');
 }
 function showActive(){
+  renderVerifiedTransfer();
   $('googleSyncStatus').textContent='Encrypted auto-sync ON · updates upload as you edit · cloud checked every 2 minutes while the app is visible.';
   beginAutoChecks();
   title(state.dirty?'Encrypted sync — saving changes':'End-to-end encrypted sync is on');
@@ -185,7 +208,7 @@ async function push(){
     ui('This unapproved beta will not upload real or unmarked student names, even though payloads are encrypted. Use the fictional-data testing checkbox to confirm that all records are invented, or prefix every name with Fictional, Imaginary, Demo, or Test.',true);
     active=false;state.dirty=true;persist();view('none');return;
   }
-  const before=JSON.stringify(classroom),expected=state.rev;
+  const before=contentSignature(classroom),expected=state.rev;
   busy=true;title('Encrypting and uploading…');ui('Unencrypted classroom content never enters the Firestore write.');
   let succeeded=false;
   try{
@@ -201,8 +224,9 @@ async function push(){
       });
     });
     if(!user||user.uid!==owner||guardEpoch!==epoch)return;
-    succeeded=true;state.rev=expected+1;state.dirty=JSON.stringify(bridge.read())!==before;
+    succeeded=true;state.rev=expected+1;state.dirty=contentSignature(bridge.read())!==before;
     if(!state.dirty){state.fingerprint=await localFingerprint();state.fingerprintFormat='content-v2';}
+    rememberVerifiedTransfer('upload');
     persist();showActive();
   }catch(err){
     if(!user||user.uid!==owner||guardEpoch!==epoch)return;
@@ -301,7 +325,7 @@ function pairReadyView(){
 }
 async function loadAccount(){
   if(!user)return;
-  safelyStop();stopPairing();key=null;state=readState();
+  safelyStop();stopPairing();key=null;state=readState();renderVerifiedTransfer();
   const owner=user.uid,guardEpoch=epoch;
   title('Checking encrypted cloud vault…');ui('No classroom information will upload without explicit opt-in.');view('none');
   try{
@@ -598,7 +622,7 @@ if(configured&&bridge){
     if(!globalThis.isSecureContext||!crypto.subtle||!globalThis.indexedDB)throw Error('Encrypted sync requires HTTPS and browser IndexedDB.');
     const app=initializeApp(cfg);auth=getAuth(app);firestore=getFirestore(app);
     onAuthStateChanged(auth,next=>{
-      const previous=user?.uid;user=next;
+      const previous=user?.uid;user=next;renderVerifiedTransfer();
       if(previous!==next?.uid){
         ++epoch;safelyStop();stopPairing();key=null;
         if(next){

@@ -617,7 +617,7 @@ body.ipad-presentation .ipad-exit-presentation {display:block;}
   <button class="secondary" id="importBtn">Import backup</button>
   <input id="importFile" type="file" accept=".json,application/json" class="hidden">
 </div>
-<p class="notice">Classes are always saved on this device. Optional cloud sync must be enabled separately. Keep a backup in a secure school-approved location.</p>
+<p class="notice">Classes are saved locally in this browser. Authorized devices can also sync encrypted copies to the cloud. Manual backup files are separate, readable exports—store them in a school-approved secure location.</p>
 <div id="backupReminder" class="backup-reminder hidden" role="status"></div>
 <p id="backupStatus" class="help" aria-live="polite">No backup recorded on this device yet.</p>
 <div id="restorePreview" class="restore-preview hidden">
@@ -631,7 +631,7 @@ body.ipad-presentation .ipad-exit-presentation {display:block;}
   <p class="help">Replacing restores all settings and classes from the backup. A safety copy of your current data will download first.</p>
 </div>
 <button class="secondary" id="privacyBtn" style="margin-top:10px">Privacy &amp; data controls</button>
-<div id="privacyPanel" class="privacy-panel hidden" style="margin-top:12px"><strong>Local-first storage</strong><p>Class names, student names, performance tiers, source names from PDF imports, separation rules, and seating assignments are saved in this browser's local storage. Google sign-in requests basic identity information (your email and profile). When enabled, this browser encrypts rosters, rankings, class settings, and seating charts before sending them to Cloud Firestore. The encryption key is stored locally using IndexedDB and does not come from Google sign-in. A new device must be approved by an existing device. Local classroom records and manual JSON backups remain readable, and privileged code running in the browser can access them. Cloud sync remains off until explicitly enabled and must not be used with actual students without district approval. Disconnecting Google does not erase local data or cloud data. You can delete the cloud copy separately. The PDF reader is bundled with the app and PDF parsing occurs in the browser. Other browser extensions or users of this browser profile may be able to access local data. Backups contain student information and must be stored securely. Clearing browser data can erase your classes. Teachers should follow their school’s applicable student-data privacy and technology policies.</p><button class="secondary" id="clearAllDataBtn" style="color:#b42332">Delete all local class data</button></div>
+<div id="privacyPanel" class="privacy-panel hidden" style="margin-top:12px"><strong>Local-first storage</strong><p>Class names, student names, performance tiers, source names from PDF imports, separation rules, and seating assignments are saved in this browser's local storage. Google sign-in requests basic identity information (your email and profile). When enabled, this browser encrypts rosters, rankings, class settings, and seating charts before sending them to Cloud Firestore. The encryption key is stored locally using IndexedDB and does not come from Google sign-in. A new device must be approved by an existing device. Local classroom records and manual JSON backups remain readable, and privileged code running in the browser can access them. Cloud sync remains off until explicitly enabled. This test build is not security-audited or district-approved and must not be used with actual student records. Disconnecting Google does not erase local data or cloud data. You can delete the cloud copy separately. The PDF reader is bundled with the app and PDF parsing occurs in the browser. Other browser extensions or users of this browser profile may be able to access local data. Backups contain student information and must be stored securely. Clearing browser data can erase your classes. Teachers should follow their school’s applicable student-data privacy and technology policies.</p><button class="secondary" id="clearAllDataBtn" style="color:#b42332">Delete all local class data</button></div>
 </section>
 </div>
 <section class="panel teacher-card cloud-card" id="googleCloudPanel" aria-label="Google and cloud sync beta">
@@ -657,6 +657,7 @@ body.ipad-presentation .ipad-exit-presentation {display:block;}
       <span class="help" id="googleAccountStatus">Not connected</span>
     </div>
     <p class="cloud-sync-status" id="googleSyncStatus" role="status" aria-live="polite">Student data is stored only on this device. Cloud sync is off.</p>
+    <p class="help" id="cloudLastSuccess" aria-live="polite">No verified encrypted cloud transfer on this device yet.</p>
   <div id="cloudPanelDetails" class="cloud-detail" aria-live="polite">
     <strong id="cloudModeLabel">Cloud sync is not configured</strong>
     <p class="help" id="cloudModeHelp">A Firebase project and secure Firestore rules are required before sync can be enabled.</p>
@@ -688,14 +689,6 @@ body.ipad-presentation .ipad-exit-presentation {display:block;}
       <button type="button" class="secondary cloud-danger" id="cloudConflictLocalBtn">Keep this device (back up cloud version)</button>
     </div>
     <div style="margin-top:8px"><button type="button" class="secondary cloud-danger" id="cloudDeleteBtn" hidden>Delete my cloud copy</button></div>
-  </div>
-  <div class="cloud-step" style="margin-top:12px">
-    <h3>Local backup controls</h3>
-    <p class="help">These work even if cloud sync is unavailable. Store backups in a school-approved secure location.</p>
-    <div class="btnrow" style="margin-top:10px">
-      <button type="button" class="secondary" id="googleLocalExportBtn">Export local backup</button>
-      <button type="button" class="secondary" id="googleLocalImportBtn">Import local backup</button>
-    </div>
   </div>
   </div>
 </section>
@@ -844,8 +837,8 @@ function updateBackupStatus() {
   const due = hasStudents && (!last || (Date.now() - last > BACKUP_INTERVAL_DAYS*86400000));
   reminder.classList.toggle('hidden', !due);
   if (due) reminder.textContent = last
-    ? 'Backup reminder: it has been over 3 weeks since your last export. Save a fresh copy before making major changes.'
-    : 'Backup reminder: your class information is only on this device. Export a backup to protect it.';
+    ? 'It has been over 3 weeks since your last manual backup export. Save a fresh copy before major changes.'
+    : 'No manual file backup has been exported on this device. Encrypted cloud sync, if enabled, does not replace a separate backup.';
 }
 function downloadBackup(snapshot, prefix='balanced-group-randomizer-backup') {
   const stamp = new Date().toISOString().slice(0,10);
@@ -2258,9 +2251,8 @@ $('restoreReplaceBtn').addEventListener('click', () => {
   toast('Backup restored. A safety copy of previous data was downloaded.');
 });
 
-// Identity-only Google pilot. Never upload class data or request Google Drive access.
-// This browser-only connection is a user-interface test, not authorization for a database.
-// Production sync will require an approved storage provider and server-verified credentials.
+// Google authentication and encrypted Firestore sync are handled by cloud-sync.js.
+// Pairing and recovery controls stay available inside the expandable help panel.
 // Normal view stays compact. All pairing, recovery, settings and status controls
 // remain in the DOM, available via the question-mark button.
 const cloudInfoButton = $('cloudInfoBtn');
@@ -2335,8 +2327,6 @@ document.addEventListener('bgr:cloud-auth', e => {
 });
 document.addEventListener('bgr:cloud-ready',googleIdentityControls);
 googleIdentityControls();
-$('googleLocalExportBtn').addEventListener('click',()=> $('exportBtn').click());
-$('googleLocalImportBtn').addEventListener('click',()=> $('importBtn').click());
 
 // Templates are shared between classes; student assignments belong to each class and template.
 function ensureSeatingTemplates() {
@@ -3171,7 +3161,7 @@ window.BGRSyncBridge = {
 </script>
 <!-- Optional Firebase sync module. If Firebase isn't configured, local-only app still works. -->
 <script src="./firebase-config.js"></script>
-<script type="module" src="./cloud-sync.js?v=44"></script>
+<script type="module" src="./cloud-sync.js?v=45"></script>
 <script>
 // Offer the native PWA install prompt when supported, otherwise explain the browser-specific steps.
 (() => {

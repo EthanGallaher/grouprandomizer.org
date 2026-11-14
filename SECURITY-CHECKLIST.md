@@ -1,16 +1,29 @@
-# Pre-approval checklist — NOT yet cleared for student data
+# Security Checklist — V45 (2026-11-14)
 
-- [ ] Confirm Firebase Google Sign-In and Firestore work under the school-approved Google Workspace account.
-- [ ] Publish and exercise `firestore.rules` in Firebase Rules Playground/emulator, including cross-user denial, encrypted-only writes, revision requirement, and pairing stage transitions.
-- [ ] Verify that the Firestore console stores ciphertext only and **never** fields containing names, rankings, or seating assignments in readable form.
-- [ ] Test Mac Chrome, Mac Safari, and iPad Safari/installed PWA using exclusively fictional data. Test local IndexedDB key persistence after app restart, sign-out/in, browser updates, and intermittent network connectivity.
-- [ ] Verify that an unknown Google account cannot access another UID and that a Google account with no authorized device cannot decrypt existing classroom records.
-- [ ] Verify second-device pairing code mismatch stops key transfer, expire requests, and assess mitigation of social engineering.
-- [ ] Add a secure device-removal/master-key-rotation flow before broad deployment.
-- [ ] Choose a recovery strategy acceptable to schools; key loss without a backup is unrecoverable.
-- [ ] Harden code delivery: repo branch protections, MFA, deploy approvals, supply-chain audit, CSP, dependency pinning, minimize analytics and cross-origin scripts.
-- [ ] Review browser plaintext localStorage, downloaded JSON backups and deletion semantics for sensitive records.
-- [ ] Obtain a professional security review, privacy policy, data-processing agreement, district IT approval, and applicable legal review.
-- [ ] Review Firebase Admin permissions, billing, logs, availability, incident response, school Workspace restrictions, and data retention/deletion.
+This checklist is a record of development status, **not** a certification or authorization to process education records.
 
-Design note: "Google sign-in is the only authentication" does **not** mean "Google sign-in is the encryption key." A Google-issued token is not a teacher-only secret. The vault key must originate and remain on authorized clients, or the system is not genuinely end-to-end encrypted.
+## Implemented design (code-level, not independently audited)
+
+- [x] Firebase Google authentication for identifying the owner; no second account password.
+- [x] Browser AES-256-GCM encryption of classroom content before Firestore write.
+- [x] Associated-data authentication ties ciphertext to owner UID and document revision.
+- [x] P-256 ECDH/HKDF encrypted transfer of the vault key during manually approved device pairing.
+- [x] Firestore rules **source** includes Google-account owner checks, field allowlist, revisions, and pairing transitions.
+- [x] Auto-upload, live listener, 2-minute visible-window fallback check and conflict pause.
+- [x] V45 avoids cloud transfers on mere class selection and reports completed uploads/restores separately from local saves.
+- [x] Local JSON export/restore remains available, with duplicate export controls removed.
+
+## Remaining acceptance gates for a real-student pilot
+
+- [ ] Confirm the **exact** Firestore rules deployed live; run emulator tests for allow/deny behavior.
+- [ ] Verify another Google account and unauthenticated clients cannot read/write the owner's vault or pairing requests.
+- [ ] Verify plaintext student marker absent from **actual Firestore documents and network request bodies** in live beta tests.
+- [ ] Adversarial device pairing: unapproved attempt, mismatched number, expiry, replay, revoked device.
+- [ ] Test offline edit/reconnect/conflicts, data corruption and revision rollback across actual Mac/iPhone hardware.
+- [ ] Protect/local-encrypt plaintext browser data or document approved device and browser safeguards.
+- [ ] Add robust lost-device revocation/key rotation and a district-acceptable recovery approach.
+- [ ] Restrict deployment pipeline (MFA, code review, branch protection, dependency integrity) and perform independent application-security assessment.
+- [ ] Document retention/deletion, incident reporting, provider/subprocessor relationships and district privacy agreement.
+- [ ] Receive explicit district IT/privacy/legal approval before any real student record is used.
+
+**Testing with invented students is appropriate. The fictional-data checkbox is an acknowledgment, not a technical PII detector.**
