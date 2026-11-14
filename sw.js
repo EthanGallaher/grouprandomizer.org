@@ -1,5 +1,5 @@
-const CACHE = 'bgr-pwa-v34';
-const SHELL = ['./', './index.html', './manifest.webmanifest', './group-randomizer-app-v19-192.png', './group-randomizer-app-v19-512.png', './group-randomizer-icon.png', './favicon.png', './apple-touch-icon.png', './pdf.min.js', './pdf.worker.min.js'];
+const CACHE = 'bgr-pwa-v36';
+const SHELL = ['./', './index.html', './manifest.webmanifest', './group-randomizer-app-v19-192.png', './group-randomizer-app-v19-512.png', './group-randomizer-icon.png', './favicon.png', './apple-touch-icon.png', './cloud-sync.js', './e2ee-core.js', './firebase-config.js', './pdf.min.js', './pdf.worker.min.js'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(SHELL)));
 });
@@ -16,6 +16,14 @@ self.addEventListener('fetch', event => {
   if (url.origin !== self.location.origin || !url.pathname.startsWith(new URL(self.registration.scope).pathname)) return;
   event.respondWith((async () => {
     const cache = await caches.open(CACHE);
+    // Configuration changes must not be trapped behind a cache-first PWA script.
+    if (url.pathname.endsWith('/firebase-config.js')) {
+      try {
+        const fresh = await fetch(request, { cache: 'no-store' });
+        if (fresh.ok) await cache.put(request, fresh.clone());
+        return fresh;
+      } catch (_) { return (await cache.match(request)) || Response.error(); }
+    }
     if (request.mode === 'navigate') {
       try {
         const response = await fetch(request);

@@ -7,7 +7,7 @@
 <title>Balanced Group Randomizer</title>
 <link rel="manifest" href="./manifest.webmanifest">
 <meta name="theme-color" content="#172b4d">
-<!-- Public OAuth Client ID (not a secret). Insert the Web application Client ID from Google Cloud here. -->
+<!-- Public OAuth Client ID (not a secret). Google account sign-in uses this client. -->
 <meta name="bgr-google-client-id" content="36100521309-g8m5ftgpu4722dj25r5oo9gm1brc9e0f.apps.googleusercontent.com">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -408,6 +408,11 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
 .cloud-warning { font-size:12px; color:#665222; background:#fff7e5; padding:10px 12px; border:1px solid #e5cf94; border-radius:9px; }
 .cloud-controls { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
 .cloud-controls button { min-height:39px; }
+.cloud-detail {border:1px solid #dce5f3;border-radius:10px;padding:12px;background:#f5f9ff;margin:10px 0}
+.cloud-detail button {margin:5px 5px 5px 0}
+.cloud-detail[hidden] {display:none!important}
+.cloud-pair-code {font-size:clamp(27px,5vw,40px);font-weight:900;letter-spacing:.12em;color:var(--navy);margin:10px 0;text-align:center;font-variant-numeric:tabular-nums;}
+.cloud-danger {color:#ad2638!important;border-color:#e9bac4!important}
 @media(max-width:700px) { .cloud-sync-grid { grid-template-columns:1fr; } }
 
 /* iPadOS does not support requestFullscreen() for arbitrary page elements.
@@ -459,7 +464,7 @@ body.ipad-presentation .ipad-exit-presentation {display:block;}
     <button type="button" id="welcomePaste" class="welcome-choice"><strong>Paste a student roster</strong><span>Add student names to the selected class, one per line.</span></button>
     <button type="button" id="welcomeManual" class="welcome-choice"><strong>Create a class manually</strong><span>Name a new class and add students when you're ready.</span></button>
   </div>
-  <div class="welcome-privacy"><strong><span aria-hidden="true">🔒</span> Your classroom data stays on this device</strong><p>Rosters, tiers, seating charts, and grouping settings are saved in this browser's local storage. The app does not automatically upload them to a cloud account. Google account connection does not upload or synchronize classroom information. Data may be lost if browser storage is cleared or the device is reset. Export backups to a school-approved secure location; backups contain student information. The feedback email opens your email app only when you choose to send it.</p></div>
+  <div class="welcome-privacy"><strong><span aria-hidden="true">🔒</span> Your classroom data is stored locally by default</strong><p>Rosters, tiers, seating charts, and grouping settings are saved in this browser's local storage. Cloud sync is disabled until you explicitly enable it. If enabled, classroom records are encrypted inside this browser before being transferred to your Firebase cloud database. The decryption key stays on authorized devices; other devices must be approved once. Data may be lost if browser storage is cleared or the device is reset. Export backups to a school-approved secure location; backups contain student information. The feedback email opens your email app only when you choose to send it.</p></div>
   <div class="welcome-footer"><button type="button" class="secondary" id="welcomeTutorial">Take the setup tutorial</button><button type="button" class="secondary" id="welcomeSkip">Skip for now</button></div>
 </dialog>
 <dialog id="feedbackDialog" class="feedback-dialog" aria-labelledby="feedbackTitle">
@@ -601,7 +606,7 @@ body.ipad-presentation .ipad-exit-presentation {display:block;}
   <button class="secondary" id="importBtn">Import backup</button>
   <input id="importFile" type="file" accept=".json,application/json" class="hidden">
 </div>
-<p class="notice">Classes are saved on this device, not in an online account. Keep a backup in a secure school-approved location.</p>
+<p class="notice">Classes are always saved on this device. Optional cloud sync must be enabled separately. Keep a backup in a secure school-approved location.</p>
 <div id="backupReminder" class="backup-reminder hidden" role="status"></div>
 <p id="backupStatus" class="help" aria-live="polite">No backup recorded on this device yet.</p>
 <div id="restorePreview" class="restore-preview hidden">
@@ -615,28 +620,58 @@ body.ipad-presentation .ipad-exit-presentation {display:block;}
   <p class="help">Replacing restores all settings and classes from the backup. A safety copy of your current data will download first.</p>
 </div>
 <button class="secondary" id="privacyBtn" style="margin-top:10px">Privacy &amp; data controls</button>
-<div id="privacyPanel" class="privacy-panel hidden" style="margin-top:12px"><strong>Local-first storage</strong><p>Class names, student names, performance tiers, source names from PDF imports, separation rules, and seating assignments are saved in this browser's local storage. The Google account pilot only requests basic identity information (your email address and profile); it does not send rosters, rankings, class settings or seating charts to Google Drive or to an application server. Your Google account connection is only active for this page session. The PDF reader is bundled with the app and PDF parsing occurs in the browser. Other browser extensions or users of this browser profile may be able to access local data. Backups contain student information and must be stored securely. Clearing browser data can erase your classes. Teachers should follow their school’s applicable student-data privacy and technology policies.</p><button class="secondary" id="clearAllDataBtn" style="color:#b42332">Delete all local class data</button></div>
+<div id="privacyPanel" class="privacy-panel hidden" style="margin-top:12px"><strong>Local-first storage</strong><p>Class names, student names, performance tiers, source names from PDF imports, separation rules, and seating assignments are saved in this browser's local storage. Google sign-in requests basic identity information (your email and profile). When enabled, this browser encrypts rosters, rankings, class settings, and seating charts before sending them to Cloud Firestore. The encryption key is stored locally using IndexedDB and does not come from Google sign-in. A new device must be approved by an existing device. Local classroom records and manual JSON backups remain readable, and privileged code running in the browser can access them. Cloud sync remains off until explicitly enabled and must not be used with actual students without district approval. Disconnecting Google does not erase local data or cloud data. You can delete the cloud copy separately. The PDF reader is bundled with the app and PDF parsing occurs in the browser. Other browser extensions or users of this browser profile may be able to access local data. Backups contain student information and must be stored securely. Clearing browser data can erase your classes. Teachers should follow their school’s applicable student-data privacy and technology policies.</p><button class="secondary" id="clearAllDataBtn" style="color:#b42332">Delete all local class data</button></div>
 </section>
 </div>
-<section class="panel teacher-card cloud-card" id="googleCloudPanel" aria-label="Google account pilot">
-  <div class="cloud-head"><h2>Google Account</h2><span class="cloud-beta">DISTRICT PILOT · LOCAL DATA ONLY</span></div>
-  <p class="help">Try connecting a Google account without any additional passcode. This stage checks Google authorization only. <strong>Signing in does not back up, transfer, or synchronize your classes.</strong></p>
-  <p class="cloud-warning">Use fictional students while testing. All student names, rankings, grouping rules and seating charts remain in local browser storage. Do not treat this as an approved cloud-storage service.</p>
+<section class="panel teacher-card cloud-card" id="googleCloudPanel" aria-label="Google and cloud sync beta">
+  <div class="cloud-head"><h2>Google Account &amp; Cloud Sync</h2><span class="cloud-beta">BETA · OPT-IN</span></div>
+  <p class="help">Sign in with Google once on each device. Your first device keeps a private encryption key; new devices are approved once from an existing device by matching an 8-digit code. No additional password is required. Your classes remain saved locally.</p>
+  <p class="cloud-warning"><strong>Use fictional student data for testing.</strong> Classroom records are encrypted before uploading; Firebase receives ciphertext, not readable rosters. Google sign-in is for account access, not the encryption key. To add an iPad, approve its pairing request on your Mac once. Losing every authorized device means losing access to encrypted cloud data. This beta is not security-audited or district-approved.</p>
   <div class="cloud-controls" style="margin-top:11px">
     <button type="button" class="primary" id="googleConnectBtn">Connect Google account</button>
     <button type="button" class="secondary hidden" id="googleDisconnectBtn">Disconnect Google</button>
     <span class="help" id="googleAccountStatus">Not connected</span>
   </div>
-  <p class="cloud-sync-status" id="googleSyncStatus" role="status" aria-live="polite">No Google account connected. Your existing classes remain on this device.</p>
+  <p class="cloud-sync-status" id="googleSyncStatus" role="status" aria-live="polite">Student data is stored only on this device. Cloud sync is off.</p>
+  <div id="cloudPanelDetails" class="cloud-detail" aria-live="polite">
+    <strong id="cloudModeLabel">Cloud sync is not configured</strong>
+    <p class="help" id="cloudModeHelp">A Firebase project and secure Firestore rules are required before sync can be enabled.</p>
+    <div id="cloudSetupActions" hidden>
+      <button type="button" class="primary" id="cloudUseThisBtn">Use this device's classes</button>
+      <button type="button" class="secondary" id="cloudUseRemoteBtn" hidden>Restore classes from cloud</button>
+    </div>
+    <div id="cloudPairActions" hidden>
+      <p class="help">Use the same Google account on both devices. On the NEW device, request access. On your EXISTING device, review the request. Compare the 8-digit numbers on both screens before approving.</p>
+      <div class="cloud-controls"><button type="button" class="primary" id="cloudPairRequestBtn">Request access from another device</button><button type="button" class="secondary" id="cloudPairCancelBtn" hidden>Cancel request</button></div>
+      <p class="help" id="cloudPairStatus">No pairing request started.</p>
+      <div class="cloud-pair-code" id="cloudPairCode" aria-label="Pairing verification number">—</div>
+      <button type="button" class="primary" id="cloudPairConfirmBtn" hidden>Numbers match on both devices</button>
+    </div>
+    <div class="cloud-detail" id="cloudPairHostPanel" hidden>
+      <strong>New device authorization request</strong>
+      <p class="help" id="cloudPairHostHelp">Another device is requesting your classroom key.</p>
+      <div class="cloud-pair-code" id="cloudPairHostCode" aria-label="Existing-device verification number">—</div>
+      <div class="cloud-controls"><button type="button" class="secondary" id="cloudPairReviewBtn">Review new device</button><button type="button" class="primary" id="cloudPairApproveBtn" hidden>Approve matching number and share key</button><button type="button" class="secondary cloud-danger" id="cloudPairRejectBtn" hidden>Reject request</button></div>
+    </div>
+    <div id="cloudActiveActions" hidden>
+      <button type="button" class="secondary" id="cloudSyncNowBtn">Sync now</button>
+      <button type="button" class="secondary" id="cloudStopBtn">Turn off sync on this device</button>
+    </div>
+    <div id="cloudConflictActions" hidden>
+      <p class="cloud-warning">Both devices have changes. Nothing will be overwritten automatically.</p>
+      <button type="button" class="secondary" id="cloudConflictRemoteBtn">Use cloud version (back up this device)</button>
+      <button type="button" class="secondary cloud-danger" id="cloudConflictLocalBtn">Keep this device (back up cloud version)</button>
+    </div>
+    <div style="margin-top:8px"><button type="button" class="secondary cloud-danger" id="cloudDeleteBtn" hidden>Delete my cloud copy</button></div>
+  </div>
   <div class="cloud-step" style="margin-top:12px">
-    <h3>Move your data safely for now</h3>
-    <p class="help">Until the district approves a cloud-storage design, use the existing local backup and restore controls. Backups contain identifiable student data; store them only where your district permits.</p>
+    <h3>Local backup controls</h3>
+    <p class="help">These work even if cloud sync is unavailable. Store backups in a school-approved secure location.</p>
     <div class="btnrow" style="margin-top:10px">
       <button type="button" class="secondary" id="googleLocalExportBtn">Export local backup</button>
       <button type="button" class="secondary" id="googleLocalImportBtn">Import local backup</button>
     </div>
   </div>
-  <p class="help" style="margin-top:10px">Future release: Google sign-in with district-approved automatic synchronization, conflict protection, and deletion controls. Nothing is uploaded by this pilot.</p>
 </section>
 </div>
 </div>
@@ -826,6 +861,16 @@ function toast(message) {
 function save() {
   try {
     localStorage.setItem(KEY, JSON.stringify(db));
+    // Persist unsynced-change marker even when offline, Firebase has not loaded,
+    // or the page closes before the debounce timer fires.
+    const owner = localStorage.getItem('bgr.cloud.boundAccount');
+    if (owner) {
+      const syncKey = 'bgr.cloud.syncState.' + owner;
+      try { const state = JSON.parse(localStorage.getItem(syncKey) || '{}');
+        if (state.enabled) {state.dirty = true; localStorage.setItem(syncKey, JSON.stringify(state));}
+      } catch (_) {}
+    }
+    document.dispatchEvent(new Event('bgr:local-save'));
     $('saveState').textContent = '✓ Saved on this device';
     updateBackupStatus();
   } catch(e) {
@@ -2172,8 +2217,9 @@ function googleIdentityStatus(message, isError=false) {
 }
 function googleIdentityControls() {
   $('googleConnectBtn').disabled = !GOOGLE_CLIENT_ID || googleIdentityBusy;
-  $('googleConnectBtn').textContent = googleAccessToken ? 'Switch Google account' : 'Connect Google account';
-  $('googleDisconnectBtn').classList.toggle('hidden', !googleAccessToken);
+  const connected = !!googleAccessToken || !!window.BGRSync?.signedIn;
+  $('googleConnectBtn').textContent = connected ? 'Switch Google account' : 'Connect Google account';
+  $('googleDisconnectBtn').classList.toggle('hidden', !connected);
 }
 function googleIdentityEnd() {
   googleAccessToken = '';
@@ -2211,7 +2257,12 @@ function googleIdentityStart() {
           if (!profile.email || profile.email_verified !== true) throw new Error('Google did not return a verified email address.');
           googleAccessToken = response.access_token;
           $('googleAccountStatus').textContent = profile.email;
-          googleIdentityStatus('Google account connected for this session. Classroom data remains on this device; cloud sync is not enabled.');
+          if (window.BGRSync?.configured) {
+            await window.BGRSync.signInWithGoogle(response.access_token);
+            googleIdentityStatus('Google account connected. Cloud sync stays off until you choose to enable it.');
+          } else {
+            googleIdentityStatus('Google connected for identity testing. Firebase has not been configured, so classes stay local.');
+          }
         } catch (error) {
           googleIdentityEnd(); googleIdentityStatus(error.message || 'Could not load account information.',true);
         } finally { googleIdentityBusy = false; googleIdentityControls(); }
@@ -2222,11 +2273,16 @@ function googleIdentityStart() {
   googleIdentityTokenClient.requestAccessToken({prompt:'select_account'});
 }
 $('googleConnectBtn').addEventListener('click',googleIdentityStart);
-$('googleDisconnectBtn').addEventListener('click',()=> {
+$('googleDisconnectBtn').addEventListener('click',async()=> {
   const token=googleAccessToken;
+  try { await window.BGRSync?.disconnect(); } catch(e) {googleIdentityStatus(e.message,true); return;}
   googleIdentityEnd();
   if(token && window.google?.accounts?.oauth2?.revoke) google.accounts.oauth2.revoke(token,()=>{});
-  googleIdentityStatus('Google disconnected. Local classroom data was not changed.');
+  googleIdentityStatus('Google disconnected. Local classroom data remains on this device.');
+});
+document.addEventListener('bgr:cloud-auth', e => {
+  $('googleAccountStatus').textContent = e.detail?.email || 'Not connected';
+  googleIdentityControls();
 });
 $('googleLocalExportBtn').addEventListener('click',()=> $('exportBtn').click());
 $('googleLocalImportBtn').addEventListener('click',()=> $('importBtn').click());
@@ -3020,6 +3076,8 @@ $('privacyBtn').addEventListener('click',()=>{$('privacyPanel').classList.toggle
 $('clearAllDataBtn').addEventListener('click',()=>{
  if(!confirm('Delete ALL locally saved classes, rankings, rules, history, and seating charts? Export a backup first if needed. This cannot be undone.'))return;
  if(!confirm('Final confirmation: permanently erase all data saved by this app in this browser?'))return;
+ window.BGRSync?.pauseForLocalErase();
+ localStorage.removeItem('bgr.cloud.boundAccount');
  localStorage.removeItem(KEY);localStorage.removeItem(BACKUP_META_KEY);db={classes:[],activeId:null,sharedRoles:null};groups=[];absentIds=new Set();makeClass('My Class');toast('All previous local app data deleted.');
 });
 try {
@@ -3052,9 +3110,24 @@ try {
 if (!db.classes.length) makeClass('My Class');
 else render();
 updateBackupStatus();
+// Bridge for optional cloud module: validated import; local backup precedes any replacement.
+window.BGRSyncBridge = {
+  read: () => JSON.parse(JSON.stringify(db)),
+  backup: (label = 'bgr-local-before-cloud-restore') => downloadBackup(db,label),
+  apply: (snapshot) => {
+    const next = validateBackup(JSON.parse(JSON.stringify(snapshot)));
+    db = next;
+    if (!db.classes.some(c => c.id === db.activeId)) db.activeId = db.classes[0]?.id || null;
+    groups=[]; absentIds=new Set(); absentOrigins=new Map();
+    syncRolesAcrossClasses(); save(); render();
+  }
+};
 
 })();
 </script>
+<!-- Optional Firebase sync module. If Firebase isn't configured, local-only app still works. -->
+<script src="./firebase-config.js"></script>
+<script type="module" src="./cloud-sync.js"></script>
 <script>
 // Offer the native PWA install prompt when supported, otherwise explain the browser-specific steps.
 (() => {
