@@ -62,6 +62,11 @@ function showPairHost(){
     ?'Compare this 8-digit number with the new device. Only approve if BOTH screens match and you initiated the pairing.'
     :`New device asking for access: ${latest?.requester||'Unidentified device'}. Verify it belongs to you before proceeding.`;
 }
+async function localFingerprint(){
+  const bytes=new TextEncoder().encode(JSON.stringify(bridge.read()));
+  const digest=await crypto.subtle.digest('SHA-256',bytes);
+  return Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');
+}
 function metaKey(){return STATE_PREFIX+user.uid;}
 function readState(){try{return {...{enabled:false,rev:0,dirty:false},...JSON.parse(localStorage.getItem(metaKey())||'{}')};}catch(_){return {enabled:false,rev:0,dirty:false};}}
 function persist(){if(user)localStorage.setItem(metaKey(),JSON.stringify(state));}
@@ -103,7 +108,7 @@ async function applyRemote(remote,backup=true){
   if(backup)bridge.backup('bgr-local-before-encrypted-cloud-restore');
   skipLocalSave=true;
   try {bridge.apply(parsed);}finally{skipLocalSave=false;}
-  state.rev=remote.revision;state.dirty=false;persist();
+  state.rev=remote.revision;state.dirty=false;state.fingerprint=await localFingerprint();persist();
 }
 function markConflict(message){
   conflict=true;active=false;clearTimeout(debounce);
@@ -115,7 +120,7 @@ function markConflict(message){
 function showActive(){
   $('googleSyncStatus').textContent='End-to-end encrypted sync is enabled. Only this teacher’s authorized devices hold the key.';
   title(state.dirty?'Encrypted sync — saving changes':'End-to-end encrypted sync is on');
-  ui(state.dirty?'Changes are saved on this device; encrypted cloud upload is pending.':'Classrooms synchronize automatically. Firebase only receives encrypted classroom content.');
+  ui(state.dirty?'Changes are saved on this device; encrypted cloud upload is pending.':'The latest encrypted cloud version loads automatically when you sign in on this authorized device. Firebase only receives encrypted classroom content.');
   view('active');
 }
 function schedulePush(delay=1200){
@@ -150,6 +155,7 @@ async function push(){
     });
     if(!user||user.uid!==owner||guardEpoch!==epoch)return;
     succeeded=true;state.rev=expected+1;state.dirty=JSON.stringify(bridge.read())!==before;
+    if(!state.dirty)state.fingerprint=await localFingerprint();
     persist();showActive();
   }catch(err){
     if(!user||user.uid!==owner||guardEpoch!==epoch)return;
@@ -218,11 +224,20 @@ async function loadAccount(){
     }
     if(state.enabled&&bound===owner&&key){
       active=true;
+      // A teacher may have edited local classes while signed out. Never silently replace those edits.
+      if(!state.dirty&&state.fingerprint&&state.fingerprint!==await localFingerprint()){
+        state.dirty=true;persist();
+      }
       if(state.dirty){
         if((remote?.revision||0)!==state.rev){markConflict('This device has unsynced edits and the cloud revision is different.');return;}
         showActive();listen();schedulePush(200);return;
       }
-      if(remote){await applyRemote(remote,false);showActive();listen();return;}
+      if(remote){
+        // Reconnect to the latest cloud revision on every Google sign-in.
+        // A local backup is saved if the cloud revision differs from this device's last revision.
+        await applyRemote(remote,remote.revision!==state.rev);
+        showActive();listen();return;
+      }
       if(state.rev>0){markConflict('Encrypted cloud copy has disappeared. Automatic upload is paused.');return;}
       state.dirty=true;persist();showActive();listen();schedulePush(300);return;
     }
@@ -342,9 +357,15 @@ async function incomingPairUpdate(request){
       await updateDoc(requestRef(session.owner,session.id),{status:'complete',updatedAt:serverTimestamp()});
       if(unlistenJoin){unlistenJoin();unlistenJoin=null;}
       pairJoin=null;watchPairRequests(session.owner);
-      title('Device authorized');
-      ui('Encryption key was transferred securely. Select Restore classes from cloud to import the classroom data on this device.');
-      view('setup');
+      // Pairing approval authorizes this device. Restore the newest encrypted version immediately.
+      // Never silently discard existing local content: download a backup before replacement.
+      const latest=cloudData(await getDocFromServer(doc(firestore,'teacherCloud',session.owner)));
+      if(!latest)throw Error('Encrypted vault vanished before automatic restore.');
+      lastServer=latest;
+      state={enabled:true,rev:latest.revision,dirty:false};bindAccount();
+      await applyRemote(latest,true);
+      active=true;conflict=false;listen();showActive();
+      ui('Device authorized. Latest encrypted classroom data restored automatically. Future Google sign-ins load the newest cloud version.');
     }
   }
 }
