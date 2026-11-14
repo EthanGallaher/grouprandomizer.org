@@ -2213,7 +2213,9 @@ function googleIdentityStatus(message, isError=false) {
 }
 function googleIdentityControls() {
   const connected = !!window.BGRSync?.signedIn;
-  $('googleConnectBtn').disabled = googleIdentityBusy || !window.BGRSync?.configured;
+  // Keep sign-in interactive even if the Firebase module has not yet emitted a ready event.
+  // The click handler displays an actionable status if Firebase is still unavailable.
+  $('googleConnectBtn').disabled = googleIdentityBusy;
   $('googleConnectBtn').textContent = connected ? 'Switch Google account' : 'Connect Google account';
   $('googleDisconnectBtn').classList.toggle('hidden', !connected);
 }
@@ -3084,7 +3086,7 @@ window.BGRSyncBridge = {
 </script>
 <!-- Optional Firebase sync module. If Firebase isn't configured, local-only app still works. -->
 <script src="./firebase-config.js"></script>
-<script type="module" src="./cloud-sync.js"></script>
+<script type="module" src="./cloud-sync.js?v=39"></script>
 <script>
 // Offer the native PWA install prompt when supported, otherwise explain the browser-specific steps.
 (() => {
@@ -3158,7 +3160,7 @@ window.BGRSyncBridge = {
 // Installable app: service workers require HTTPS (GitHub Pages) or localhost.
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').then(registration => {
+    navigator.serviceWorker.register('./sw.js', {updateViaCache:'none'}).then(registration => {
       let refreshing = false;
       const banner = document.getElementById('updateBanner');
       const showUpdate = () => {
