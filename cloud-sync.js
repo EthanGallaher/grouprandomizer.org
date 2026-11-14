@@ -487,6 +487,7 @@ if(configured&&bridge){
       }
     });
     title('Encrypted sync is ready');ui('Connect your Google account. Cloud uploads require your consent and a locally held encryption key.');
+    document.dispatchEvent(new CustomEvent('bgr:cloud-ready'));
   }catch(err){title('Encrypted sync configuration error');ui(err.message,true);}
 }else{
   title('Encrypted sync is not configured');
