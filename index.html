@@ -2722,9 +2722,8 @@ $('clearStudentsBtn').addEventListener('click',() => {
   current().seatingLocksByTemplate && (current().seatingLocksByTemplate[db.activeSeatingTemplateId]={});
   save(); renderSeating(); toast('Seating assignments cleared.');
 });
-function seatingScore(layout,c) {
+function seatingScore(layout,c,strategy=c.groupingStrategy||'balanced') {
   const groups=layout.map(g=>(g.students||[]).map(id=>c.students.find(s=>s.id===id)).filter(Boolean));
-  const strategy=c.groupingStrategy||'balanced';
   if(strategy==='random') return 0;
   if(strategy==='similar') return groups.reduce((score,g)=>{
     const counts=tiers.map(t=>g.filter(s=>s.tier===t).length);
@@ -2763,7 +2762,7 @@ $('populateDesksBtn').addEventListener('click',() => {
   // Fill strictly by teacher-selected priority, regardless of desk group size.
   normalizeSeatingPriorities(layout);
   const ordered = [...layout].sort((a,b)=>a.priority-b.priority);
-  let best=null, bestScore=-Infinity;
+  let best=null, bestScore=-Infinity, bestOccupancy=null;
   const locks=seatingLocks(c), currentAssignments=seatingAssignments(c);
   const validIds=new Set(c.students.map(st=>st.id));
   const lockedByGroup=new Map(ordered.map(g=>[g.id,Array(g.size).fill(null)]));
@@ -2800,12 +2799,13 @@ $('populateDesksBtn').addEventListener('click',() => {
       item.students.forEach((st,i)=>{slots[vacancies[i]]=st.id;});
     }
     if(!valid)continue;
-    const orderedBlocks=floating.slice().sort((a,b)=>b.length-a.length||Math.random()-.5);
+    const orderedBlocks=floating.slice().sort((a,b)=>b.length-a.length||(Math.random()-.5));
     // Backtrack through the available desk groups while enforcing Keep Apart rules.
     function placeBlock(i){
       if(i===orderedBlocks.length)return true;
-      const block=orderedBlocks[i],choices=ordered.slice();
-      for(let j=choices.length-1;j>0;j--){const k=Math.floor(Math.random()*(j+1));[choices[j],choices[k]]=[choices[k],choices[j]];}
+      // Earlier priorities are always tried first; backtracking only uses later desks
+      // when the earlier placement cannot satisfy capacity or grouping restrictions.
+      const block=orderedBlocks[i],choices=ordered;
       for(const g of choices){
         const slots=byId.get(g.id).students;
         const free=slots.map((id,k)=>id?null:k).filter(k=>k!==null);
@@ -2822,8 +2822,15 @@ $('populateDesksBtn').addEventListener('click',() => {
     for(const g of candidate)g.students=g.students.map(id=>id||null);
     const candidateGroups=candidate.map(g=>g.students.map(id=>c.students.find(st=>st.id===id)).filter(Boolean));
     if(separationViolations(candidateGroups,c)||togetherViolations(candidateGroups,c)) continue;
-    const score=seatingScore(candidate,c)+Math.random()*.01;
-    if(score>bestScore){bestScore=score;best=candidate;}
+    // A vacancy in an earlier-priority group must outweigh every ability/history
+    // preference. Lexicographic occupancy is encoded by comparing the vacancy
+    // vector before the secondary grouping score.
+    const occupancy=ordered.map(g=>byId.get(g.id).students.filter(Boolean).length);
+    const strategy=$('seatingStrategy').value;
+    const score=seatingScore(candidate,c,strategy)+Math.random()*.01;
+    const betterPriority=!bestOccupancy || occupancy.some((n,i)=>n!==bestOccupancy[i] && occupancy.slice(0,i).every((v,j)=>v===bestOccupancy[j]) && n>bestOccupancy[i]);
+    const samePriority=bestOccupancy && occupancy.every((n,i)=>n===bestOccupancy[i]);
+    if(betterPriority || (samePriority && score>bestScore)){bestScore=score;best=candidate;bestOccupancy=occupancy;}
   }
   if(!best){toast('No valid seating arrangement satisfies all grouping rules. Existing seats unchanged.');return;}
   rememberSeatingEdit();
