@@ -2208,82 +2208,50 @@ $('restoreReplaceBtn').addEventListener('click', () => {
 // Identity-only Google pilot. Never upload class data or request Google Drive access.
 // This browser-only connection is a user-interface test, not authorization for a database.
 // Production sync will require an approved storage provider and server-verified credentials.
-const GOOGLE_CLIENT_ID = (document.querySelector('meta[name="bgr-google-client-id"]')?.content || '').trim();
-const GOOGLE_IDENTITY_SCOPE = 'openid email profile';
-let googleAccessToken = '', googleIdentityTokenClient = null, googleIdentityBusy = false;
+let googleIdentityBusy = false;
 function googleIdentityStatus(message, isError=false) {
   $('googleSyncStatus').textContent = message;
   $('googleSyncStatus').dataset.error = isError ? 'true' : 'false';
 }
 function googleIdentityControls() {
-  $('googleConnectBtn').disabled = !GOOGLE_CLIENT_ID || googleIdentityBusy;
-  const connected = !!googleAccessToken || !!window.BGRSync?.signedIn;
+  const connected = !!window.BGRSync?.signedIn;
+  $('googleConnectBtn').disabled = googleIdentityBusy || !window.BGRSync?.configured;
   $('googleConnectBtn').textContent = connected ? 'Switch Google account' : 'Connect Google account';
   $('googleDisconnectBtn').classList.toggle('hidden', !connected);
 }
-function googleIdentityEnd() {
-  googleAccessToken = '';
-  $('googleAccountStatus').textContent = 'Not connected';
-  googleIdentityControls();
-}
-function googleIdentityFetchProfile(accessToken) {
-  return fetch('https://openidconnect.googleapis.com/v1/userinfo', {
-    headers: { Authorization: 'Bearer ' + accessToken },
-    cache: 'no-store'
-  }).then(async response => {
-    if(!response.ok) throw new Error('Google account verification failed (HTTP '+response.status+').');
-    return response.json();
-  });
-}
-function googleIdentityStart() {
-  if (!GOOGLE_CLIENT_ID) { googleIdentityStatus('Website owner must configure a public Google OAuth Client ID.',true); return; }
+async function googleIdentityStart() {
+  if (!window.BGRSync?.configured) {
+    googleIdentityStatus('Firebase is loading or not configured. Try again shortly.',true); return;
+  }
   if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
-    googleIdentityStatus('Open your deployed HTTPS website to test Google sign-in.',true); return;
+    googleIdentityStatus('Open your deployed HTTPS website to sign in.',true); return;
   }
-  if (!window.google?.accounts?.oauth2) {
-    googleIdentityStatus('Google sign-in library is loading. Please select Connect again in a moment.',true); return;
+  googleIdentityBusy=true; googleIdentityControls();
+  try {
+    const email=await window.BGRSync.signInWithGoogle();
+    $('googleAccountStatus').textContent=email||'Connected';
+    googleIdentityStatus('Google account connected through Firebase. Enable encrypted sync when ready.');
+  } catch (error) {
+    googleIdentityStatus(error.message||'Google sign-in failed.',true);
+  } finally {
+    googleIdentityBusy=false; googleIdentityControls();
   }
-  if (!googleIdentityTokenClient) {
-    googleIdentityTokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: GOOGLE_CLIENT_ID,
-      scope: GOOGLE_IDENTITY_SCOPE,
-      callback: async response => {
-        if (response.error || !response.access_token) {
-          googleIdentityStatus('Google access was not granted. '+(response.error || ''),true);return;
-        }
-        googleIdentityBusy = true; googleIdentityControls();
-        try {
-          const profile = await googleIdentityFetchProfile(response.access_token);
-          if (!profile.email || profile.email_verified !== true) throw new Error('Google did not return a verified email address.');
-          googleAccessToken = response.access_token;
-          $('googleAccountStatus').textContent = profile.email;
-          if (window.BGRSync?.configured) {
-            await window.BGRSync.signInWithGoogle(response.access_token);
-            googleIdentityStatus('Google account connected. Cloud sync stays off until you choose to enable it.');
-          } else {
-            googleIdentityStatus('Google connected for identity testing. Firebase has not been configured, so classes stay local.');
-          }
-        } catch (error) {
-          googleIdentityEnd(); googleIdentityStatus(error.message || 'Could not load account information.',true);
-        } finally { googleIdentityBusy = false; googleIdentityControls(); }
-      },
-      error_callback: () => googleIdentityStatus('Google sign-in was cancelled or blocked. Try again.',true)
-    });
-  }
-  googleIdentityTokenClient.requestAccessToken({prompt:'select_account'});
 }
 $('googleConnectBtn').addEventListener('click',googleIdentityStart);
 $('googleDisconnectBtn').addEventListener('click',async()=> {
-  const token=googleAccessToken;
-  try { await window.BGRSync?.disconnect(); } catch(e) {googleIdentityStatus(e.message,true); return;}
-  googleIdentityEnd();
-  if(token && window.google?.accounts?.oauth2?.revoke) google.accounts.oauth2.revoke(token,()=>{});
-  googleIdentityStatus('Google disconnected. Local classroom data remains on this device.');
+  try {
+    await window.BGRSync?.disconnect();
+    $('googleAccountStatus').textContent='Not connected';
+    googleIdentityStatus('Google disconnected. Local classroom data remains on this device.');
+  } catch(e) {googleIdentityStatus(e.message,true);}
+  googleIdentityControls();
 });
 document.addEventListener('bgr:cloud-auth', e => {
   $('googleAccountStatus').textContent = e.detail?.email || 'Not connected';
   googleIdentityControls();
 });
+document.addEventListener('bgr:cloud-ready',googleIdentityControls);
+googleIdentityControls();
 $('googleLocalExportBtn').addEventListener('click',()=> $('exportBtn').click());
 $('googleLocalImportBtn').addEventListener('click',()=> $('importBtn').click());
 if (GOOGLE_CLIENT_ID) {

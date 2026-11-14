@@ -4,7 +4,7 @@
 // New devices require explicit approval by an already-unlocked device.
 // TEST WITH FICTIONAL CLASSROOM DATA ONLY. This is not production- or FERPA-approved.
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/13.3.0/firebase-app.js';
-import { getAuth, GoogleAuthProvider, signInWithCredential, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/13.3.0/firebase-auth.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/13.3.0/firebase-auth.js';
 import { getFirestore, doc, collection, getDocFromServer, getDocs, onSnapshot, runTransaction, updateDoc, setDoc, deleteDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore.js';
 import {generateVaultKey,encryptVault,decryptVault,newEphemeral,pairingSecrets,wrapVaultKey,unwrapVaultKey,getDeviceKey,storeDeviceKey,forgetDeviceKey,freshId} from './e2ee-core.js';
 
@@ -441,11 +441,11 @@ async function manuallySync(){
 }
 
 window.BGRSync={configured,get signedIn(){return !!user;},
-  signInWithGoogle:async googleAccessToken=>{
+  signInWithGoogle:async ()=>{
     if(!configured)throw Error('Firebase is not configured.');
-    if(!googleAccessToken)throw Error('Missing Google token.');
-    const credential=GoogleAuthProvider.credential(null,googleAccessToken);
-    const result=await signInWithCredential(auth,credential);
+    const provider=new GoogleAuthProvider();
+    provider.setCustomParameters({prompt:'select_account'});
+    const result=await signInWithPopup(auth,provider);
     return result.user.email;
   },disconnect,pauseForLocalErase};
 $('cloudUseThisBtn').addEventListener('click',()=>void beginFromLocal().catch(e=>ui(e.message,true)));
