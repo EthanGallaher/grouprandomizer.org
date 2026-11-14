@@ -631,6 +631,10 @@ body.ipad-presentation .ipad-exit-presentation {display:block;}
     <span class="help" id="googleAccountStatus">Not connected</span>
   </div>
   <p class="cloud-sync-status" id="googleSyncStatus" role="status" aria-live="polite">Student data is stored only on this device. Cloud sync is off.</p>
+  <label class="cloud-test-confirm" style="display:flex;align-items:flex-start;gap:10px;margin:12px 0;padding:12px;border:1px solid #d5dfed;border-radius:10px;background:#f4f7fc">
+    <input id="cloudFictionalConfirm" type="checkbox" style="width:19px;height:19px;flex-shrink:0;margin-top:2px">
+    <span><strong>Enable fictional-data testing</strong><br><span class="help">I confirm that every name and record in this browser is invented and does not identify an actual student. This permits test names such as Apple, Banana, and Cherry without renaming them. Do not select for real student data.</span></span>
+  </label>
   <div id="cloudPanelDetails" class="cloud-detail" aria-live="polite">
     <strong id="cloudModeLabel">Cloud sync is not configured</strong>
     <p class="help" id="cloudModeHelp">A Firebase project and secure Firestore rules are required before sync can be enabled.</p>

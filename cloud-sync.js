@@ -28,6 +28,8 @@ const ui=(message,error=false)=>{
   $('cloudModeHelp').style.color=error?'#ad2638':'';
 };
 const title=text=>{$('cloudModeLabel').textContent=text;};
+function isTestDataset(data){return Boolean($('cloudFictionalConfirm')?.checked)&&Array.isArray(data.classes);}
+function canUploadTestDataset(data){return isDemoDataset(data)||isTestDataset(data);}
 function isDemoDataset(data){
   return Array.isArray(data.classes) && data.classes.every(c=>
     Array.isArray(c.students)&&c.students.every(s=>
@@ -126,9 +128,9 @@ async function push(){
   if(!navigator.onLine){title('Offline — saved locally');ui('The app will retry encrypted upload when the network returns.');return;}
   const owner=user.uid,guardEpoch=epoch;
   const classroom=bridge.read();
-  if(!isDemoDataset(classroom)){
+  if(!canUploadTestDataset(classroom)){
     title('Testing safeguard — fictional students only');
-    ui('This unapproved beta will not upload real or unmarked student names, even though payloads are encrypted. EVERY name must begin Fictional, Imaginary, Demo, or Test.',true);
+    ui('This unapproved beta will not upload real or unmarked student names, even though payloads are encrypted. Use the fictional-data testing checkbox to confirm that all records are invented, or prefix every name with Fictional, Imaginary, Demo, or Test.',true);
     active=false;state.dirty=true;persist();view('none');return;
   }
   const before=JSON.stringify(classroom),expected=state.rev;
@@ -233,7 +235,7 @@ async function loadAccount(){
 }
 async function beginFromLocal(){
   if(!user||busy)return;
-  if(!isDemoDataset(bridge.read())){title('Fictional students only');ui('This beta refuses cloud uploads of real or unmarked student names. Test in a separate browser profile.',true);return;}
+  if(!canUploadTestDataset(bridge.read())){title('Fictional students only');ui('Confirm all names are fictional using the testing checkbox, or prefix every name with Fictional, Imaginary, Demo, or Test. Test in a separate browser profile.',true);return;}
   const bound=localStorage.getItem(BOUND_KEY);
   if(bound&&bound!==user.uid){ui('A different teacher’s local data is present. Cannot upload it to this account.',true);return;}
   const owner=user.uid;
