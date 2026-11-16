@@ -504,6 +504,57 @@ body.ipad-presentation .ipad-exit-presentation {display:block;}
 #groupsPage:not(:fullscreen):not(.ipad-fullscreen) .member{padding:8px;gap:8px}
 #groupsPage:not(:fullscreen):not(.ipad-fullscreen) .member>div:last-child{flex:1;min-width:0}
 
+
+/* V58: performance letters align to the right in teacher-facing group and seating views. */
+#groupsPage:not(:fullscreen):not(.ipad-fullscreen) .member > div:last-child { flex:1; min-width:0; }
+.member-name-row { display:flex; align-items:center; justify-content:space-between; gap:8px; min-width:0; width:100%; }
+.member-name-row .member-name { flex:1; min-width:0; overflow-wrap:break-word; }
+.member-name-row .member-tier { margin-left:auto; flex:none; }
+.desk .tier-letter { left:auto; right:2px; bottom:2px; }
+/* Preserve the student-only presentation: never reveal rankings in fullscreen. */
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .tier-letter,
+.seating-scroll:is(:fullscreen,.ipad-fullscreen) .tier-letter { display:none!important; }
+
+
+/* V59: one obvious class switcher, with the daily classroom tools first. */
+.workspace-bar{max-width:1740px;margin:0 auto;padding:15px 26px 10px;display:flex;
+  align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.workspace-bar .page-nav{display:flex;flex:1 1 auto;align-items:center;gap:8px;
+  min-width:0;max-width:none!important;width:auto!important;margin:0!important;padding:0!important;
+  overflow-x:auto;scrollbar-width:thin}
+.workspace-bar .page-nav button{flex:none;white-space:nowrap;min-height:43px;padding:10px 16px}
+.workspace-bar .page-nav button.active{background:var(--blue);color:white;
+  box-shadow:inset 0 -3px 0 var(--red)}
+.workspace-class-bar{display:flex;align-items:center;gap:9px;flex:0 1 auto;min-width:0;
+  padding:6px 10px;background:white;border:1px solid var(--line);border-radius:12px}
+.workspace-class-bar label{color:var(--muted);font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+.workspace-class-bar select{width:220px;min-width:130px;max-width:28vw;padding:8px 10px;border-radius:8px;
+  font-size:14px;font-weight:650}
+.workspace-class-meta{color:var(--muted);font-size:12px;white-space:nowrap}
+.legacy-class-picker{display:none!important}
+.selected-class-actions{align-items:center}
+.selected-class-name{flex:1 1 140px;min-width:0;overflow-wrap:anywhere;
+  padding:10px 12px;background:#f4f7fc;border:1px solid var(--line);border-radius:9px;color:var(--navy)}
+@media(max-width:1050px){.workspace-bar{align-items:stretch}.workspace-class-bar{margin-left:auto}}
+@media(max-width:700px){
+ .workspace-bar{padding:12px 14px;gap:10px}
+ .workspace-bar .page-nav{flex:1 1 100%;width:100%!important;overflow-x:auto}
+ .workspace-bar .page-nav button{padding:9px 12px;min-height:40px;font-size:13px}
+ .workspace-class-bar{width:100%;margin:0;flex:1 1 100%;flex-wrap:wrap}
+ .workspace-class-bar select{flex:1;max-width:none;width:auto;min-width:145px}
+ .workspace-class-meta{width:100%;padding-left:2px}
+}
+@media(max-width:640px){
+ .top-inner{display:flex;flex-direction:column;align-items:stretch;gap:11px}
+ .site-brand{width:100%;align-items:center}
+ .site-brand h1{font-size:clamp(19px,5vw,24px);line-height:1.2;overflow-wrap:anywhere}
+ .install-actions{width:100%;justify-content:flex-start;align-items:center;gap:7px}
+ .install-actions .save-state{width:100%;max-width:none;font-size:11px}
+ #bgrCloudSaveState{max-width:none;white-space:normal}
+}
+@media print{.workspace-bar{display:none!important}}
+body.print-seating .workspace-bar{display:none!important}
+
 </style>
 <style>
 .seating-tool-row #triangleVariantField{flex:0 0 100%;width:100%;min-width:0;max-width:100%;align-self:stretch}
@@ -600,12 +651,19 @@ body.ipad-presentation .ipad-exit-presentation {display:block;}
   <span id="bgrSyncAlertText"></span>
   <button type="button" id="bgrSyncAlertOpen">View cloud sync details</button>
 </div>
-<nav class="page-nav">
-  <button class="secondary active" id="teacherTab">Teacher Setup</button>
-  <button class="secondary" id="groupsTab">Display Groups</button>
-  <button class="secondary" id="randomStudentTab">Random Student</button>
-  <button class="secondary" id="seatingTab">Seating Chart</button>
-</nav>
+<div class="workspace-bar">
+  <nav class="page-nav" aria-label="Classroom tools">
+    <button type="button" class="secondary" id="groupsTab" aria-controls="groupsPage">Groups</button>
+    <button type="button" class="secondary" id="seatingTab" aria-controls="seatingPage">Seating Chart</button>
+    <button type="button" class="secondary" id="randomStudentTab" aria-controls="randomStudentPage">Random Student</button>
+    <button type="button" class="secondary active" id="teacherTab" aria-controls="teacherPage">Teacher Setup</button>
+  </nav>
+  <div class="workspace-class-bar">
+    <label for="workspaceClassSelect">Class</label>
+    <select id="workspaceClassSelect" aria-label="Current class for all classroom tools"></select>
+    <span class="workspace-class-meta" id="workspaceClassMeta" aria-live="polite">Select a class</span>
+  </div>
+</div>
 
 <div class="wrap">
 <div class="layout">
@@ -616,12 +674,13 @@ body.ipad-presentation .ipad-exit-presentation {display:block;}
 <div class="teacher-column teacher-column-left">
 <section class="panel teacher-card class-card"><h2>1. Your classes</h2>
 <div class="field">
-  <label for="classSelect">Choose a class</label>
-  <div class="row">
-    <select class="grow" id="classSelect"></select>
+  <div class="legacy-class-picker"><label for="classSelect">Class selector</label><select id="classSelect"></select></div>
+  <div class="row selected-class-actions">
+    <strong class="selected-class-name" id="setupSelectedClassName">Current class</strong>
     <button class="secondary" id="renameClassBtn" title="Rename selected class">Rename</button>
     <button class="secondary" id="deleteClassBtn" title="Delete selected class" style="color:#c63b46">Delete</button>
   </div>
+  <p class="help">Switch classes using the selector above the tabs. Your choice applies everywhere.</p>
 </div>
 <div class="row">
   <input class="grow" id="newClassName" placeholder="New class name">
@@ -822,11 +881,10 @@ body.ipad-presentation .ipad-exit-presentation {display:block;}
     <div class="subline" id="classSummary">Add students to get started.</div>
   </div>
   <div class="btnrow actions">
-    <label for="displayClassSelect">Class</label>
-    <select id="displayClassSelect" style="width:auto;min-width:170px;max-width:240px"></select>
+    <div class="legacy-class-picker"><label for="displayClassSelect">Class</label><select id="displayClassSelect"></select></div>
     
     <button class="secondary" id="printBtn">Print groups</button>
-    <button class="secondary" id="fullscreenBtn">⛶ Full screen</button>
+    <button class="secondary" id="fullscreenBtn">⛶ Student Fullscreen</button>
     <button class="primary" id="generateBtn">⤨ Randomize groups</button>
   </div>
 </div>
@@ -847,8 +905,7 @@ body.ipad-presentation .ipad-exit-presentation {display:block;}
         <div class="subline">Select a student at random from the selected class roster.</div>
       </div>
       <div class="btnrow actions">
-        <label for="randomClassSelect">Class</label>
-        <select id="randomClassSelect" style="width:auto;min-width:170px;max-width:240px"></select>
+        <div class="legacy-class-picker"><label for="randomClassSelect">Class</label><select id="randomClassSelect"></select></div>
         
       </div>
     </div>
@@ -864,8 +921,7 @@ body.ipad-presentation .ipad-exit-presentation {display:block;}
   <main class="panel">
     <div class="groups-page-head">
       <div><h2>Seating Chart</h2><div class="subline">Desk positions and priorities are shared across classes; student assignments stay separate. "Populate" attempts to divide High, Middle, and Low students between groups.</div></div>
-      <div class="btnrow"><label for="seatingClassSelect">Class</label>
-        <select id="seatingClassSelect" style="width:auto;min-width:170px"></select></div>
+      <div class="legacy-class-picker"><label for="seatingClassSelect">Class</label><select id="seatingClassSelect"></select></div>
     </div>
     <div class="seating-toolbar" id="seatingSetupControls">
       <section class="seating-tool-section" aria-label="Seating chart templates">
@@ -1075,7 +1131,7 @@ function makeClass(name) {
   return c;
 }
 function syncClassDropdowns() {
-  ['classSelect','displayClassSelect','randomClassSelect','seatingClassSelect'].forEach(id => {
+  ['workspaceClassSelect','classSelect','displayClassSelect','randomClassSelect','seatingClassSelect'].forEach(id => {
     const select = $(id);
     const prior = select.value;
     select.innerHTML = '';
@@ -1365,6 +1421,8 @@ function renderRoles(c) {
 function render() {
   syncClassDropdowns();
   const c = current();
+  $('setupSelectedClassName').textContent = c?.name || 'No class selected';
+  $('workspaceClassMeta').textContent = c ? `${c.students.length} student${c.students.length===1?'':'s'}` : 'Create a class in Teacher Setup';
   renderStudents(c);
   renderAvoidControls(c);
   renderRoles(c);
@@ -1785,7 +1843,10 @@ function renderGroups() {
       const name = document.createElement('div');
       name.className = 'member-name';
       name.textContent = s.name;
-      info.append(name,makeTierLetter(s.tier,'member-tier'));
+      const nameRow = document.createElement('div');
+      nameRow.className = 'member-name-row';
+      nameRow.append(name,makeTierLetter(s.tier,'member-tier'));
+      info.append(nameRow);
       m.append(avatar,info);
       members.append(m);
     });
@@ -1819,6 +1880,9 @@ function showPage(which) {
   $('groupsTab').classList.toggle('active',groupDisplay);
   $('randomStudentTab').classList.toggle('active',randomStudent);
   $('seatingTab').classList.toggle('active',seating);
+  [['teacherTab',teacher],['groupsTab',groupDisplay],['randomStudentTab',randomStudent],['seatingTab',seating]].forEach(([id,selected])=>{
+    $(id).setAttribute('aria-current',selected?'page':'false');
+  });
 }
 
 $('teacherTab').addEventListener('click',() => showPage('teacher'));
@@ -1887,6 +1951,7 @@ function switchClass(id) {
   save();
   render();
 }
+$('workspaceClassSelect').addEventListener('change',e => switchClass(e.target.value));
 $('classSelect').addEventListener('change',e => switchClass(e.target.value));
 $('displayClassSelect').addEventListener('change',e => switchClass(e.target.value));
 $('randomClassSelect').addEventListener('change',e => switchClass(e.target.value));
@@ -3287,7 +3352,7 @@ $('populateDesksBtn').addEventListener('click',() => {
 
 const guideSteps = [
   {title:'Welcome', body:'This interactive tour will take you directly to each part of the website. The highlighted controls remain usable, so you can follow along as you set up a class.', page:'teacher', target:'welcomeHelpBtn'},
-  {title:'Create or select a class', body:'Enter a class name and select Create, or choose an existing class from the dropdown.', page:'teacher', target:'classSelect'},
+  {title:'Create or select a class', body:'Choose a class from the shared selector above the tabs, or enter a new class name below and select Create.', page:'teacher', target:'workspaceClassSelect'},
   {title:'Add students', body:'Paste student names here, one per line, then select Add students. You can also use the PowerSchool PDF importer in the next step.', page:'teacher', target:'bulkNames'},
   {title:'Import and rank automatically', body:'Upload a PowerSchool Final Grades PDF here. Review the extracted records before confirming; existing classes can be updated.', page:'teacher', target:'classPdfUpload'},
   {title:'Review performance tiers', body:'Review High, Middle, and Low rankings and adjust any student individually. These tiers appear as H, M, and L in teacher views, but are hidden in student fullscreen views.', page:'teacher', target:'studentList'},
@@ -3370,6 +3435,8 @@ try {
 }
 if (!db.classes.length) makeClass('My Class');
 else render();
+// Groups is the everyday home screen; initial setup remains obvious for empty rosters.
+showPage(db.classes.some(c => c.students.length > 0) ? 'groups' : 'teacher');
 updateBackupStatus();
 // Bridge for optional cloud module: validated import; local backup precedes any replacement.
 window.BGRSyncBridge = {
