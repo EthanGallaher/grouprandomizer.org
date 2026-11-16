@@ -137,6 +137,18 @@ textarea { resize:vertical; min-height:90px; }
   .group-card { break-inside:avoid; }
 }
 
+
+/* Performance tiers are visible only to teachers, never in student presentation. */
+.tier-letter{display:inline-flex;align-items:center;justify-content:center;flex:none;width:23px;height:23px;border-radius:7px;font-size:12px;font-weight:900;line-height:1;border:1px solid transparent;vertical-align:middle}
+.tier-high{background:var(--high);color:#176334;border-color:#9bd3aa}
+.tier-middle{background:var(--mid);color:#845200;border-color:#e6ca79}
+.tier-low{background:var(--low);color:#174d9a;border-color:#a9c2ef}
+.member-tier{margin-left:7px}
+.desk .tier-letter{position:absolute;left:2px;bottom:2px;width:14px;height:14px;font-size:9px;border-radius:4px;pointer-events:none}
+.desk{position:relative}
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .tier-letter,.seating-scroll:is(:fullscreen,.ipad-fullscreen) .tier-letter{display:none!important}
+@media print{.tier-letter{display:none!important}}
+
 /* Seating chart */
 
 /* Only the classroom canvas enters fullscreen; no toolbars or buttons. */
@@ -1038,6 +1050,15 @@ function syncClassDropdowns() {
     if (db.classes.some(c => c.id === prior) && prior === db.activeId) select.value = prior;
   });
 }
+function makeTierLetter(tier,extraClass=''){
+  const span=document.createElement('span');
+  const safe=tiers.includes(tier)?tier:'Middle';
+  span.className='tier-letter tier-'+safe.toLowerCase()+(extraClass?' '+extraClass:'');
+  span.textContent=safe[0];
+  span.title=safe+' performance tier (teacher view only)';
+  span.setAttribute('aria-label',safe+' performance tier');
+  return span;
+}
 function renderStudents(c) {
   const list = $('studentList');
   list.innerHTML = '';
@@ -1061,7 +1082,7 @@ function renderStudents(c) {
     edit.title = `Edit preferred name for ${s.name}`;
     edit.setAttribute('aria-label', `Edit preferred name for ${s.name}`);
     edit.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4Z"/></svg>';
-    nameWrap.append(name, edit);
+    nameWrap.append(makeTierLetter(s.tier),name, edit);
     edit.addEventListener('click', () => {
       const input = document.createElement('input');
       input.type = 'text';
@@ -1691,7 +1712,7 @@ function renderGroups() {
       const name = document.createElement('div');
       name.className = 'member-name';
       name.textContent = s.name;
-      info.append(name);
+      info.append(name,makeTierLetter(s.tier,'member-tier'));
       m.append(avatar,info);
       members.append(m);
     });
@@ -2898,7 +2919,8 @@ function renderSeating() {
         }
         desk.style.fontSize = `${fontSize}px`;
       }
-      desk.title = student ? student.name : 'Empty seat';
+      desk.title = student ? student.name+' — '+(student.tier||'Middle')+' tier' : 'Empty seat';
+      if(student)desk.append(makeTierLetter(student.tier));
       const lockInfo=student&&seatingLocks()[student.id];
       if(lockInfo?.groupId===g.id && lockInfo?.seatIndex===i){
         desk.classList.add('seat-locked');
@@ -3173,7 +3195,7 @@ const guideSteps = [
   {title:'Create or select a class', body:'Enter a class name and select Create, or choose an existing class from the dropdown.', page:'teacher', target:'classSelect'},
   {title:'Add students', body:'Paste student names here, one per line, then select Add students. You can also use the PowerSchool PDF importer in the next step.', page:'teacher', target:'bulkNames'},
   {title:'Import and rank automatically', body:'Upload a PowerSchool Final Grades PDF here. Review the extracted records before confirming; existing classes can be updated.', page:'teacher', target:'classPdfUpload'},
-  {title:'Review performance tiers', body:'Review High, Middle, and Low rankings and adjust any student individually. These tiers are only visible in Teacher Setup.', page:'teacher', target:'studentList'},
+  {title:'Review performance tiers', body:'Review High, Middle, and Low rankings and adjust any student individually. These tiers appear as H, M, and L in teacher views, but are hidden in student fullscreen views.', page:'teacher', target:'studentList'},
   {title:'Set grouping rules', body:'Keep selected students apart, or choose Keep Together for students who must share a group.', page:'teacher', target:'avoidRuleType'},
   {title:'Customize group roles', body:'Change the three role titles here. They are shared across all classes; in pairs, the second student covers roles 2 and 3.', page:'teacher', target:'roleList'},
   {title:'Generate groups', body:'Select a grouping strategy, then click Randomize groups. The New partners option uses locally saved grouping history.', page:'groups', target:'groupStrategy'},

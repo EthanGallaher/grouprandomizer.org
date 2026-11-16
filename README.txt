@@ -1,9 +1,4 @@
-BGR V49 PDF IMPORT PATCH — fictional-data testing only.
-
-Replace files in repository with files from this ZIP.
-Fixes PowerSchool class headings such as 2(A-B), supports percent-only reports,
-letter-grade-plus-percent reports, and reports with extra columns.
-Supports percentages up to 200 (e.g., 122%).
-Does not invent grades when percentage column is absent.
-Review detected students before importing. Export a backup first.
-Retains V48 cloud sync and encryption.
+BGR V50 — teacher-only H/M/L markers.
+Upload the included application files over their matching GitHub repository filenames. Keep all existing images, manifest and PDF.js files.
+Back up before updating. H=High (green), M=Middle (amber), L=Low (blue). Markers are hidden in fullscreen student presentations and printouts.
+This is a UI update based on V49; sync and PDF import logic are otherwise unchanged. Test with fictional records before classroom deployment.
