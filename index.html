@@ -735,7 +735,18 @@ body.ipad-presentation .ipad-exit-presentation {display:block;}
       <button type="button" class="secondary" id="cloudStopBtn">Turn off sync on this device</button>
     </div>
     <div id="cloudConflictActions" hidden>
-      <p class="cloud-warning">Both devices have changes. Nothing will be overwritten automatically.</p>
+      <div style="background:#f3f7ff;border:1px solid #b8cae8;padding:12px;border-radius:10px;margin:10px 0">
+        <strong>Combine changes safely</strong>
+        <p class="help" id="bgrMergeHint">Merging checks for edits to the same settings. A safety archive of both versions downloads before merging.</p>
+        <button type="button" class="primary" id="bgrMergeBtn">Try safe three-way merge</button>
+        <p class="help">For an existing V46 conflict without a verified baseline, choose which version has the correct rankings and which has the correct seating arrangements. This option refuses to merge if other settings differ.</p>
+        <div class="field"><label for="bgrMergeTierSource">Student performance rankings</label>
+          <select id="bgrMergeTierSource"><option value="local">This device</option><option value="cloud">Cloud version</option></select></div>
+        <div class="field"><label for="bgrMergeSeatingSource">Seating charts and assignments</label>
+          <select id="bgrMergeSeatingSource"><option value="cloud">Cloud version</option><option value="local">This device</option></select></div>
+        <button type="button" class="secondary" id="bgrMergeLegacyBtn">Combine selected rankings and seating</button>
+      </div>
+      <p class="cloud-warning">Both devices have changes. Merge non-overlapping changes, or keep a safety backup before choosing a full version.</p>
       <button type="button" class="secondary" id="cloudConflictRemoteBtn">Use cloud version (back up this device)</button>
       <button type="button" class="secondary cloud-danger" id="cloudConflictLocalBtn">Keep this device (back up cloud version)</button>
     </div>
@@ -3228,7 +3239,7 @@ window.BGRSyncBridge = {
 </script>
 <!-- Optional Firebase sync module. If Firebase isn't configured, local-only app still works. -->
 <script src="./firebase-config.js"></script>
-<script type="module" src="./cloud-sync.js?v=46-login2"></script>
+<script type="module" src="./cloud-sync.js?v=47-merge1"></script>
 <script>
 // Offer the native PWA install prompt when supported, otherwise explain the browser-specific steps.
 (() => {

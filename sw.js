@@ -1,5 +1,5 @@
-const CACHE = 'bgr-pwa-v46-conflict-2-no-auto-json';
-const SHELL = ['./', './index.html', './manifest.webmanifest', './group-randomizer-app-v19-192.png', './group-randomizer-app-v19-512.png', './group-randomizer-icon.png', './favicon.png', './apple-touch-icon.png', './cloud-sync.js', './e2ee-core.js', './firebase-config.js', './pdf.min.js', './pdf.worker.min.js'];
+const CACHE = 'bgr-pwa-v47-merge-1';
+const SHELL = ['./', './index.html', './manifest.webmanifest', './group-randomizer-app-v19-192.png', './group-randomizer-app-v19-512.png', './group-randomizer-icon.png', './favicon.png', './apple-touch-icon.png', './cloud-sync.js', './merge-core.js', './e2ee-core.js', './firebase-config.js', './pdf.min.js', './pdf.worker.min.js'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(SHELL)));
 });
@@ -18,7 +18,7 @@ self.addEventListener('fetch', event => {
     const cache = await caches.open(CACHE);
     // Keep authentication and encryption code fresh; an older cached module
     // must not keep sign-in disabled or revive obsolete OAuth logic.
-    if (['firebase-config.js', 'cloud-sync.js', 'e2ee-core.js'].some(name => url.pathname.endsWith('/' + name))) {
+    if (['firebase-config.js', 'cloud-sync.js', 'e2ee-core.js', 'merge-core.js'].some(name => url.pathname.endsWith('/' + name))) {
       try {
         const fresh = await fetch(request, { cache: 'no-store' });
         if (fresh.ok) await cache.put(request, fresh.clone());

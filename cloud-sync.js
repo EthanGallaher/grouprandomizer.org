@@ -6,6 +6,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/13.3.0/firebase-app.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/13.3.0/firebase-auth.js';
 import { getFirestore, doc, collection, getDocFromServer, getDocs, onSnapshot, runTransaction, updateDoc, setDoc, deleteDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore.js';
+import {mergeThreeWay,mergeLegacyDomains} from './merge-core.js';
 import {generateVaultKey,encryptVault,decryptVault,newEphemeral,pairingSecrets,wrapVaultKey,unwrapVaultKey,getDeviceKey,storeDeviceKey,forgetDeviceKey,freshId} from './e2ee-core.js';
 
 const $=id=>document.getElementById(id);
@@ -16,6 +17,7 @@ function gateRelease(){startupGate?.release();}
 const cfg=window.BGR_FIREBASE_CONFIG||{};
 const configured=Boolean(cfg.apiKey&&cfg.authDomain&&cfg.projectId&&cfg.appId&&!cfg.apiKey.startsWith('PASTE_'));
 const STATE_PREFIX='bgr.cloud.syncState.';
+const BASE_PREFIX='bgr.cloud.verifiedBase.';
 const BOUND_KEY='bgr.cloud.boundAccount';
 const DEMO_NAME=/^(fictional|imaginary|demo|test)[\s_-]/i;
 const PAIR_LIFETIME_MS=10*60*1000;
@@ -26,7 +28,7 @@ const FICTIONAL_ACK_PREFIX='bgr.cloud.fictionalTesting.';
 const tabId=freshId();
 let auth, firestore, user=null, key=null;
 let state={enabled:false,rev:0,dirty:false};
-let active=false,busy=false,conflict=false,lastServer=null;
+let active=false,busy=false,conflict=false,lastServer=null,merging=false;
 let unlisten=null,unlistenPairs=null,unlistenJoin=null;
 let debounce=null,retry=null,autoTimer=null,checking=false,receiving=false,skipLocalSave=false,epoch=0;
 let pendingPairRequests=[],pairHost=null,pairJoin=null;
@@ -51,6 +53,7 @@ function view(mode){
   $('cloudSetupActions').hidden=mode!=='setup';
   $('cloudActiveActions').hidden=mode!=='active';
   $('cloudConflictActions').hidden=mode!=='conflict';
+  if(mode==='conflict')$('bgrMergeHint').textContent=readVerifiedBase()?'This device has a verified merge baseline. Try the safe three-way merge.':'This older sync revision has no shared baseline. To combine only rankings and seating, choose the source for each below.';
   $('cloudPairActions').hidden=mode!=='pair';
   $('cloudDeleteBtn').hidden=!user;
   if(mode==='setup'){
@@ -109,6 +112,80 @@ async function migrateLegacyFingerprint(){
     }
   }
   // Unknown differences must continue to be treated as unsynced edits.
+}
+function readVerifiedBase(){
+  if(!user)return null;
+  try {const v=JSON.parse(localStorage.getItem(BASE_PREFIX+user.uid)||'null');
+    return v && v.rev===state.rev && Array.isArray(v.snapshot?.classes)?v.snapshot:null;
+  }catch(_){return null;}
+}
+function saveVerifiedBase(snapshot,revision){
+  if(!user)return;
+  try {localStorage.setItem(BASE_PREFIX+user.uid,JSON.stringify({rev:revision,snapshot}));}
+  catch(err){console.warn('Verified merge baseline could not be stored; future conflicts require manual resolution.',err);}
+}
+function downloadMergeSafety(localCopy,cloudCopy){
+  const payload={format:'BGR V47 pre-merge safety archive',savedAt:new Date().toISOString(),
+    note:'Contains UNENCRYPTED fictional classroom data; store securely. Extract local/cloud under copies.',
+    local:localCopy,cloud:cloudCopy};
+  const url=URL.createObjectURL(new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}));
+  const a=document.createElement('a');a.href=url;
+  a.download='bgr-before-merge-both-versions-'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),15000);
+}
+async function mergeAndPublish(legacy=false){
+  if(merging||busy||!user||!key)return;
+  merging=true;
+  const owner=user.uid,guardEpoch=epoch;
+  try {
+    const local=bridge.read(),rev=state.rev;
+    const remoteDoc=cloudData(await getDocFromServer(ref()));
+    if(!remoteDoc)throw Error('Cloud vault is unavailable. No changes were made.');
+    const cloud=await parseRemote(remoteDoc);
+    if(!user||user.uid!==owner||epoch!==guardEpoch)throw Error('Google account changed.');
+    let merged;
+    if(legacy){
+      const tier=$('bgrMergeTierSource').value;
+      const seating=$('bgrMergeSeatingSource').value;
+      merged=mergeLegacyDomains(local,cloud,tier,seating);
+    }else{
+      const base=readVerifiedBase();
+      if(!base)throw Error('This device has no verified common ancestor for this revision. Use the guided merge if only rankings and seating differ.');
+      const attempt=mergeThreeWay(base,local,cloud);
+      if(attempt.conflicts.length)throw Error('Both devices changed the same setting: '+attempt.conflicts.slice(0,5).join('; ')+'. Choose versions manually.');
+      merged=attempt.merged;
+    }
+    if(!canUploadTestDataset(merged))throw Error('Fictional-data upload restriction is active.');
+    if(!confirm('Confirm the selected sources carefully: '+(legacy?'rankings from '+$('bgrMergeTierSource').selectedOptions[0].text+', seating from '+$('bgrMergeSeatingSource').selectedOptions[0].text+'. ':'non-overlapping edits from both versions. ')+'The app will request a JSON safety download containing BOTH originals before uploading. Browsers may block downloads: keep your separately exported backups. Proceed?'))return;
+    if(contentSignature(bridge.read())!==contentSignature(local))throw Error('Local changes occurred during merge review. Retry.');
+    // Require a working safety download before the cloud write. Browsers can still
+    // restrict multiple downloads; this is a single archive.
+    downloadMergeSafety(local,cloud);
+    const encrypted=await encryptVault(key,merged,owner,remoteDoc.revision+1);
+    await runTransaction(firestore,async tx=>{
+      const snapshot=await tx.get(ref());
+      if(!snapshot.exists()||snapshot.data().revision!==remoteDoc.revision)throw Error('REVISION_CONFLICT');
+      tx.set(ref(),{schema:encrypted.schema,iv:encrypted.iv,ciphertext:encrypted.ciphertext,
+        revision:remoteDoc.revision+1,writer:tabId,updatedAt:serverTimestamp()});
+    });
+    // An edit during the cloud transaction must not be overwritten locally.
+    if(!user||user.uid!==owner||epoch!==guardEpoch)return;
+    if(contentSignature(bridge.read())!==contentSignature(local)){
+      state.rev=remoteDoc.revision+1;state.dirty=true;persist();
+      markConflict('Combined cloud version saved, but this device changed again during upload. Local edits were preserved.');return;
+    }
+    skipLocalSave=true;
+    try {bridge.apply(merged);}finally{skipLocalSave=false;}
+    state.rev=remoteDoc.revision+1;state.enabled=true;state.dirty=false;
+    state.fingerprint=await localFingerprint();state.fingerprintFormat='content-v2';
+    saveVerifiedBase(merged,state.rev);bindAccount();rememberVerifiedTransfer('upload');persist();
+    conflict=false;active=true;lastServer=null;listen();showActive();
+    ui('Both changes were combined, encrypted, and saved to the cloud. Other devices can now retrieve the merged version.');
+  }catch(err){
+    if(!conflict)markConflict('Merge could not safely complete. Both local and cloud versions are preserved.');
+    if(err.message==='REVISION_CONFLICT')ui('Another device saved during the merge. No merge was applied; retry against the latest cloud copy.',true);
+    else ui('Merge was not applied: '+(err.message||err),true);
+  }finally{merging=false;}
 }
 function metaKey(){return STATE_PREFIX+user.uid;}
 function readState(){try{return {...{enabled:false,rev:0,dirty:false},...JSON.parse(localStorage.getItem(metaKey())||'{}')};}catch(_){return {enabled:false,rev:0,dirty:false};}}
@@ -210,6 +287,7 @@ async function applyRemote(remote,backup=true,guard=null){
   skipLocalSave=true;
   try {bridge.apply(parsed);}finally{skipLocalSave=false;}
   state.rev=remote.revision;state.dirty=false;state.fingerprint=await localFingerprint();state.fingerprintFormat='content-v2';
+  saveVerifiedBase(parsed,remote.revision);
   rememberVerifiedTransfer('download');persist();
 }
 function markConflict(message){
@@ -263,6 +341,7 @@ async function push(){
     });
     if(!user||user.uid!==owner||guardEpoch!==epoch)return;
     succeeded=true;state.rev=expected+1;state.dirty=contentSignature(bridge.read())!==before;
+    saveVerifiedBase(classroom,expected+1);
     if(!state.dirty){state.fingerprint=await localFingerprint();state.fingerprintFormat='content-v2';}
     rememberVerifiedTransfer('upload');
     persist();showActive();
@@ -713,6 +792,8 @@ window.BGRSync={configured,get signedIn(){return !!user;},get uid(){return user?
   },disconnect,pauseForLocalErase};
 $('cloudUseThisBtn').addEventListener('click',()=>void beginFromLocal().catch(e=>ui(e.message,true)));
 $('cloudUseRemoteBtn').addEventListener('click',()=>void beginFromCloud().catch(e=>ui(e.message,true)));
+$('bgrMergeBtn').addEventListener('click',()=>void mergeAndPublish(false));
+$('bgrMergeLegacyBtn').addEventListener('click',()=>void mergeAndPublish(true));
 $('cloudConflictRemoteBtn').addEventListener('click',()=>void resolveKeepCloud().catch(e=>ui(e.message,true)));
 $('cloudConflictLocalBtn').addEventListener('click',()=>void resolveKeepLocal().catch(e=>ui(e.message,true)));
 $('cloudSyncNowBtn').addEventListener('click',()=>void automaticCheck());
