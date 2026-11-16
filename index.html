@@ -495,15 +495,24 @@ body.ipad-presentation .ipad-exit-presentation {display:block;}
 #bgrCloudSaveState[data-kind="conflict"]{color:#ffcfb8;font-weight:800;}
 #bgrCloudSaveState[data-kind="offline"]{color:#ffe0ad;}
 #bgrCloudSaveState[hidden]{display:none!important;}
+
+/* V56: readable teacher display; fullscreen retains its own scaling rules. */
+#groupsPage:not(:fullscreen):not(.ipad-fullscreen) .member-name{font-size:clamp(15px,1.45vw,21px)!important;line-height:1.15;overflow-wrap:break-word;word-break:normal}
+#groupsPage:not(:fullscreen):not(.ipad-fullscreen) .avatar{font-size:clamp(10px,.95vw,13px)!important;min-width:55px;max-width:96px;overflow-wrap:normal;word-break:normal;hyphens:none;flex-shrink:0}
+#groupsPage:not(:fullscreen):not(.ipad-fullscreen) .member{padding:8px;gap:8px}
+#groupsPage:not(:fullscreen):not(.ipad-fullscreen) .member>div:last-child{flex:1;min-width:0}
+
 </style>
 <style>
-.triangle-picker{display:grid;grid-template-columns:repeat(4,minmax(70px,1fr));gap:9px;max-width:490px;margin-top:7px}
-.triangle-choice{display:flex;align-items:center;justify-content:center;background:#f5f8fd;border:2px solid #d6e1f1;border-radius:10px;padding:8px;min-height:76px;cursor:pointer}
-.triangle-choice svg{width:100%;max-width:112px;height:auto;fill:#dce8fa;stroke:#4673b2;stroke-width:2.5}
+.seating-tool-row #triangleVariantField{flex:0 0 100%;width:100%;min-width:0;max-width:100%;align-self:stretch}
+#triangleVariantField .triangle-picker{display:grid!important;grid-template-columns:repeat(2,72px)!important;gap:8px;width:max-content;max-width:100%;margin-top:7px}
+#triangleVariantField .triangle-choice{width:72px;min-width:0;box-sizing:border-box}
+.triangle-choice{display:flex;align-items:center;justify-content:center;background:#f5f8fd;border:2px solid #d6e1f1;border-radius:10px;padding:5px;min-width:0;min-height:54px;cursor:pointer}
+.triangle-choice svg{width:100%;max-width:65px;height:auto;fill:#dce8fa;stroke:#4673b2;stroke-width:2.5}
 .triangle-choice.selected{background:#e8efff;border-color:#2459a9;box-shadow:0 0 0 2px rgba(36,89,169,.15)}
 .triangle-choice:focus-visible{outline:3px solid #c63b46;outline-offset:2px}
 .visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
-@media(max-width:550px){.triangle-picker{grid-template-columns:repeat(2,minmax(80px,1fr))}}
+
 </style>
 </head>
 <body>
@@ -821,6 +830,7 @@ body.ipad-presentation .ipad-exit-presentation {display:block;}
 </div>
 <div class="field" style="max-width:360px;margin:12px 0"><label for="groupStrategy">Grouping strategy</label><select id="groupStrategy"><option value="balanced">Balanced abilities (default)</option><option value="random">Random (respect separation rules)</option><option value="similar">Similar abilities</option><option value="variety">New partners (use group history)</option></select><p class="help" id="strategyHelp">Prioritizes mixed-ability groups.</p></div>
 <div class="notice" id="balanceNote">Groups of three are used whenever possible; pairs are used when needed.</div>
+<div class="btnrow" style="margin:10px 0"><button type="button" class="secondary" id="rebalancePresentBtn">Rebalance present students</button></div>
 <div id="groupsArea">
   <div class="empty">Your groups will appear here.</div>
 </div>
@@ -1527,6 +1537,33 @@ function generate() {
   toast(violations ? 'Warning: some separation rules could not be satisfied.' : 'New groups generated.');
 }
 
+
+function rebalancePresentStudents(){
+  const c=current();if(!c)return;
+  const present=c.students.filter(s=>!absentIds.has(s.id));
+  if(present.length<2){toast('Not enough present students to rebalance.');return;}
+  const active={...c,students:present};
+  const issue=validateTogetherRules(active);
+  if(issue){toast(issue);return;}
+  const sizes=createGroupSizes(present.length);
+  let best=null,bestScore=-Infinity;
+  const attempts=Math.min(5000,Math.max(800,present.length*120));
+  for(let i=0;i<attempts;i++){
+    const candidate=arrangeTogether(present,sizes,active);
+    if(!candidate||separationViolations(candidate,active)||togetherViolations(candidate,active))continue;
+    const score=strategyScore(candidate,active)+Math.random()*.06;
+    if(score>bestScore){best=candidate;bestScore=score;}
+  }
+  if(!best){toast('Cannot form groups with the current separation and together rules.');return;}
+  const roles=c.roles||defaultRoles;
+  groups=best.map(g=>g.map((s,i)=>({...s,role:g.length===2?(i===0?roles[0]:`${roles[1]} + ${roles[2]}`):roles[i]})));
+  absentOrigins.clear();
+  renderGroups();
+  const threes=groups.filter(g=>g.length===3).length,pairs=groups.filter(g=>g.length===2).length;
+  $('balanceNote').textContent=`${present.length} present · ${threes} groups of 3 · ${pairs} pairs. All separation rules were followed.`;
+  toast('Present students rebalanced.');
+}
+$('rebalancePresentBtn').addEventListener('click',rebalancePresentStudents);
 
 function markStudentAbsent(studentId) {
   if (absentIds.has(studentId)) return;
