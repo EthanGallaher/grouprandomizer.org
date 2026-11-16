@@ -1,21 +1,20 @@
-BGR V46 — Google login loop repair 2 (fictional-data testing only)
+BGR V46 — Conflict visibility / reconnection diagnostic patch
 
-Replace index.html, cloud-sync.js and sw.js in your GitHub Pages repository.
-The included e2ee-core.js and firebase-config.js are unchanged.
-The original Firestore security rules are unchanged.
+Based on BGR-V46-login-repair-2.zip.
 
-WHAT IS DIFFERENT
-1. Completing the Google popup actively verifies the selected UID; it no longer
-   waits solely for an auth-state callback.
-2. Concurrent auth checks cannot allow an older check to apply its response.
-3. A successful Google login whose cloud check fails now shows the underlying
-   error rather than appearing to reject the account.
-4. Only after the SAME Google account has been identified can the teacher
-   explicitly open the local classroom copy with cloud sync paused.
-5. The app's service-worker cache version is bumped to force fresh assets.
+CHANGES:
+- Shows a persistent warning on all pages whenever offline edits remain unsynced, upload is pending, or two devices conflict.
+- Offers direct access to conflict resolution in Teacher Setup.
+- Keeps both existing cloud-versus-local decisions and backup-before-replace behavior.
+- Changes PWA cache name to load the patched files.
 
-DO NOT clear browser storage, IndexedDB, or cookies. Back up V45 data first.
-This patch has static syntax checks but has NOT been live-tested against your Firebase project.
+IMPORTANT: No automatic merge has been added. Two offline/online edits to different data fields can still conflict because the database is encrypted as one vault. Export safety backups from BOTH devices before choosing which whole version to retain. If you select one version, manually reapply the other device's change after synchronization resumes.
 
-After deployment, reopen the page and confirm its updated PWA version is active.
-If the gate remains visible, copy the full message shown below its title.
+TEST WITH FICTIONAL CLASSROOM RECORDS ONLY. Preserve browser data/IndexedDB and take backups before installation. This patch has not been tested against live Firebase.
+
+NO AUTOMATIC JSON DOWNLOAD ON IPAD:
+- New/blank devices restore encrypted classes from the cloud without downloading a plaintext JSON file.
+- Previously paired devices continue normal cloud refresh without an automatic download.
+- If the iPad already has substantive local data, pairing will NOT overwrite it: select Restore from cloud explicitly; a safety backup is downloaded before that destructive replacement.
+- Explicit conflict resolutions and user-requested backup exports retain their existing safety downloads.
+- Do not clear local storage or IndexedDB; test with fictional classes.

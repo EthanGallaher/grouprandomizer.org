@@ -447,6 +447,11 @@ body.ipad-presentation { overflow:hidden!important; }
 }
 body.ipad-presentation .ipad-exit-presentation {display:block;}
 
+/* Always-visible synchronization warning across all teacher pages. */
+#bgrSyncAlert{position:sticky;top:0;z-index:9000;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;background:#fff4dd;border-bottom:2px solid #b76d17;color:#603900;padding:10px 18px;font-size:13px;font-weight:700}
+#bgrSyncAlert[hidden]{display:none!important}
+#bgrSyncAlert[data-kind=conflict]{background:#fff0f2;border-color:#c92e42;color:#8d1b2d}
+#bgrSyncAlert button{background:white;color:#10346b;border:1px solid #a9bfdf;padding:7px 10px;font-size:12px}
 /* Cloud-bound data is hidden until the saved Google owner is verified. */
 #bgrStartupGate{position:fixed;inset:0;z-index:20000;background:#f2f5fb;display:flex;align-items:center;justify-content:center;padding:20px}
 #bgrStartupGate[hidden]{display:none!important}
@@ -536,6 +541,10 @@ body.ipad-presentation .ipad-exit-presentation {display:block;}
   </div>
   <p id="feedbackStatus" role="status" aria-live="polite"></p>
 </dialog>
+<div id="bgrSyncAlert" role="status" aria-live="polite" hidden>
+  <span id="bgrSyncAlertText"></span>
+  <button type="button" id="bgrSyncAlertOpen">View cloud sync details</button>
+</div>
 <nav class="page-nav">
   <button class="secondary active" id="teacherTab">Teacher Setup</button>
   <button class="secondary" id="groupsTab">Display Groups</button>
@@ -2322,6 +2331,22 @@ document.addEventListener('bgr:cloud-attention', event => {
   }
 });
 
+// Sync state is visible outside the expandable cloud settings. Never claim
+// both devices are synchronized when a local upload or conflict is pending.
+const syncAlert = document.getElementById('bgrSyncAlert');
+document.addEventListener('bgr:sync-status',event=>{
+  const {kind,message}=event.detail||{};
+  if(!['conflict','offline','pending'].includes(kind)){
+    syncAlert.hidden=true; return;
+  }
+  syncAlert.hidden=false;
+  syncAlert.dataset.kind=kind;
+  document.getElementById('bgrSyncAlertText').textContent=(kind==='conflict'?'Synchronization paused — ':kind==='offline'?'Offline — ':'Sync pending — ')+(message||'Review cloud synchronization status.');
+});
+document.getElementById('bgrSyncAlertOpen').addEventListener('click',()=>{
+  showPage('teacher');setCloudDetailsOpen(true);
+  document.getElementById('cloudModeLabel')?.scrollIntoView({block:'center'});
+});
 let googleIdentityBusy = false;
 function googleIdentityStatus(message, isError=false) {
   $('googleSyncStatus').textContent = message;

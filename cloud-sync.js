@@ -35,6 +35,10 @@ const ui=(message,error=false)=>{
   $('cloudModeHelp').style.color=error?'#ad2638':'';
 };
 const title=text=>{$('cloudModeLabel').textContent=text;};
+function syncNotice(kind,message){
+  document.dispatchEvent(new CustomEvent('bgr:sync-status', {detail:{kind,message}}));
+}
+
 function isTestDataset(data){return Boolean($('cloudFictionalConfirm')?.checked)&&Array.isArray(data.classes);}
 function canUploadTestDataset(data){return isDemoDataset(data)||isTestDataset(data);}
 function isDemoDataset(data){
@@ -168,6 +172,31 @@ async function downloadRemoteBackup(remote,label){
   link.href=url;link.download=label+'-'+new Date().toISOString().slice(0,10)+'.json';
   document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);
 }
+// Treat a fresh browser's generated empty "My Class" as a placeholder, not
+// a classroom backup worth downloading during normal cloud onboarding.
+// Any substantive local classes, rules, seating, or custom roles must be
+// preserved through the explicit backup-before-replace flow instead.
+function hasMeaningfulLocalData(){
+  const snapshot=bridge.read();
+  const classes=Array.isArray(snapshot?.classes)?snapshot.classes:[];
+  if(classes.length===0)return false;
+  if(classes.length!==1)return true;
+  const c=classes[0];
+  if(c.name!=='My Class'||(c.students||[]).length)return true;
+  if((c.avoidPairs||[]).length||(c.avoidGroups||[]).length||(c.togetherGroups||[]).length)return true;
+  if((c.seating||[]).length||(c.groupHistory||[]).length)return true;
+  if(c.groupingStrategy&&c.groupingStrategy!=='balanced')return true;
+  if((snapshot.sharedRoles||[]).length && JSON.stringify(snapshot.sharedRoles)!==JSON.stringify(['Facilitator','Recorder','Reporter']))return true;
+  // Template state and extra settings beyond defaults are not safely
+  // distinguishable from real edits, so conservatively preserve them.
+  if((c.seatingTemplates||[]).length||(c.templates||[]).length)return true;
+  if((snapshot.sharedSeating||[]).length)return true;
+  if((snapshot.seatingTemplates||[]).some(t=>t.name!=='Default Layout'||(t.layout||[]).length))return true;
+  if((snapshot.seatingTemplates||[]).length>1)return true;
+  if(Object.values(c.seatingAssignmentsByTemplate||{}).some(assignments=>
+      Object.values(assignments||{}).some(seats=>Array.isArray(seats)&&seats.length)))return true;
+  return false;
+}
 async function applyRemote(remote,backup=true,guard=null){
   if(!remote||!Number.isSafeInteger(remote.revision))throw Error('Invalid cloud revision.');
   if(guard&&remote.revision<guard.rev)throw Error('Cloud revision moved backwards; local data was preserved.');
@@ -187,6 +216,7 @@ function markConflict(message){
   if(!startupGate?.bound||startupGate.bound===user?.uid)gateRelease();
   conflict=true;active=false;clearTimeout(debounce);stopAutoChecks();
   $('googleSyncStatus').textContent='Encrypted sync paused: resolve the conflict.';
+  syncNotice('conflict',message||'Both devices edited the classroom. Sync is paused; neither version will be overwritten automatically.');
   title('Two devices changed classrooms');
   ui(message||'Choose which copy to keep; nothing has been overwritten.',true);
   view('conflict');
@@ -194,6 +224,7 @@ function markConflict(message){
 function showActive(){
   if(!startupGate?.bound||startupGate.bound===user?.uid)gateRelease();
   renderVerifiedTransfer();
+  syncNotice(state.dirty?'pending':'clean',state.dirty?'Saved on this device; encrypted upload is pending.':'');
   $('googleSyncStatus').textContent='Encrypted auto-sync ON · updates upload as you edit · cloud checked every 2 minutes while the app is visible.';
   beginAutoChecks();
   title(state.dirty?'Encrypted sync — saving changes':'End-to-end encrypted sync is on');
@@ -207,7 +238,7 @@ function schedulePush(delay=1200){
 }
 async function push(){
   if(!active||!user||!key||conflict||busy||!state.dirty)return;
-  if(!navigator.onLine){title('Offline — saved locally');ui('The app will retry encrypted upload when the network returns.');return;}
+  if(!navigator.onLine){title('Offline — saved locally');ui('The app will retry encrypted upload when the network returns.');syncNotice('offline','Offline: classroom changes saved only on this device. They are not yet in the cloud.');return;}
   const owner=user.uid,guardEpoch=epoch;
   const classroom=bridge.read();
   if(!canUploadTestDataset(classroom)){
@@ -216,7 +247,7 @@ async function push(){
     active=false;state.dirty=true;persist();view('none');return;
   }
   const before=contentSignature(classroom),expected=state.rev;
-  busy=true;title('Encrypting and uploading…');ui('Unencrypted classroom content never enters the Firestore write.');
+  busy=true;syncNotice('pending','Uploading encrypted classroom changes to the cloud…');title('Encrypting and uploading…');ui('Unencrypted classroom content never enters the Firestore write.');
   let succeeded=false;
   try{
     const encrypted=await encryptVault(key,classroom,owner,expected+1);
@@ -242,6 +273,7 @@ async function push(){
       try{lastServer=cloudData(await getDocFromServer(ref()));markConflict('A different device saved an encrypted revision before this one. Nothing was overwritten.');}
       catch(e){title('Sync stopped');ui(e.message,true);safelyStop();}
     }else{
+      syncNotice('pending','Cloud upload failed. Classes remain saved locally and will be retried.');
       title('Cloud unavailable — local classes saved');
       ui('Encrypted upload failed: '+(err.message||'Unknown error'),true);
       clearTimeout(retry);retry=setTimeout(()=>schedulePush(200),12000);
@@ -316,7 +348,17 @@ async function automaticCheck(){
     }
   }finally{checking=false;}
 }
-function checkIfVisible(){if(active&&document.visibilityState!=='hidden')void automaticCheck();}
+function checkIfVisible(){
+  if(conflict){syncNotice('conflict','Sync is paused because changes on two devices conflict. Review both backups before choosing a version.');return;}
+  if(active&&document.visibilityState!=='hidden'){
+    if(!navigator.onLine){
+      if(state.dirty)syncNotice('offline','Offline: changes are stored on this device and have not been uploaded.');
+      return;
+    }
+    if(state.dirty)syncNotice('pending','Connection restored. Checking the encrypted cloud revision before uploading local changes…');
+    void automaticCheck();
+  }
+}
 
 function pairReadyView(){
   if(!startupGate?.bound||startupGate.bound===user?.uid)gateRelease();
@@ -422,9 +464,12 @@ async function beginFromCloud(){
   const remote=cloudData(await getDocFromServer(ref()));
   if(!remote){ui('There is no encrypted cloud copy.',true);return;}
   await parseRemote(remote);
-  if(!confirm('Replace local classes on THIS device with your decrypted cloud version? Your local classes will be downloaded as a safety backup first.'))return;
+  const preserveLocal=hasMeaningfulLocalData();
+  if(!confirm(preserveLocal
+    ? 'Replace local classes on THIS device with your decrypted cloud version? Your local classes will be downloaded as a safety backup first.'
+    : 'Restore your encrypted cloud classes to this device?'))return;
   lastServer=remote;state={enabled:true,rev:remote.revision,dirty:false};bindAccount();
-  await applyRemote(remote,true);persist();active=true;conflict=false;listen();showActive();
+  await applyRemote(remote,preserveLocal);persist();active=true;conflict=false;listen();showActive();
 }
 async function resolveKeepCloud(){
   if(!user||busy||!key)return;
@@ -510,15 +555,23 @@ async function incomingPairUpdate(request){
       await updateDoc(requestRef(session.owner,session.id),{status:'complete',updatedAt:serverTimestamp()});
       if(unlistenJoin){unlistenJoin();unlistenJoin=null;}
       pairJoin=null;watchPairRequests(session.owner);
-      // Pairing approval authorizes this device. Restore the newest encrypted version immediately.
-      // Never silently discard existing local content: download a backup before replacement.
+      // Pairing approval authorizes this device. A new/blank browser can load
+      // cloud data silently, without triggering iPad Safari's "Download JSON".
+      // If substantive local work exists, DO NOT overwrite it automatically:
+      // require the teacher to choose a cloud restore with a safety backup.
       const latest=cloudData(await getDocFromServer(doc(firestore,'teacherCloud',session.owner)));
       if(!latest)throw Error('Encrypted vault vanished before automatic restore.');
       lastServer=latest;
+      if(hasMeaningfulLocalData()){
+        state={enabled:false,rev:0,dirty:false};persist();
+        title('Device paired — local classes preserved');
+        ui('This device already has local classroom data. Select the encrypted cloud copy to restore it; a safety backup will download only if you choose to replace the local data.');
+        gateRelease();view('setup');return;
+      }
       state={enabled:true,rev:latest.revision,dirty:false};bindAccount();
-      await applyRemote(latest,true);
+      await applyRemote(latest,false);
       active=true;conflict=false;listen();showActive();
-      ui('Device authorized. Latest encrypted classroom data restored automatically. Future Google sign-ins load the newest cloud version.');
+      ui('Device authorized. Latest encrypted classroom data restored automatically without a JSON download. Future Google sign-ins load the newest cloud version.');
     }
   }
 }
@@ -677,7 +730,9 @@ $('cloudFictionalConfirm')?.addEventListener('change',()=>{
 });
 document.addEventListener('bgr:local-save',()=>{
   if(skipLocalSave||!user||!active||conflict)return;
-  state.dirty=true;persist();schedulePush();
+  state.dirty=true;persist();
+  syncNotice(navigator.onLine?'pending':'offline',navigator.onLine?'Saved locally; encrypted cloud upload pending.':'Offline: change saved on this device, not yet in cloud.');
+  schedulePush();
 });
 window.addEventListener('online',checkIfVisible);
 window.addEventListener('focus',checkIfVisible);
