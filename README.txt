@@ -1,7 +1,1 @@
-BGR V51 compact staggered desk layout
-
-Replace index.html and sw.js in your existing GitHub repository. Other included files are unchanged from V50.
-
-Seating Chart > Desk group > 3 desks (compact staggered). Choose an orientation (two above, below, left or right) and Add. Desk names remain upright. Existing groups and assignments are preserved.
-
-Export a JSON backup before deployment. Test on desktop and iPad with fictional data.
+V53: Triangle orientation now uses four illustrated, accessible, touch-friendly buttons rather than a text dropdown. The underlying orientation values and saved desk configurations remain unchanged. Replace matching files in GitHub after backing up. Test in browser and iPad.\n
