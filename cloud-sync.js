@@ -394,7 +394,7 @@ async function loadAccount(){
       state.dirty=true;persist();markConflict('Local edits occurred while cloud data was loading. Neither copy was overwritten.');return;
     }
     safelyStop();title('Cloud vault unavailable');ui(err.message||String(err),true);view('none');
-    gateMessage('Cloud verification failed. Reconnect to the internet, or use your previously saved classes offline. '+(err.message||''), !navigator.onLine && startupGate?.bound===owner);
+    gateMessage('Google sign-in succeeded, but encrypted cloud verification failed: '+(err.message||String(err))+'. Retry with the same account when connected. Your saved classes remain on this device.', !navigator.onLine && startupGate?.bound===owner);
   }
 }
 async function beginFromLocal(){
@@ -614,11 +614,28 @@ async function manuallySync(){
 
 window.BGRSync={configured,get signedIn(){return !!user;},
   signInWithGoogle:async ()=>{
-    if(!configured)throw Error('Firebase is not configured.');
+    if(!configured||!auth)throw Error('Firebase is not ready. Reload and try again.');
+    const previousUid=user?.uid;
     const provider=new GoogleAuthProvider();
     provider.setCustomParameters({prompt:'select_account'});
-    const result=await signInWithPopup(auth,provider);
-    return result.user.email;
+    try {
+      const result=await signInWithPopup(auth,provider);
+      // Firebase onAuthStateChanged fires when the account CHANGES, not when an
+      // already-signed-in teacher chooses that same account again. A prior
+      // server failure could otherwise strand the startup gate indefinitely.
+      // For an actual account switch the auth observer handles loadAccount().
+      if(previousUid===result.user.uid && user?.uid===result.user.uid &&
+         startupGate?.bound && !active && !conflict){
+        await loadAccount();
+      }
+      return result.user.email;
+    } catch(err){
+      if(startupGate?.bound){
+        gateMessage('Google sign-in could not be completed: '+(err.message||String(err))+
+          '. Retry with the original account. Your saved classes have not been erased.',!navigator.onLine);
+      }
+      throw err;
+    }
   },disconnect,pauseForLocalErase};
 $('cloudUseThisBtn').addEventListener('click',()=>void beginFromLocal().catch(e=>ui(e.message,true)));
 $('cloudUseRemoteBtn').addEventListener('click',()=>void beginFromCloud().catch(e=>ui(e.message,true)));
