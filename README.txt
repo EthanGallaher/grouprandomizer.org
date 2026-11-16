@@ -1,1 +1,1 @@
-BGR V62: Home sample roles are Facilitator, Recorder, Reporter. Integrated header retains the actual BGR app icon (group-randomizer-icon.png). Standalone preview uses the live website icon, requiring internet. Upload matching files to GitHub; preserve existing icon image.
+BGR V63: Both Open teacher workspace buttons on the Home page now open Teacher Setup, even when classes already exist. Existing first-time welcome behavior retained. No changes to sync or class data. Replace index.html and sw.js; do not clear browser storage.

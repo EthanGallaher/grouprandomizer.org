@@ -2028,7 +2028,7 @@ $('randomStudentTab').addEventListener('click',() => showPage('randomStudent'));
 $('seatingTab').addEventListener('click',() => showPage('seating'));
 function openWorkspaceFromHome() {
   const hasRoster = db.classes.some(c => c.students && c.students.length > 0);
-  showPage(hasRoster ? 'groups' : 'teacher');
+  showPage('teacher');
   window.scrollTo(0,0);
   if (!hasRoster && window.__bgrHadPriorData === false) {
     const dialog = $('welcomeDialog');
