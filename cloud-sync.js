@@ -124,8 +124,66 @@ function saveVerifiedBase(snapshot,revision){
   try {localStorage.setItem(BASE_PREFIX+user.uid,JSON.stringify({rev:revision,snapshot}));}
   catch(err){console.warn('Verified merge baseline could not be stored; future conflicts require manual resolution.',err);}
 }
+// Encrypted, device-local rollback journal. No downloads or teacher decisions occur
+// for routine non-overlapping merges. Keep a few encrypted pre-merge snapshots.
+const MERGE_JOURNAL_DB='bgr-v48-merge-recovery';
+let mergeJournalOpen=null;
+function recoveryDatabase(){
+  if(!mergeJournalOpen){
+    mergeJournalOpen=new Promise((resolve,reject)=>{
+      const req=indexedDB.open(MERGE_JOURNAL_DB,1);
+      req.onupgradeneeded=()=>{
+        if(!req.result.objectStoreNames.contains('snapshots'))
+          req.result.createObjectStore('snapshots',{keyPath:'id'});
+      };
+      req.onsuccess=()=>resolve(req.result);
+      req.onerror=()=>reject(req.error||Error('Cannot create encrypted merge recovery storage.'));
+      req.onblocked=()=>reject(Error('Encrypted merge recovery storage is blocked.'));
+    }).catch(error=>{mergeJournalOpen=null;throw error;});
+  }
+  return mergeJournalOpen;
+}
+async function storeMergeRecovery(owner,baseRevision,remoteRevision,localSnapshot,cloudSnapshot){
+  // Encryption uses the same device-held classroom key and authenticated UID.
+  // If storage fails, refuse the automatic cloud write rather than losing a copy.
+  const local={...await encryptVault(key,localSnapshot,owner,baseRevision),revision:baseRevision};
+  const cloud={...await encryptVault(key,cloudSnapshot,owner,remoteRevision),revision:remoteRevision};
+  const database=await recoveryDatabase();
+  return new Promise((resolve,reject)=>{
+    const tx=database.transaction('snapshots','readwrite');
+    const store=tx.objectStore('snapshots');
+    const record={id:owner+':'+Date.now()+':'+freshId(),owner,at:Date.now(),local,cloud};
+    const get=store.getAll();
+    get.onsuccess=()=>{
+      const existing=(get.result||[]).filter(item=>item.owner===owner)
+        .sort((a,b)=>b.at-a.at);
+      store.put(record);
+      // Limit storage growth to this teacher's five newest recovery entries.
+      for(const old of existing.slice(4))store.delete(old.id);
+    };
+    tx.oncomplete=()=>resolve(record.id);
+    tx.onerror=()=>reject(tx.error||Error('Cannot save encrypted recovery copy.'));
+    tx.onabort=()=>reject(tx.error||Error('Encrypted recovery storage was cancelled.'));
+  });
+}
+async function downloadLatestMergeRecovery(){
+  if(!user||!key)return;
+  const owner=user.uid,db=await recoveryDatabase();
+  const rows=await new Promise((resolve,reject)=>{
+    const tx=db.transaction('snapshots','readonly');
+    const request=tx.objectStore('snapshots').getAll();
+    request.onsuccess=()=>resolve(request.result||[]);
+    request.onerror=()=>reject(request.error||Error('Cannot read encrypted recovery history.'));
+  });
+  const latest=rows.filter(x=>x.owner===owner).sort((a,b)=>b.at-a.at)[0];
+  if(!latest){ui('No automatic merge recovery copy exists on this device yet.');return;}
+  const local=await decryptVault(key,latest.local,owner);
+  const cloud=await decryptVault(key,latest.cloud,owner);
+  downloadMergeSafety(local,cloud);
+  ui('Encrypted recovery copies were decrypted into the JSON file you requested. Store this file securely.');
+}
 function downloadMergeSafety(localCopy,cloudCopy){
-  const payload={format:'BGR V47 pre-merge safety archive',savedAt:new Date().toISOString(),
+  const payload={format:'BGR V48 pre-merge safety archive',savedAt:new Date().toISOString(),
     note:'Contains UNENCRYPTED fictional classroom data; store securely. Extract local/cloud under copies.',
     local:localCopy,cloud:cloudCopy};
   const url=URL.createObjectURL(new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}));
@@ -155,6 +213,7 @@ async function mergeAndPublish(legacy=false){
       if(attempt.conflicts.length)throw Error('Both devices changed the same setting: '+attempt.conflicts.slice(0,5).join('; ')+'. Choose versions manually.');
       merged=attempt.merged;
     }
+    if(bridge.validate)merged=bridge.validate(merged);
     if(!canUploadTestDataset(merged))throw Error('Fictional-data upload restriction is active.');
     if(!confirm('Confirm the selected sources carefully: '+(legacy?'rankings from '+$('bgrMergeTierSource').selectedOptions[0].text+', seating from '+$('bgrMergeSeatingSource').selectedOptions[0].text+'. ':'non-overlapping edits from both versions. ')+'The app will request a JSON safety download containing BOTH originals before uploading. Browsers may block downloads: keep your separately exported backups. Proceed?'))return;
     if(contentSignature(bridge.read())!==contentSignature(local))throw Error('Local changes occurred during merge review. Retry.');
@@ -187,6 +246,148 @@ async function mergeAndPublish(legacy=false){
     else ui('Merge was not applied: '+(err.message||err),true);
   }finally{merging=false;}
 }
+// V48 automatic reconciliation: client-side three-way merge over the existing
+// E2EE vault format. The cloud never sees plaintext and Firestore rules stay
+// compatible. If there is no verified base, or edits overlap, stop for review.
+async function reconcileAutomatically(remote){
+  if(!active||!user||!key||busy||merging||conflict||!remote)return false;
+  const owner=user.uid,guardEpoch=epoch,startingRevision=state.rev;
+  if(remote.revision<=startingRevision)return false;
+  const base=readVerifiedBase();
+  if(!base){markConflict('Both devices have saved changes, but this device has no verified shared starting version. To protect both copies, a one-time review is required.');return false;}
+  merging=true;
+  syncNotice('pending','Combining compatible changes securely…');
+  try{
+    let latest=remote;
+    for(let attempt=0;attempt<3;attempt++){
+      if(!active||!user||user.uid!==owner||epoch!==guardEpoch||state.rev!==startingRevision)
+        throw Error('SYNC_CONTEXT_CHANGED');
+      const local=bridge.read(),localSignature=contentSignature(local);
+      const cloud=await parseRemote(latest);
+      if(!active||!user||user.uid!==owner||epoch!==guardEpoch||state.rev!==startingRevision)
+        throw Error('SYNC_CONTEXT_CHANGED');
+      const candidate=mergeThreeWay(base,local,cloud);
+      if(candidate.conflicts.length){
+        markConflict('The same setting changed on both devices ('+candidate.conflicts.slice(0,3).join(', ')+'). Both versions are preserved. Review only this conflict.');
+        return false;
+      }
+      if(contentSignature(bridge.read())!==localSignature){
+        // Do not spin indefinitely while a teacher is editing rapidly.
+        scheduleCloudRefresh(600);return false;
+      }
+      const merged=bridge.validate?bridge.validate(candidate.merged):candidate.merged;
+      if(!canUploadTestDataset(merged)){
+        markConflict('Enable fictional-data testing before publishing a combined test classroom. No cloud changes were made.');return false;
+      }
+      // Local edits may have been reverted: in that case the latest cloud copy
+      // already contains the entire merge, so no new cloud revision is needed.
+      if(contentSignature(merged)===contentSignature(cloud)){
+        if(contentSignature(bridge.read())!==localSignature){scheduleCloudRefresh(600);return false;}
+        // applyRemote refuses to overwrite dirty data; here we've established
+        // that every local change is already represented by the merged cloud.
+        if(!active||!user||user.uid!==owner||epoch!==guardEpoch||state.rev!==startingRevision)throw Error('SYNC_CONTEXT_CHANGED');
+        skipLocalSave=true;
+        try {bridge.apply(merged);} finally {skipLocalSave=false;}
+        state.rev=latest.revision;state.dirty=false;
+        state.fingerprint=await localFingerprint();state.fingerprintFormat='content-v2';
+        if(contentSignature(bridge.read())!==contentSignature(merged))state.dirty=true;
+        saveVerifiedBase(cloud,latest.revision);rememberVerifiedTransfer('download');persist();
+        showActive();if(state.dirty)schedulePush(350);return true;
+      }
+      // Preserve both originals without triggering an iPad JSON download.
+      // The journal is encrypted, bounded, and accessible only to an
+      // already-authorized device holding this teacher's key.
+      if(contentSignature(bridge.read())!==localSignature){scheduleCloudRefresh(600);return false;}
+      await storeMergeRecovery(owner,startingRevision,latest.revision,local,cloud);
+      if(contentSignature(bridge.read())!==localSignature){scheduleCloudRefresh(600);return false;}
+      const newRevision=latest.revision+1;
+      const encrypted=await encryptVault(key,merged,owner,newRevision);
+      if(contentSignature(bridge.read())!==localSignature){scheduleCloudRefresh(600);return false;}
+      try{
+        await runTransaction(firestore,async tx=>{
+          const snapshot=await tx.get(doc(firestore,'teacherCloud',owner));
+          if(!snapshot.exists()||snapshot.data().schema!=='bgr-e2ee-v1'||snapshot.data().revision!==latest.revision)
+            throw Error('REVISION_CONFLICT');
+          tx.set(doc(firestore,'teacherCloud',owner),{
+            schema:encrypted.schema,iv:encrypted.iv,ciphertext:encrypted.ciphertext,
+            revision:newRevision,writer:tabId,updatedAt:serverTimestamp()
+          });
+        });
+      }catch(err){
+        if(err.message==='REVISION_CONFLICT'){
+          const next=cloudData(await getDocFromServer(doc(firestore,'teacherCloud',owner)));
+          if(!next||next.revision<=latest.revision)throw Error('Cloud was reset during automatic reconciliation.');
+          latest=next;lastServer=next;continue;
+        }
+        throw err;
+      }
+      if(!user||user.uid!==owner||epoch!==guardEpoch)return true;
+      // The cloud now has the merged version. Edits made while the transaction
+      // was running must be rebased onto that version, never overwritten.
+      const newestLocal=bridge.read();
+      const extra=mergeThreeWay(local,newestLocal,merged);
+      state.rev=newRevision;
+      saveVerifiedBase(merged,newRevision);
+      if(extra.conflicts.length){
+        state.dirty=true;persist();
+        markConflict('Both copies were merged in the cloud, but a new local edit overlaps that merge. Local changes remain intact for review.');
+        return true;
+      }
+      skipLocalSave=true;
+      try {bridge.apply(extra.merged);}
+      catch(err){
+        state.dirty=true;persist();
+        markConflict('The combined cloud data was saved, but the local screen could not be updated. Both versions are retained. '+err.message);
+        return true;
+      } finally {skipLocalSave=false;}
+      const expectedSignature=contentSignature(extra.merged);
+      const installedSignature=contentSignature(bridge.read());
+      state.dirty=installedSignature!==contentSignature(merged);
+      state.fingerprintFormat='content-v2';
+      // Do not mark this state clean if rendering or another edit changed it.
+      const fingerprint=await localFingerprint();
+      if(contentSignature(bridge.read())!==installedSignature)state.dirty=true;
+      if(!state.dirty)state.fingerprint=fingerprint;
+      rememberVerifiedTransfer('upload');persist();
+      showActive();
+      if(state.dirty)schedulePush(350);
+      return true;
+    }
+    // Revisions changing faster than we can commit must be retried after a
+    // short delay; never attempt a blind last-write-wins overwrite.
+    syncNotice('pending','Other devices are still saving; retrying the encrypted merge.');
+    scheduleCloudRefresh(800);
+    return false;
+  }catch(err){
+    if(user?.uid!==owner||epoch!==guardEpoch)return false;
+    if(err.message==='SYNC_CONTEXT_CHANGED')return false;
+    if(err.message==='REVISION_CONFLICT'){
+      scheduleCloudRefresh(800);return false;
+    }
+    // Transient network failure should not create a permanent data conflict.
+    // A journal failure is different: no automatic write should proceed.
+    if(/recovery|storage|IndexedDB/i.test(err.message||'')){
+      markConflict('Unable to save encrypted rollback copies on this device. Automatic merge was stopped to protect both versions. '+err.message);
+    }else{
+      syncNotice('pending','Encrypted merge has not completed. Local changes are safe; retrying when connected.');
+      ui('Automatic merge temporarily unavailable: '+(err.message||String(err)),true);
+      scheduleCloudRefresh(3000);
+    }
+    return false;
+  }finally{
+    merging=false;
+  }
+}
+let cloudRefreshTimer=null;
+function scheduleCloudRefresh(delay=400){
+  if(!active||conflict||!user)return;
+  clearTimeout(cloudRefreshTimer);
+  cloudRefreshTimer=setTimeout(()=>{
+    cloudRefreshTimer=null;
+    if(active&&!busy&&!receiving&&!merging)void automaticCheck();
+    else if(active&&!conflict)scheduleCloudRefresh(900);
+  },delay);
+}
 function metaKey(){return STATE_PREFIX+user.uid;}
 function readState(){try{return {...{enabled:false,rev:0,dirty:false},...JSON.parse(localStorage.getItem(metaKey())||'{}')};}catch(_){return {enabled:false,rev:0,dirty:false};}}
 function restoreFictionalAcknowledgement(){
@@ -218,7 +419,7 @@ function rememberVerifiedTransfer(kind){
 function persist(){if(user)localStorage.setItem(metaKey(),JSON.stringify(state));}
 function bindAccount(){localStorage.setItem(BOUND_KEY,user.uid);}
 function safelyStop(){
-  active=false;conflict=false;clearTimeout(debounce);clearTimeout(retry);stopAutoChecks();
+  active=false;conflict=false;clearTimeout(debounce);clearTimeout(retry);clearTimeout(cloudRefreshTimer);stopAutoChecks();
   if(unlisten){unlisten();unlisten=null;}
 }
 function stopPairing(){
@@ -294,7 +495,7 @@ function markConflict(message){
   if(!startupGate?.bound||startupGate.bound===user?.uid)gateRelease();
   conflict=true;active=false;clearTimeout(debounce);stopAutoChecks();
   $('googleSyncStatus').textContent='Encrypted sync paused: resolve the conflict.';
-  syncNotice('conflict',message||'Both devices edited the classroom. Sync is paused; neither version will be overwritten automatically.');
+  syncNotice('conflict',message||'Two devices changed the same setting. Review required; both versions retained.');
   title('Two devices changed classrooms');
   ui(message||'Choose which copy to keep; nothing has been overwritten.',true);
   view('conflict');
@@ -302,7 +503,7 @@ function markConflict(message){
 function showActive(){
   if(!startupGate?.bound||startupGate.bound===user?.uid)gateRelease();
   renderVerifiedTransfer();
-  syncNotice(state.dirty?'pending':'clean',state.dirty?'Saved on this device; encrypted upload is pending.':'');
+  syncNotice(state.dirty?'pending':'clean',state.dirty?'Changes saved locally; encrypted upload pending.':'All changes saved to the encrypted cloud.');
   $('googleSyncStatus').textContent='Encrypted auto-sync ON · updates upload as you edit · cloud checked every 2 minutes while the app is visible.';
   beginAutoChecks();
   title(state.dirty?'Encrypted sync — saving changes':'End-to-end encrypted sync is on');
@@ -315,7 +516,7 @@ function schedulePush(delay=1200){
   debounce=setTimeout(()=>void push().catch(e=>ui('Encrypted sync error: '+e.message,true)),delay);
 }
 async function push(){
-  if(!active||!user||!key||conflict||busy||!state.dirty)return;
+  if(!active||!user||!key||conflict||busy||receiving||merging||!state.dirty)return;
   if(!navigator.onLine){title('Offline — saved locally');ui('The app will retry encrypted upload when the network returns.');syncNotice('offline','Offline: classroom changes saved only on this device. They are not yet in the cloud.');return;}
   const owner=user.uid,guardEpoch=epoch;
   const classroom=bridge.read();
@@ -326,7 +527,7 @@ async function push(){
   }
   const before=contentSignature(classroom),expected=state.rev;
   busy=true;syncNotice('pending','Uploading encrypted classroom changes to the cloud…');title('Encrypting and uploading…');ui('Unencrypted classroom content never enters the Firestore write.');
-  let succeeded=false;
+  let succeeded=false,needsMerge=null;
   try{
     const encrypted=await encryptVault(key,classroom,owner,expected+1);
     await runTransaction(firestore,async tx=>{
@@ -349,37 +550,71 @@ async function push(){
     if(!user||user.uid!==owner||guardEpoch!==epoch)return;
     state.dirty=true;persist();
     if(err.message==='REVISION_CONFLICT'){
-      try{lastServer=cloudData(await getDocFromServer(ref()));markConflict('A different device saved an encrypted revision before this one. Nothing was overwritten.');}
-      catch(e){title('Sync stopped');ui(e.message,true);safelyStop();}
+      try {
+        lastServer=cloudData(await getDocFromServer(ref()));
+        needsMerge=lastServer;
+        syncNotice('pending','Another device saved first. Automatically checking whether both edits can be combined…');
+      } catch(e){
+        syncNotice('pending','Cannot check the latest cloud revision yet; local data is safe.');
+        scheduleCloudRefresh(3000);
+      }
     }else{
       syncNotice('pending','Cloud upload failed. Classes remain saved locally and will be retried.');
       title('Cloud unavailable — local classes saved');
       ui('Encrypted upload failed: '+(err.message||'Unknown error'),true);
       clearTimeout(retry);retry=setTimeout(()=>schedulePush(200),12000);
     }
-  }finally{busy=false;if(succeeded&&active&&state.dirty&&!conflict)schedulePush(300);}
+  }finally{
+    busy=false;
+    if(needsMerge&&active&&!conflict)void received(needsMerge);
+    else if(queuedRemote&&active&&!conflict){const latest=queuedRemote;queuedRemote=null;void received(latest);}
+    if(succeeded&&active&&state.dirty&&!conflict)schedulePush(300);
+  }
 }
+let queuedRemote=null;
 async function received(remote){
-  if(receiving||!active||!user||!key||!remote||remote.revision<=state.rev)return;
+  if(!active||!user||!key||!remote||remote.revision<=state.rev)return;
+  if(receiving){
+    if(!queuedRemote||remote.revision>queuedRemote.revision)queuedRemote=remote;
+    return;
+  }
   const owner=user.uid,guardEpoch=epoch;
-  if(remote.writer===tabId){if(busy)return;state.rev=remote.revision;persist();return;}
+  if(remote.writer===tabId&&busy)return;
   receiving=true;
   try{
     lastServer=remote;
-    if(state.dirty||busy){markConflict('Encrypted updates arrived while this device had local unsynced edits.');return;}
+    if(busy||merging){
+      queuedRemote=remote;
+      scheduleCloudRefresh(500);
+      return;
+    }
     const fingerprint=await localFingerprint();
-    if(state.fingerprint&&fingerprint!==state.fingerprint){
+    if(!state.dirty&&state.fingerprint&&fingerprint!==state.fingerprint){
       state.dirty=true;persist();
-      markConflict('Local classes changed since the last upload; the cloud version was not allowed to overwrite them.');return;
+    }
+    if(state.dirty){
+      await reconcileAutomatically(remote);
+      return;
     }
     const guard={owner,epoch:guardEpoch,rev:state.rev,fingerprint};
-    // Routine autosync replaces only a verified, clean local revision.
-    // Never trigger a plaintext JSON download for every incoming change (especially on iOS).
     await applyRemote(remote,false,guard);
     if(active&&user?.uid===owner&&epoch===guardEpoch)showActive();
   }catch(err){
-    if(user?.uid===owner&&epoch===guardEpoch)markConflict('Cannot safely restore this cloud revision: '+err.message);
-  }finally{receiving=false;}
+    if(user?.uid===owner&&epoch===guardEpoch){
+      if(/Local classroom data changed/.test(err.message||'')){
+        state.dirty=true;persist();scheduleCloudRefresh(500);
+      }else if(/network|unavailable|offline|timeout/i.test(err.message||'')){
+        syncNotice('pending','Cloud temporarily unreachable; changes are safely stored locally.');
+        scheduleCloudRefresh(3000);
+      }else markConflict('Cannot safely synchronize the cloud revision: '+err.message);
+    }
+  }finally{
+    receiving=false;
+    if(queuedRemote&&active&&!conflict&&!busy&&!merging){
+      const next=queuedRemote;queuedRemote=null;
+      if(next.revision>state.rev)Promise.resolve().then(()=>received(next));
+    }
+  }
 }
 function listen(){
   if(unlisten)unlisten();
@@ -420,6 +655,7 @@ async function automaticCheck(){
     if(active&&!conflict){
       if(!unlisten)listen();
       if(state.dirty)schedulePush(300);
+      else syncNotice('clean','All changes saved to the encrypted cloud.');
     }
   }catch(err){
     if(active&&user?.uid===owner&&epoch===guardEpoch){
@@ -485,8 +721,14 @@ async function loadAccount(){
         state.dirty=true;persist();
       }
       if(state.dirty){
-        if((remote?.revision||0)!==state.rev){markConflict('This device has unsynced edits and the cloud revision is different.');return;}
-        showActive();listen();schedulePush(200);return;
+        if((remote?.revision||0)<state.rev){markConflict('The cloud revision is missing or older than this device. Local changes were preserved.');return;}
+        showActive();listen();
+        if((remote?.revision||0)>state.rev){
+          // The verified ancestor is needed only for true offline divergence.
+          // Non-overlapping edits are merged without a teacher-facing prompt.
+          void received(remote);
+        }else schedulePush(200);
+        return;
       }
       if(remote){
         // Legacy sync state may lack a trusted content fingerprint. Compare the
@@ -740,8 +982,7 @@ async function manuallySync(){
   try{
     const remote=cloudData(await getDocFromServer(ref()));lastServer=remote;
     if((remote?.revision||0)>state.rev){
-      if(state.dirty)markConflict('Other device saved a newer encrypted revision.');
-      else await received(remote);
+      await received(remote);
     }
     if(active&&state.dirty)await push();
     if(active&&!state.dirty)showActive();
@@ -793,6 +1034,7 @@ window.BGRSync={configured,get signedIn(){return !!user;},get uid(){return user?
 $('cloudUseThisBtn').addEventListener('click',()=>void beginFromLocal().catch(e=>ui(e.message,true)));
 $('cloudUseRemoteBtn').addEventListener('click',()=>void beginFromCloud().catch(e=>ui(e.message,true)));
 $('bgrMergeBtn').addEventListener('click',()=>void mergeAndPublish(false));
+$('bgrDownloadMergeRecovery').addEventListener('click',()=>void downloadLatestMergeRecovery().catch(e=>ui('Recovery export failed: '+e.message,true)));
 $('bgrMergeLegacyBtn').addEventListener('click',()=>void mergeAndPublish(true));
 $('cloudConflictRemoteBtn').addEventListener('click',()=>void resolveKeepCloud().catch(e=>ui(e.message,true)));
 $('cloudConflictLocalBtn').addEventListener('click',()=>void resolveKeepLocal().catch(e=>ui(e.message,true)));

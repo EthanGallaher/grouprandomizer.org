@@ -391,7 +391,7 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
 .welcome-privacy p {font-size:12px;margin:6px 0 0;}
 @media(max-width:600px) {.welcome-dialog {padding:16px;}.welcome-dialog h2 {font-size:21px;}}
 
-/* Optional Google account pilot. No student data is transferred to cloud storage. */
+/* Encrypted Google cloud sync pilot. */
 .cloud-card { border-top-color:#1856ad; }
 .cloud-head { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
 .cloud-head h2 { margin:0; }
@@ -460,6 +460,12 @@ body.ipad-presentation .ipad-exit-presentation {display:block;}
 #bgrStartupGate p{margin:8px 0 18px;line-height:1.5}
 #bgrStartupGate button{margin-right:8px;margin-bottom:8px}
 #bgrGateStatus{font-size:13px;color:#475467;overflow-wrap:anywhere}
+
+/* Compact sync state: teachers see a simple save message, not a banner for every edit. */
+#bgrCloudSaveState{font-size:12px;color:#e8f2ff;white-space:nowrap;max-width:240px;overflow:hidden;text-overflow:ellipsis;}
+#bgrCloudSaveState[data-kind="conflict"]{color:#ffcfb8;font-weight:800;}
+#bgrCloudSaveState[data-kind="offline"]{color:#ffe0ad;}
+#bgrCloudSaveState[hidden]{display:none!important;}
 </style>
 </head>
 <body>
@@ -499,7 +505,7 @@ body.ipad-presentation .ipad-exit-presentation {display:block;}
 <header class="top">
   <div class="top-inner">
     <div class="site-brand"><img src="group-randomizer-icon.png" alt="" width="48" height="48"><h1>Balanced Group Randomizer</h1></div>
-    <div class="install-actions"><button type="button" class="install-app-btn" id="welcomeHelpBtn">Getting Started</button><button type="button" class="install-app-btn" id="feedbackBtn">Feedback</button><button type="button" class="install-app-btn" id="installAppBtn" hidden>Install Desktop App</button><div class="save-state" id="saveState">Saved on this device</div></div>
+    <div class="install-actions"><button type="button" class="install-app-btn" id="welcomeHelpBtn">Getting Started</button><button type="button" class="install-app-btn" id="feedbackBtn">Feedback</button><button type="button" class="install-app-btn" id="installAppBtn" hidden>Install Desktop App</button><div class="save-state" id="saveState">Saved on this device</div><div class="save-state" id="bgrCloudSaveState" role="status" aria-live="polite" hidden></div></div>
   </div>
 </header>
 
@@ -730,7 +736,7 @@ body.ipad-presentation .ipad-exit-presentation {display:block;}
       <div class="cloud-controls"><button type="button" class="secondary" id="cloudPairReviewBtn">Review new device</button><button type="button" class="primary" id="cloudPairApproveBtn" hidden>Approve matching number and share key</button><button type="button" class="secondary cloud-danger" id="cloudPairRejectBtn" hidden>Reject request</button></div>
     </div>
     <div id="cloudActiveActions" hidden>
-      <p class="help">No Sync button is needed. Both authorized devices upload changes automatically and check the cloud about every two minutes while the app is open and visible. They also check when you return to the app. Background or sleeping devices may pause until opened again. Conflicting edits still require your decision.</p>
+      <p class="help">No Sync button is needed. Both authorized devices upload changes automatically and check the cloud about every two minutes while the app is open and visible. They also check when you return to the app. Background or sleeping devices may pause until opened again. Different edits merge automatically. If both devices change the exact same setting, the app will ask for review rather than discard data.</p>
       <button type="button" class="secondary" id="cloudSyncNowBtn">Check now (optional)</button>
       <button type="button" class="secondary" id="cloudStopBtn">Turn off sync on this device</button>
     </div>
@@ -750,7 +756,7 @@ body.ipad-presentation .ipad-exit-presentation {display:block;}
       <button type="button" class="secondary" id="cloudConflictRemoteBtn">Use cloud version (back up this device)</button>
       <button type="button" class="secondary cloud-danger" id="cloudConflictLocalBtn">Keep this device (back up cloud version)</button>
     </div>
-    <div style="margin-top:8px"><button type="button" class="secondary cloud-danger" id="cloudDeleteBtn" hidden>Delete my cloud copy</button></div>
+    <div style="margin-top:8px"><button type="button" class="secondary" id="bgrDownloadMergeRecovery">Download latest encrypted-merge recovery copy</button><button type="button" class="secondary cloud-danger" id="cloudDeleteBtn" hidden>Delete my cloud copy</button></div>
   </div>
   </div>
 </section>
@@ -2345,14 +2351,21 @@ document.addEventListener('bgr:cloud-attention', event => {
 // Sync state is visible outside the expandable cloud settings. Never claim
 // both devices are synchronized when a local upload or conflict is pending.
 const syncAlert = document.getElementById('bgrSyncAlert');
+const syncPill = document.getElementById('bgrCloudSaveState');
 document.addEventListener('bgr:sync-status',event=>{
   const {kind,message}=event.detail||{};
-  if(!['conflict','offline','pending'].includes(kind)){
-    syncAlert.hidden=true; return;
+  syncAlert.hidden=kind!=='conflict';
+  if(kind==='conflict'){
+    syncAlert.dataset.kind='conflict';
+    document.getElementById('bgrSyncAlertText').textContent='One setting needs review — '+(message||'Two edits could not be safely combined.');
   }
-  syncAlert.hidden=false;
-  syncAlert.dataset.kind=kind;
-  document.getElementById('bgrSyncAlertText').textContent=(kind==='conflict'?'Synchronization paused — ':kind==='offline'?'Offline — ':'Sync pending — ')+(message||'Review cloud synchronization status.');
+  if(!['clean','pending','offline','conflict'].includes(kind))return;
+  const labels={clean:'✓ All changes saved',pending:'↻ Saving changes…',offline:'◌ Offline — saved on this device',conflict:'! Review sync changes'};
+  syncPill.hidden=false;
+  syncPill.dataset.kind=kind;
+  syncPill.textContent=labels[kind];
+  syncPill.title=message||labels[kind];
+  document.getElementById('saveState').hidden=true;
 });
 document.getElementById('bgrSyncAlertOpen').addEventListener('click',()=>{
   showPage('teacher');setCloudDetailsOpen(true);
@@ -3223,6 +3236,8 @@ updateBackupStatus();
 // Bridge for optional cloud module: validated import; local backup precedes any replacement.
 window.BGRSyncBridge = {
   read: () => JSON.parse(JSON.stringify(db)),
+  // Preflight a merged snapshot without replacing the teacher's current classes.
+  validate: (snapshot) => validateBackup(JSON.parse(JSON.stringify(snapshot))),
   backup: (label = 'bgr-local-before-cloud-restore') => downloadBackup(db,label),
   apply: (snapshot) => {
     const next = validateBackup(JSON.parse(JSON.stringify(snapshot)));
@@ -3239,7 +3254,7 @@ window.BGRSyncBridge = {
 </script>
 <!-- Optional Firebase sync module. If Firebase isn't configured, local-only app still works. -->
 <script src="./firebase-config.js"></script>
-<script type="module" src="./cloud-sync.js?v=47-merge1"></script>
+<script type="module" src="./cloud-sync.js?v=48-auto-merge1"></script>
 <script>
 // Offer the native PWA install prompt when supported, otherwise explain the browser-specific steps.
 (() => {
