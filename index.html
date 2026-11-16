@@ -567,6 +567,73 @@ body.print-seating .workspace-bar{display:none!important}
 .visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 
 </style>
+<style>
+
+/* V60: public-facing introduction without disrupting the teacher workspace. */
+body.bgr-home-active .workspace-class-bar{display:none!important}
+.wrap:has(#homePage.active){max-width:1560px;padding-top:10px}
+#homePage{color:#18283f}
+.landing-shell{overflow:hidden;border:1px solid #d9e3f2;border-radius:26px;background:#fff;box-shadow:0 16px 50px rgba(14,48,96,.055)}
+.landing-hero{position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:24px;min-height:515px;padding:clamp(28px,4.6vw,68px);align-items:center;background:linear-gradient(130deg,#f8fbff 0%,#eef4ff 55%,#fff6f6 100%)}
+.landing-hero:before{content:'';pointer-events:none;position:absolute;right:-120px;top:-140px;width:490px;height:490px;border:1px solid rgba(38,88,163,.12);border-radius:50%;box-shadow:0 0 0 50px rgba(38,88,163,.035),0 0 0 120px rgba(38,88,163,.025);z-index:-1}
+.landing-hero-copy{max-width:680px}
+.landing-eyebrow{display:inline-flex;align-items:center;gap:9px;color:#2256a5;font-size:11px;font-weight:850;letter-spacing:.13em;text-transform:uppercase;margin-bottom:22px}
+.landing-eyebrow:before{content:'';height:7px;width:7px;border-radius:50%;background:#c92e42;box-shadow:0 0 0 5px #c92e4219}
+.landing-hero h2{font-size:clamp(35px,4.4vw,67px);letter-spacing:-.052em;line-height:1.055;margin:0 0 20px;color:#102b56;font-weight:850}
+.landing-hero h2 em{font-style:normal;color:#b72f46}
+.landing-hero-copy>p{max-width:580px;margin:0;color:#53667f;font-size:clamp(16px,1.45vw,19px);line-height:1.65}
+.landing-cta{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:29px}
+.landing-action{display:inline-flex;align-items:center;justify-content:center;gap:9px;text-decoration:none;border-radius:12px;min-height:47px;padding:12px 20px;font-size:14px;font-weight:800;cursor:pointer}
+.landing-action.primary{background:#1856ad;color:white;border:1px solid #1856ad;box-shadow:0 8px 18px #1856ad24}
+.landing-action.primary:hover{background:#103d82}
+.landing-action.secondary{background:#fff;color:#1c457e;border:1px solid #ced9ea}
+.landing-note{margin-top:16px;font-size:12px;color:#63748a}
+.landing-showcase{position:relative;max-width:495px;width:100%;margin:0 auto;padding:14px}
+.landing-showcase:before{content:'';position:absolute;inset:36px 0 3px 45px;background:#dfeaff;border-radius:28px;transform:rotate(5deg);z-index:-1}
+.landing-demo{background:white;border:1px solid #d9e4f3;border-radius:20px;padding:18px;box-shadow:0 25px 60px rgba(30,64,120,.15);transform:rotate(-1.5deg)}
+.landing-demo-head{display:flex;justify-content:space-between;align-items:start;gap:10px;margin-bottom:12px}
+.landing-demo-overline{font-size:10px;letter-spacing:.1em;color:#6b7f9a;font-weight:800;text-transform:uppercase}
+.landing-demo-head h3{margin:4px 0 0;color:#132d58;font-size:22px;line-height:1.2}
+.landing-demo-chip{background:#e5f4eb;color:#19623d;border:1px solid #bce1c8;border-radius:30px;padding:6px 10px;font-size:11px;font-weight:800;white-space:nowrap}
+.landing-demo-list{display:grid;gap:9px}
+.landing-demo-person{display:grid;grid-template-columns:104px minmax(0,1fr);gap:12px;align-items:center;padding:12px;border-radius:11px;border:1px solid #e4ebf5;background:#fbfcff}
+.landing-demo-role{border-radius:8px;background:#e8eef7;color:#244675;padding:7px 6px;font-size:11px;font-weight:800;text-align:center}
+.landing-demo-name{font-size:16px;font-weight:800;color:#142e50}
+.landing-demo-footer{display:flex;justify-content:space-between;align-items:center;gap:10px;padding-top:16px;color:#62748c;font-size:11px}
+.landing-avatar-stack{display:flex;padding-left:7px}
+.landing-avatar-stack span{display:grid;place-items:center;width:27px;height:27px;border-radius:50%;border:2px solid white;background:#2459a9;color:#fff;font-size:10px;font-weight:900;margin-left:-7px}
+.landing-avatar-stack span:nth-child(2){background:#d2505c}.landing-avatar-stack span:nth-child(3){background:#6c7e9e}
+.landing-promise{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid #e5ebf5;border-bottom:1px solid #e5ebf5;background:white}
+.landing-promise>div{padding:22px 25px;text-align:center;font-size:12px;font-weight:800;color:#425872}
+.landing-promise>div+div{border-left:1px solid #e5ebf5}
+.landing-promise strong{color:#1856ad}
+.landing-section{padding:clamp(30px,4.7vw,68px)}
+.landing-section-head{max-width:750px;margin-bottom:29px}
+.landing-section-head .landing-kicker{display:block;font-size:11px;font-weight:850;color:#c03950;letter-spacing:.13em;text-transform:uppercase;margin-bottom:12px}
+.landing-section-head h3{font-size:clamp(26px,3vw,40px);line-height:1.14;letter-spacing:-.03em;color:#102b56;margin:0 0 13px}
+.landing-section-head p{font-size:15px;color:#62748a;line-height:1.7;margin:0}
+.landing-features{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.landing-feature{background:#f9fbff;border:1px solid #e1e9f4;border-radius:16px;padding:22px;min-width:0}
+.landing-feature-icon{width:40px;height:40px;display:grid;place-items:center;background:#eaf1fe;color:#2359aa;border-radius:12px;font-size:19px;font-weight:900;margin-bottom:16px}
+.landing-feature:nth-child(2) .landing-feature-icon,.landing-feature:nth-child(5) .landing-feature-icon{background:#fdebee;color:#bc3850}
+.landing-feature h4{font-size:17px;color:#14325e;margin:0 0 9px}
+.landing-feature p{font-size:13px;line-height:1.65;color:#5b6e85;margin:0}
+.landing-steps{background:#f0f5fd;border-top:1px solid #e1eaf7;border-bottom:1px solid #e1eaf7}
+.landing-step-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px}
+.landing-step{position:relative;padding-left:5px}
+.landing-step-number{width:37px;height:37px;display:grid;place-items:center;border:1px solid #b8cdec;border-radius:50%;background:white;color:#1a56a6;font-size:13px;font-weight:850;margin-bottom:16px}
+.landing-step h4{font-size:17px;color:#173664;margin:0 0 8px}
+.landing-step p{font-size:13px;line-height:1.65;color:#5a708a;margin:0}
+.landing-bottom{background:linear-gradient(115deg,#102d60,#174b94 70%,#9f2d48);color:white;border-radius:18px;padding:34px;display:flex;align-items:center;justify-content:space-between;gap:28px}
+.landing-bottom h3{font-size:clamp(23px,2.3vw,31px);line-height:1.15;margin:0 0 9px;color:white}
+.landing-bottom p{color:#e0e9f5;font-size:13px;line-height:1.65;margin:0;max-width:650px}
+.landing-bottom .landing-action{background:white;color:#14396c;border-color:white;flex:none}
+.landing-privacy{margin:18px 0 4px;color:#7b889b;font-size:11px;line-height:1.6;text-align:center}
+@media(max-width:1050px){.landing-hero{grid-template-columns:1fr 0.9fr;padding:32px;min-height:440px}.landing-demo-name{font-size:14px}.landing-features{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.landing-shell{border-radius:17px}.landing-hero{grid-template-columns:1fr;min-height:0;padding:30px 23px 35px}.landing-hero h2{font-size:clamp(36px,8vw,49px)}.landing-showcase{max-width:430px;padding:8px 0 0}.landing-demo{transform:none}.landing-promise{grid-template-columns:1fr}.landing-promise>div{padding:12px}.landing-promise>div+div{border-left:0;border-top:1px solid #e5ebf5}.landing-section{padding:30px 22px}.landing-features{grid-template-columns:1fr}.landing-step-grid{grid-template-columns:1fr;gap:24px}.landing-bottom{flex-direction:column;align-items:flex-start;padding:24px}.landing-bottom .landing-action{width:100%}}
+@media print{#homePage{display:none!important}}
+
+</style>
 </head>
 <body>
 <div id="bgrStartupGate" role="dialog" aria-modal="true" aria-labelledby="bgrGateTitle" hidden>
@@ -653,6 +720,7 @@ body.print-seating .workspace-bar{display:none!important}
 </div>
 <div class="workspace-bar">
   <nav class="page-nav" aria-label="Classroom tools">
+    <button type="button" class="secondary" id="homeTab" aria-controls="homePage">Home</button>
     <button type="button" class="secondary" id="groupsTab" aria-controls="groupsPage">Groups</button>
     <button type="button" class="secondary" id="seatingTab" aria-controls="seatingPage">Seating Chart</button>
     <button type="button" class="secondary" id="randomStudentTab" aria-controls="randomStudentPage">Random Student</button>
@@ -667,6 +735,70 @@ body.print-seating .workspace-bar{display:none!important}
 
 <div class="wrap">
 <div class="layout">
+
+<section class="page" id="homePage" aria-labelledby="landingTitle">
+  <div class="landing-shell">
+    <div class="landing-hero">
+      <div class="landing-hero-copy">
+        <span class="landing-eyebrow">Built for real classrooms</span>
+        <h2 id="landingTitle">Less time making groups.<br><em>More time making them work.</em></h2>
+        <p>Random groups are easy. Creating groups that work for your students takes more thought. Balanced Group Randomizer brings thoughtful grouping, classroom rules, seating charts, and student selection into one simple teacher workspace.</p>
+        <div class="landing-cta">
+          <button type="button" class="landing-action primary" id="homeOpenWorkspace">Open teacher workspace <span aria-hidden="true">→</span></button>
+          <a href="#landingWhy" class="landing-action secondary">See what makes BGR different ↓</a>
+        </div>
+        <div class="landing-note">Designed for groups of three. Flexible enough for your classroom.</div>
+      </div>
+      <div class="landing-showcase" aria-label="Illustration of a three-student classroom group">
+        <div class="landing-demo">
+          <div class="landing-demo-head">
+            <div><span class="landing-demo-overline">Sample group · Illustration</span><h3>Group 1</h3></div>
+            <span class="landing-demo-chip">3 students</span>
+          </div>
+          <div class="landing-demo-list">
+            <div class="landing-demo-person"><span class="landing-demo-role">Facilitator</span><span class="landing-demo-name">Avery</span></div>
+            <div class="landing-demo-person"><span class="landing-demo-role">Recorder</span><span class="landing-demo-name">Jordan</span></div>
+            <div class="landing-demo-person"><span class="landing-demo-role">Reporter</span><span class="landing-demo-name">Morgan</span></div>
+          </div>
+          <div class="landing-demo-footer"><span>Student presentation hides performance levels</span><span class="landing-avatar-stack" aria-hidden="true"><span>A</span><span>J</span><span>M</span></span></div>
+        </div>
+      </div>
+    </div>
+    <div class="landing-promise" aria-label="BGR principles">
+      <div><strong>01</strong> &nbsp; Purposeful grouping</div><div><strong>02</strong> &nbsp; Teacher control</div><div><strong>03</strong> &nbsp; Ready for instruction</div>
+    </div>
+    <div class="landing-section" id="landingWhy">
+      <div class="landing-section-head">
+        <span class="landing-kicker">Why BGR exists</span>
+        <h3>It's not just about who sits together.</h3>
+        <p>Teachers need a fast way to mix students thoughtfully without losing control of classroom dynamics. BGR starts with randomization, then adds the everyday tools that make the groups usable.</p>
+      </div>
+      <div class="landing-features">
+        <article class="landing-feature"><div class="landing-feature-icon" aria-hidden="true">≋</div><h4>Balanced by design</h4><p>Prioritize groups of three and mix teacher-assigned High, Middle, and Low performance levels—not just names from a hat.</p></article>
+        <article class="landing-feature"><div class="landing-feature-icon" aria-hidden="true">↔</div><h4>Your classroom rules matter</h4><p>Keep specific students apart or together while building groups. Teachers remain in control of the constraints.</p></article>
+        <article class="landing-feature"><div class="landing-feature-icon" aria-hidden="true">▦</div><h4>Real seating charts</h4><p>Arrange desks into rows, pairs, triangles, or pods. Drag groups around, lock a student in a seat, and populate the room.</p></article>
+        <article class="landing-feature"><div class="landing-feature-icon" aria-hidden="true">⇧</div><h4>Less time entering rosters</h4><p>Paste names or import supported grade-report PDFs to build classes and assign initial performance tiers when numeric percentages are available.</p></article>
+        <article class="landing-feature"><div class="landing-feature-icon" aria-hidden="true">◎</div><h4>Made for active lessons</h4><p>Mark absent students without reshuffling everyone, pick a random student, and switch to a clean student fullscreen display.</p></article>
+        <article class="landing-feature"><div class="landing-feature-icon" aria-hidden="true">✓</div><h4>Works across devices</h4><p>Use a local offline copy and optional end-to-end encrypted Google-connected sync between authorized devices.</p></article>
+      </div>
+    </div>
+    <div class="landing-steps landing-section" id="landingSteps">
+      <div class="landing-section-head"><span class="landing-kicker">How it works</span><h3>From roster to ready in three steps.</h3></div>
+      <div class="landing-step-grid">
+        <div class="landing-step"><div class="landing-step-number">01</div><h4>Add your classes</h4><p>Import a supported PDF report, paste a roster, or create a class manually.</p></div>
+        <div class="landing-step"><div class="landing-step-number">02</div><h4>Set your preferences</h4><p>Review ability tiers, choose a grouping strategy, and set any keep-apart or keep-together rules.</p></div>
+        <div class="landing-step"><div class="landing-step-number">03</div><h4>Teach, don't sort</h4><p>Randomize groups, arrange seating, present to students, and adjust when attendance changes.</p></div>
+      </div>
+    </div>
+    <div class="landing-section">
+      <div class="landing-bottom">
+        <div><h3>Ready to spend less time organizing?</h3><p>Open your teacher workspace and put your classroom needs first.</p></div>
+        <button type="button" class="landing-action" id="homeOpenWorkspaceBottom">Open teacher workspace <span aria-hidden="true">→</span></button>
+      </div>
+      <p class="landing-privacy">The sample names shown above are fictional. Google cloud sync is optional and encrypted; schools should approve student-data use before uploading real rosters.</p>
+    </div>
+  </div>
+</section>
 
 <section class="page active" id="teacherPage">
 <div class="teacher-dashboard">
@@ -1868,10 +2000,14 @@ function renderGroups() {
 }
 
 function showPage(which) {
+  const home = which === 'home';
   const teacher = which === 'teacher';
   const groupDisplay = which === 'groups';
   const randomStudent = which === 'randomStudent';
   const seating = which === 'seating';
+  $('homePage').classList.toggle('active',home);
+  $('homeTab').classList.toggle('active',home);
+  document.body.classList.toggle('bgr-home-active',home);
   $('teacherPage').classList.toggle('active',teacher);
   $('groupsPage').classList.toggle('active',groupDisplay);
   $('randomStudentPage').classList.toggle('active',randomStudent);
@@ -1880,15 +2016,28 @@ function showPage(which) {
   $('groupsTab').classList.toggle('active',groupDisplay);
   $('randomStudentTab').classList.toggle('active',randomStudent);
   $('seatingTab').classList.toggle('active',seating);
-  [['teacherTab',teacher],['groupsTab',groupDisplay],['randomStudentTab',randomStudent],['seatingTab',seating]].forEach(([id,selected])=>{
+  [['homeTab',home],['teacherTab',teacher],['groupsTab',groupDisplay],['randomStudentTab',randomStudent],['seatingTab',seating]].forEach(([id,selected])=>{
     $(id).setAttribute('aria-current',selected?'page':'false');
   });
 }
 
+$('homeTab').addEventListener('click',() => {showPage('home');window.scrollTo(0,0);});
 $('teacherTab').addEventListener('click',() => showPage('teacher'));
 $('groupsTab').addEventListener('click',() => showPage('groups'));
 $('randomStudentTab').addEventListener('click',() => showPage('randomStudent'));
 $('seatingTab').addEventListener('click',() => showPage('seating'));
+function openWorkspaceFromHome() {
+  const hasRoster = db.classes.some(c => c.students && c.students.length > 0);
+  showPage(hasRoster ? 'groups' : 'teacher');
+  window.scrollTo(0,0);
+  if (!hasRoster && window.__bgrHadPriorData === false) {
+    const dialog = $('welcomeDialog');
+    if (dialog && !dialog.open) dialog.showModal();
+  }
+}
+$('homeOpenWorkspace').addEventListener('click',openWorkspaceFromHome);
+$('homeOpenWorkspaceBottom').addEventListener('click',openWorkspaceFromHome);
+
 
 
 
@@ -3436,7 +3585,7 @@ try {
 if (!db.classes.length) makeClass('My Class');
 else render();
 // Groups is the everyday home screen; initial setup remains obvious for empty rosters.
-showPage(db.classes.some(c => c.students.length > 0) ? 'groups' : 'teacher');
+showPage(db.classes.some(c => c.students.length > 0) ? 'groups' : (window.__bgrHadPriorData === false ? 'home' : 'teacher'));
 updateBackupStatus();
 // Bridge for optional cloud module: validated import; local backup precedes any replacement.
 window.BGRSyncBridge = {
@@ -3669,7 +3818,7 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
     pending = localStorage.getItem(PENDING_KEY) === '1';
   } catch (_) {}
   if (!seen && (pending || !existing)) {
-    if (!dialog.open) dialog.showModal();
+    // New visitors now see the introduction first; onboarding opens on their click.
   } else if (!seen && existing) {
     // Long-time users with an existing classroom should not see first-run onboarding.
     try { localStorage.setItem(SEEN_KEY, '1'); } catch (_) {}
