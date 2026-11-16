@@ -1,4 +1,7 @@
-BGR V50 — teacher-only H/M/L markers.
-Upload the included application files over their matching GitHub repository filenames. Keep all existing images, manifest and PDF.js files.
-Back up before updating. H=High (green), M=Middle (amber), L=Low (blue). Markers are hidden in fullscreen student presentations and printouts.
-This is a UI update based on V49; sync and PDF import logic are otherwise unchanged. Test with fictional records before classroom deployment.
+BGR V51 compact staggered desk layout
+
+Replace index.html and sw.js in your existing GitHub repository. Other included files are unchanged from V50.
+
+Seating Chart > Desk group > 3 desks (compact staggered). Choose an orientation (two above, below, left or right) and Add. Desk names remain upright. Existing groups and assignments are preserved.
+
+Export a JSON backup before deployment. Test on desktop and iPad with fictional data.

@@ -182,6 +182,23 @@ textarea { resize:vertical; min-height:90px; }
 .desk-group { position:absolute; display:grid; gap:4px; padding:6px;
   background:#e4eaf4; border:2px solid #8fa5c4; border-radius:12px;
   cursor:grab; user-select:none; touch-action:none; }
+
+/* Compact staggered group of three. Positions move, not the desk labels. */
+.desk-group.compact-stagger {display:block;width:160px;height:106px;box-sizing:border-box}
+.desk-group.compact-stagger .desk {position:absolute;margin:0;transform:none}
+.desk-group.compact-stagger.stagger-down .desk[data-seat-index="0"] {left:6px;top:6px}
+.desk-group.compact-stagger.stagger-down .desk[data-seat-index="1"] {left:80px;top:6px}
+.desk-group.compact-stagger.stagger-down .desk[data-seat-index="2"] {left:43px;top:53px}
+.desk-group.compact-stagger.stagger-up .desk[data-seat-index="0"] {left:43px;top:6px}
+.desk-group.compact-stagger.stagger-up .desk[data-seat-index="1"] {left:6px;top:53px}
+.desk-group.compact-stagger.stagger-up .desk[data-seat-index="2"] {left:80px;top:53px}
+.desk-group.compact-stagger.stagger-right .desk[data-seat-index="0"] {left:6px;top:6px}
+.desk-group.compact-stagger.stagger-right .desk[data-seat-index="1"] {left:6px;top:53px}
+.desk-group.compact-stagger.stagger-right .desk[data-seat-index="2"] {left:80px;top:29.5px}
+.desk-group.compact-stagger.stagger-left .desk[data-seat-index="0"] {left:80px;top:6px}
+.desk-group.compact-stagger.stagger-left .desk[data-seat-index="1"] {left:80px;top:53px}
+.desk-group.compact-stagger.stagger-left .desk[data-seat-index="2"] {left:6px;top:29.5px}
+
 .desk-group.dragging { cursor:grabbing; z-index:20; box-shadow:0 10px 25px #18223035; }
 .desk { width:70px; height:43px; min-height:43px; padding:4px; border:1px solid #9daec4;
   border-radius:8px; background:white; display:flex; align-items:center; justify-content:center;
@@ -844,9 +861,9 @@ body.ipad-presentation .ipad-exit-presentation {display:block;}
         <div class="seating-tool-heading"><span class="tool-number">2</span><h3>Arrange desks</h3></div>
         <div class="seating-tool-row">
           <div class="field"><label for="deskSize">Desk group</label>
-            <select id="deskSize"><option value="1">1 desk</option><option value="2">2 desks</option><option value="3">3 desks</option><option value="4">4 desks (2×2)</option></select></div>
+            <select id="deskSize"><option value="1">1 desk</option><option value="2">2 desks</option><option value="3">3 desks</option><option value="staggered3">3 desks (compact staggered)</option><option value="4">4 desks (2×2)</option></select></div>
           <div class="field"><label for="deskOrientation">Orientation</label>
-            <select id="deskOrientation"><option value="row">Row (horizontal)</option><option value="column">Column (vertical)</option></select></div>
+            <select id="deskOrientation"><option value="row">Row (horizontal)</option><option value="column">Column (vertical)</option><option value="stagger-down">Staggered: two above</option><option value="stagger-up">Staggered: two below</option><option value="stagger-right">Staggered: two left</option><option value="stagger-left">Staggered: two right</option></select></div>
           <button class="secondary" id="addDeskBtn">＋ Add desks</button>
           <button class="secondary danger-outline" id="clearDesksBtn">Clear desks</button>
         </div>
@@ -2596,6 +2613,8 @@ function changeSeatingPriority(groupId,newPriority) {
   renderSeating();
 }
 function seatingDimensions(g) {
+  if(g.size===3 && String(g.orientation||'').startsWith('stagger-'))
+    return {w:160,h:106,cols:2}; // Two desks plus a tightly offset third, all text stays upright.
   const cols = g.size === 4 ? 2 : g.orientation === 'column' ? 1 : g.size;
   const rows = Math.ceil(g.size / cols);
   return {w:cols*70+(cols-1)*4+16,h:rows*43+(rows-1)*4+16,cols};
@@ -2856,6 +2875,7 @@ function renderSeating() {
     const {w,h,cols} = seatingDimensions(g);
     const el = document.createElement('div');
     el.className = 'desk-group';
+    if(g.size===3 && String(g.orientation||'').startsWith('stagger-')) el.classList.add('compact-stagger',g.orientation);
     el.style.left = `${g.x}px`;
     el.style.top = `${g.y}px`;
     el.style.gridTemplateColumns = `repeat(${cols},70px)`;
@@ -2906,6 +2926,7 @@ function renderSeating() {
       const desk = document.createElement('div');
       const student = current()?.students.find(s => s.id === (seatingAssignments()[g.id]||[])[i]);
       desk.className = 'desk' + (student ? '' : ' empty-seat');
+      desk.dataset.seatIndex = String(i);
       desk.textContent = student ? student.name : 'Empty';
       if (student) {
         // Measure the full name and shrink its font until it fits on one line.
@@ -2996,15 +3017,20 @@ function renderSeating() {
   $('seatingStatus').textContent = `${layout.length} desk groups · ${seats} seats · ${occupied} assigned · ${count} students in roster. Populate fills priority 1 first; changing a priority shifts the others automatically.`;
 }
 function updateDeskOrientation() {
-  const size = Number($('deskSize').value);
-  $('deskOrientation').disabled = size === 1 || size === 4;
+  const selected=$('deskSize').value;
+  const orientation=$('deskOrientation');
+  const stagger=selected==='staggered3';
+  orientation.disabled = selected==='1' || selected==='4';
+  [...orientation.options].forEach(o=>o.hidden=stagger?!o.value.startsWith('stagger-'):o.value.startsWith('stagger-'));
+  if(stagger && !orientation.value.startsWith('stagger-')) orientation.value='stagger-down';
+  if(!stagger && orientation.value.startsWith('stagger-')) orientation.value='row';
 }
 $('deskSize').addEventListener('change',updateDeskOrientation);
 updateDeskOrientation();
 $('addDeskBtn').addEventListener('click',() => {
   const c = current();
   if (!c) { toast('Create a class first.'); return; }
-  const size = Number($('deskSize').value);
+  const size = $('deskSize').value==='staggered3'?3:Number($('deskSize').value);
   const orientation = size === 4 ? 'square' : $('deskOrientation').value;
   const layout = seatingLayout();
   const g = {id:uid(),size,orientation,priority:layout.length+1,x:20+(layout.length%10)*105,y:65+(Math.floor(layout.length/10)%6)*96};
