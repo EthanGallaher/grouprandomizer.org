@@ -479,8 +479,13 @@ body.ipad-presentation .ipad-exit-presentation {display:block;}
   document.getElementById('bgrGateSignIn').addEventListener('click',()=>document.getElementById('googleConnectBtn')?.click());
   document.getElementById('bgrGateBackup').addEventListener('click',()=>{if(window.BGRSyncBridge)window.BGRSyncBridge.backup('bgr-local-account-safety-copy');});
   document.getElementById('bgrGateOffline').addEventListener('click',()=>{
-    // Offline access is only possible after confirming a previous account on this browser.
-    if(navigator.onLine)return;
+    // Never unlock account-bound cached classes without checking the actual
+    // Firebase-authenticated UID, even when offline.
+    if(!window.BGRStartupGate.identityVerified ||
+       window.BGRStartupGate.bound!==window.BGRSync?.uid){
+      window.BGRStartupGate.show('Verify the original Google account before opening saved classes.');
+      return;
+    }
     window.BGRStartupGate.release();
   });
 })();
@@ -3198,7 +3203,7 @@ window.BGRSyncBridge = {
 </script>
 <!-- Optional Firebase sync module. If Firebase isn't configured, local-only app still works. -->
 <script src="./firebase-config.js"></script>
-<script type="module" src="./cloud-sync.js?v=46-login1"></script>
+<script type="module" src="./cloud-sync.js?v=46-login2"></script>
 <script>
 // Offer the native PWA install prompt when supported, otherwise explain the browser-specific steps.
 (() => {

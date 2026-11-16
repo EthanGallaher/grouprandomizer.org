@@ -332,16 +332,19 @@ function pairReadyView(){
     ?'Verify that both device screens display exactly this number before confirming.'
     :pairJoin?'Waiting for the existing device to review the request…':'The classroom key never comes from the Google OAuth token.';
 }
+let verifyAttempt=0;
 async function loadAccount(){
   if(!user)return;
+  const attempt=++verifyAttempt;
   safelyStop();stopPairing();key=null;state=readState();renderVerifiedTransfer();
   const owner=user.uid,guardEpoch=epoch;
-  gateMessage('Checking the signed-in Google account and latest encrypted cloud revision…');
+  if(startupGate?.bound===owner) startupGate.identityVerified=true;
+  gateMessage('Google account recognized. Checking the encrypted cloud vault and device key…');
   title('Checking encrypted cloud vault…');ui('No classroom information will upload without explicit opt-in.');view('none');
   try{
     const loadedKey=await getDeviceKey(owner);
     const remote=cloudData(await getDocFromServer(doc(firestore,'teacherCloud',owner)));
-    if(!user||user.uid!==owner||guardEpoch!==epoch)return;
+    if(!user||user.uid!==owner||guardEpoch!==epoch||attempt!==verifyAttempt)return;
     key=loadedKey;lastServer=remote;
     await migrateLegacyFingerprint();
     if(remote&&!key){pairReadyView();return;}
@@ -389,12 +392,13 @@ async function loadAccount(){
     ui(remote?'This device has its classroom key. Choose whether to restore the encrypted cloud copy or replace it with this device.':'Click Enable to create this browser’s private classroom key and upload an encrypted copy of your fictional classes.');
     gateRelease();view('setup');
   }catch(err){
-    if(!user||user.uid!==owner||guardEpoch!==epoch)return;
+    if(!user||user.uid!==owner||guardEpoch!==epoch||attempt!==verifyAttempt)return;
     if((err.message||'').includes('Local classroom data changed while downloading')){
       state.dirty=true;persist();markConflict('Local edits occurred while cloud data was loading. Neither copy was overwritten.');return;
     }
     safelyStop();title('Cloud vault unavailable');ui(err.message||String(err),true);view('none');
-    gateMessage('Google sign-in succeeded, but encrypted cloud verification failed: '+(err.message||String(err))+'. Retry with the same account when connected. Your saved classes remain on this device.', !navigator.onLine && startupGate?.bound===owner);
+    gateMessage('Google sign-in succeeded, but the cloud check failed: '+(err.code||err.message||String(err))+'. Your local classes were not overwritten. You can retry sign-in, or use the saved copy on this device with cloud sync paused.', startupGate?.bound===owner);
+    if(startupGate?.bound===owner) $('bgrGateOffline').textContent='Open saved classes (sync paused)';
   }
 }
 async function beginFromLocal(){
@@ -612,7 +616,7 @@ async function manuallySync(){
   }catch(err){ui('Encrypted sync failed: '+err.message,true);}
 }
 
-window.BGRSync={configured,get signedIn(){return !!user;},
+window.BGRSync={configured,get signedIn(){return !!user;},get uid(){return user?.uid||null;},
   signInWithGoogle:async ()=>{
     if(!configured||!auth)throw Error('Firebase is not ready. Reload and try again.');
     const previousUid=user?.uid;
@@ -624,9 +628,26 @@ window.BGRSync={configured,get signedIn(){return !!user;},
       // already-signed-in teacher chooses that same account again. A prior
       // server failure could otherwise strand the startup gate indefinitely.
       // For an actual account switch the auth observer handles loadAccount().
-      if(previousUid===result.user.uid && user?.uid===result.user.uid &&
-         startupGate?.bound && !active && !conflict){
-        await loadAccount();
+      // The popup result is authoritative even when onAuthStateChanged does not
+      // fire again (same UID) or is delayed. Do not rely solely on the observer.
+      // Always complete a verification attempt when the startup gate is visible.
+      if(user?.uid !== result.user.uid){
+        user=result.user;
+        ++epoch;
+        safelyStop();stopPairing();key=null;
+        restoreFictionalAcknowledgement();
+        document.dispatchEvent(new CustomEvent('bgr:cloud-auth',
+          {detail:{email:result.user.email,uid:result.user.uid}}));
+      }
+      if(startupGate?.bound){
+        const expected=startupGate.bound;
+        if(expected!==result.user.uid){
+          gateMessage('Google signed in, but this is not the original account for this browser. Select the original Google account or export a backup.');
+        } else if(!active && !conflict){
+          await loadAccount();
+        } else if(active || conflict){
+          gateRelease();
+        }
       }
       return result.user.email;
     } catch(err){
