@@ -446,9 +446,46 @@ body.ipad-presentation { overflow:hidden!important; }
   padding:7px 11px; font-size:12px; border-radius:10px;
 }
 body.ipad-presentation .ipad-exit-presentation {display:block;}
+
+/* Cloud-bound data is hidden until the saved Google owner is verified. */
+#bgrStartupGate{position:fixed;inset:0;z-index:20000;background:#f2f5fb;display:flex;align-items:center;justify-content:center;padding:20px}
+#bgrStartupGate[hidden]{display:none!important}
+#bgrStartupGate .bgr-gate-card{max-width:480px;width:100%;background:white;border:1px solid #d9e2ef;border-top:5px solid #1856ad;border-radius:16px;padding:24px;box-shadow:0 12px 35px #102c5a27;color:#182230}
+#bgrStartupGate h2{margin:0 0 8px;color:#10346b;font-size:21px}
+#bgrStartupGate p{margin:8px 0 18px;line-height:1.5}
+#bgrStartupGate button{margin-right:8px;margin-bottom:8px}
+#bgrGateStatus{font-size:13px;color:#475467;overflow-wrap:anywhere}
 </style>
 </head>
 <body>
+<div id="bgrStartupGate" role="dialog" aria-modal="true" aria-labelledby="bgrGateTitle" hidden>
+  <div class="bgr-gate-card"><h2 id="bgrGateTitle">Checking your encrypted classrooms</h2>
+  <p id="bgrGateStatus" role="status">Verifying the Google account associated with the classroom cache.</p>
+  <button id="bgrGateSignIn" class="primary" type="button">Connect the original Google account</button>
+  <button id="bgrGateBackup" class="secondary" type="button">Export local safety backup</button>
+  <button id="bgrGateOffline" class="secondary" type="button" hidden>Use saved classes offline</button>
+  </div></div>
+<script>
+/* Gate before classroom initialization; don't expose a cloud-bound cache during auth startup. */
+(function(){
+  const gate=document.getElementById('bgrStartupGate');
+  let bound='';try{bound=localStorage.getItem('bgr.cloud.boundAccount')||'';}catch(_){}
+  if(bound)gate.hidden=false;
+  window.BGRStartupGate={
+    get bound(){try{return localStorage.getItem('bgr.cloud.boundAccount')||'';}catch(_){return "";}},
+    show(message,allowOffline=false){if(!bound)return;gate.hidden=false;document.getElementById('bgrGateStatus').textContent=message;document.getElementById('bgrGateOffline').hidden=!allowOffline;},
+    release(){gate.hidden=true;document.getElementById('bgrGateOffline').hidden=true;}
+  };
+  document.getElementById('bgrGateSignIn').addEventListener('click',()=>document.getElementById('googleConnectBtn')?.click());
+  document.getElementById('bgrGateBackup').addEventListener('click',()=>{if(window.BGRSyncBridge)window.BGRSyncBridge.backup('bgr-local-account-safety-copy');});
+  document.getElementById('bgrGateOffline').addEventListener('click',()=>{
+    // Offline access is only possible after confirming a previous account on this browser.
+    if(navigator.onLine)return;
+    window.BGRStartupGate.release();
+  });
+})();
+</script>
+
 <header class="top">
   <div class="top-inner">
     <div class="site-brand"><img src="group-randomizer-icon.png" alt="" width="48" height="48"><h1>Balanced Group Randomizer</h1></div>
@@ -3161,7 +3198,7 @@ window.BGRSyncBridge = {
 </script>
 <!-- Optional Firebase sync module. If Firebase isn't configured, local-only app still works. -->
 <script src="./firebase-config.js"></script>
-<script type="module" src="./cloud-sync.js?v=45"></script>
+<script type="module" src="./cloud-sync.js?v=46"></script>
 <script>
 // Offer the native PWA install prompt when supported, otherwise explain the browser-specific steps.
 (() => {

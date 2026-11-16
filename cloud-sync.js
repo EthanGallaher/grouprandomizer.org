@@ -10,6 +10,9 @@ import {generateVaultKey,encryptVault,decryptVault,newEphemeral,pairingSecrets,w
 
 const $=id=>document.getElementById(id);
 const bridge=window.BGRSyncBridge;
+const startupGate=window.BGRStartupGate;
+function gateMessage(message,offline=false){startupGate?.show(message,offline);}
+function gateRelease(){startupGate?.release();}
 const cfg=window.BGR_FIREBASE_CONFIG||{};
 const configured=Boolean(cfg.apiKey&&cfg.authDomain&&cfg.projectId&&cfg.appId&&!cfg.apiKey.startsWith('PASTE_'));
 const STATE_PREFIX='bgr.cloud.syncState.';
@@ -166,6 +169,8 @@ async function downloadRemoteBackup(remote,label){
   document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);
 }
 async function applyRemote(remote,backup=true,guard=null){
+  if(!remote||!Number.isSafeInteger(remote.revision))throw Error('Invalid cloud revision.');
+  if(guard&&remote.revision<guard.rev)throw Error('Cloud revision moved backwards; local data was preserved.');
   const parsed=await parseRemote(remote);
   // Another local edit may happen while decryption is running. Never lose it.
   if(guard&&(!active||!user||user.uid!==guard.owner||epoch!==guard.epoch||
@@ -179,6 +184,7 @@ async function applyRemote(remote,backup=true,guard=null){
   rememberVerifiedTransfer('download');persist();
 }
 function markConflict(message){
+  if(!startupGate?.bound||startupGate.bound===user?.uid)gateRelease();
   conflict=true;active=false;clearTimeout(debounce);stopAutoChecks();
   $('googleSyncStatus').textContent='Encrypted sync paused: resolve the conflict.';
   title('Two devices changed classrooms');
@@ -186,6 +192,7 @@ function markConflict(message){
   view('conflict');
 }
 function showActive(){
+  if(!startupGate?.bound||startupGate.bound===user?.uid)gateRelease();
   renderVerifiedTransfer();
   $('googleSyncStatus').textContent='Encrypted auto-sync ON · updates upload as you edit · cloud checked every 2 minutes while the app is visible.';
   beginAutoChecks();
@@ -269,6 +276,7 @@ function listen(){
   unlisten=onSnapshot(doc(firestore,'teacherCloud',owner),snap=>{
     if(!user||user.uid!==owner||!active)return;
     try{
+      if(snap.metadata.fromCache||snap.metadata.hasPendingWrites)return;
       const remote=cloudData(snap);
       if(!remote){if(state.rev>0)markConflict('Encrypted cloud backup was deleted. Local data is safe.');return;}
       void received(remote);
@@ -311,6 +319,7 @@ async function automaticCheck(){
 function checkIfVisible(){if(active&&document.visibilityState!=='hidden')void automaticCheck();}
 
 function pairReadyView(){
+  if(!startupGate?.bound||startupGate.bound===user?.uid)gateRelease();
   $('googleSyncStatus').textContent='Google connected; encrypted cloud data needs authorization from an existing device.';
   title('Authorize this device once');
   ui('Sign in with the SAME Google account on your existing authorized device. Request pairing here, then compare the 8-digit number on both screens. No additional password is required.');
@@ -327,6 +336,7 @@ async function loadAccount(){
   if(!user)return;
   safelyStop();stopPairing();key=null;state=readState();renderVerifiedTransfer();
   const owner=user.uid,guardEpoch=epoch;
+  gateMessage('Checking the signed-in Google account and latest encrypted cloud revision…');
   title('Checking encrypted cloud vault…');ui('No classroom information will upload without explicit opt-in.');view('none');
   try{
     const loadedKey=await getDeviceKey(owner);
@@ -341,6 +351,7 @@ async function loadAccount(){
     if(bound&&bound!==owner){
       state.enabled=false;persist();title('Different Google account');
       ui('This browser belongs to a different teacher account. Export its data first or restore this Google account’s encrypted copy. Existing local data will not upload across accounts.',true);
+      gateMessage('This browser contains a different teacher’s classroom cache. Sign in with its original Google account or export a local backup. Nothing will be uploaded.');
       view('setup');return;
     }
     if(state.enabled&&bound===owner&&key){
@@ -354,9 +365,21 @@ async function loadAccount(){
         showActive();listen();schedulePush(200);return;
       }
       if(remote){
+        // Legacy sync state may lack a trusted content fingerprint. Compare the
+        // decrypted cloud copy directly rather than silently replacing local data.
+        if(!state.fingerprint){
+          const remoteContent=contentSignature(await parseRemote(remote));
+          if(remoteContent!==contentSignature(bridge.read())){
+            state.dirty=true;persist();
+            markConflict('This device has local classroom data without a verified sync fingerprint. Choose which copy to keep; neither was overwritten.');
+            return;
+          }
+          state.fingerprint=await localFingerprint();state.fingerprintFormat='content-v2';persist();
+        }
         // Reconnect to the latest cloud revision on every Google sign-in.
         // No downloadable plaintext backup is needed for a verified clean auto-refresh.
-        await applyRemote(remote,false);
+        const startupGuard={owner,epoch:guardEpoch,rev:state.rev,fingerprint:await localFingerprint()};
+        await applyRemote(remote,false,startupGuard);
         showActive();listen();return;
       }
       if(state.rev>0){markConflict('Encrypted cloud copy has disappeared. Automatic upload is paused.');return;}
@@ -364,9 +387,14 @@ async function loadAccount(){
     }
     title(remote?'Encrypted cloud vault found':'Encrypted cloud sync is off');
     ui(remote?'This device has its classroom key. Choose whether to restore the encrypted cloud copy or replace it with this device.':'Click Enable to create this browser’s private classroom key and upload an encrypted copy of your fictional classes.');
-    view('setup');
+    gateRelease();view('setup');
   }catch(err){
+    if(!user||user.uid!==owner||guardEpoch!==epoch)return;
+    if((err.message||'').includes('Local classroom data changed while downloading')){
+      state.dirty=true;persist();markConflict('Local edits occurred while cloud data was loading. Neither copy was overwritten.');return;
+    }
     safelyStop();title('Cloud vault unavailable');ui(err.message||String(err),true);view('none');
+    gateMessage('Cloud verification failed. Reconnect to the internet, or use your previously saved classes offline. '+(err.message||''), !navigator.onLine && startupGate?.bound===owner);
   }
 }
 async function beginFromLocal(){
@@ -549,7 +577,7 @@ function pauseForLocalErase(){
 async function disconnect(){
   ++epoch;safelyStop();stopPairing();key=null;
   if(auth)await signOut(auth);
-  user=null;view('none');title('Encrypted sync is off');ui('Google disconnected. Local class data and the device key remain on this browser.');
+  user=null;if(startupGate?.bound)gateMessage('Sign in again using the original Google account to access this classroom cache.');view('none');title('Encrypted sync is off');ui('Google disconnected. Local class data and the device key remain on this browser.');
 }
 async function deleteCloud(){
   if(!user)return;
@@ -632,7 +660,8 @@ if(configured&&bridge){
         }else{
           restoreFictionalAcknowledgement();
           title('Sign in with Google to unlock this device’s encrypted classrooms');
-          ui('Your locally saved classes remain accessible.');view('none');
+          ui('Cloud-bound classroom data requires its original Google account.');view('none');
+          if(startupGate?.bound)gateMessage('Connect the original Google account to unlock this browser’s classroom cache.',!navigator.onLine);
           document.dispatchEvent(new CustomEvent('bgr:cloud-auth',{detail:{email:null,uid:null}}));
         }
       }
@@ -643,5 +672,6 @@ if(configured&&bridge){
 }else{
   title('Encrypted sync is not configured');
   ui('Add your Firebase web configuration to firebase-config.js. Until then, local classroom saving and manual backups still work.');
+  if(startupGate?.bound)gateMessage('Cloud sign-in is unavailable because Firebase configuration is missing. Your local classroom data is preserved.');
   view('none');
 }
