@@ -1830,7 +1830,7 @@ function parseGradeLine(line) {
   let name=match[1].replace(/^\d+[.)]?\s+/,'').replace(/\s*[,|:-]\s*$/,'').trim();
   if (!/[a-zA-Z]/.test(name) || name.length<3 || name.length>100 || /\b(class|section|period|overall|average|total)\b/i.test(name)) return null;
   const grade=Number(match[2]);
-  if (grade<0 || grade>100) return null;
+  if (grade<0 || grade>200) return null;
   return {name,grade};
 }
 function classHeading(line) {
@@ -1876,23 +1876,44 @@ $('classPdfUpload').addEventListener('change',async e=>{
       }
       rows.sort((a,b)=>b.y-a.y);
       rows.forEach(r=>r.parts.sort((a,b)=>a.x-b.x));
-      const header=rows.find(r=>r.parts.some(p=>/Final Grades Report/i.test(p.str)));
-      // PowerSchool's Final Grades Report places the class name at the upper right.
-      const reportClass=header?.parts.filter(p=>!/^Final Grades Report$/i.test(p.str))
-        .map(p=>p.str).find(t=>/^\d+\s*\([A-Za-z]\)\s+.+/.test(t));
+      // PowerSchool exports vary by selected columns. Identify the class by
+      // its page heading, not by an exact "2(A)" pattern ("2(A-B)" is valid).
+      const headingParts=rows.slice(0,8).flatMap(r=>r.parts.map(p=>p.str));
+      const reportClass=headingParts.find(t=>/^\d+\s*\([A-Za-z0-9\s-]+\)\s+\S/.test(t))
+        || headingParts.find(t=>/^\d+[A-Za-z]?\s+.+(?:Geometry|Algebra|Science|English|History|Math|Art|Music|Biology|Chemistry|Physics)/i.test(t));
       if(reportClass) {
         let inTable=false;
         for(const row of rows) {
           const joined=row.parts.map(p=>p.str).join(' ');
-          if(/Student Name/i.test(joined) && /Final Grade/i.test(joined)) {inTable=true;continue;}
+          if(/Student Name/i.test(joined)) {inTable=true;continue;}
           if(!inTable) continue;
-          // Separate the left-hand name column from the far-right grade column.
-          const gradePart=row.parts.find(p=>/^\d{1,3}(?:\.\d+)?%$/.test(p.str));
-          if(!gradePart) continue;
-          const name=row.parts.filter(p=>p.x<gradePart.x-25).map(p=>p.str).join(' ').trim();
-          const grade=Number(gradePart.str.replace('%',''));
-          if(name.includes(',') && name.length<=100 && grade>=0 && grade<=100)
-            found.push({className:reportClass.trim(),name,grade});
+          // Accept any PDF column selection that includes a percentage.
+          // Grade cells can be separate text items or split by PDF.js.
+          const percentages=[];
+          for(let i=0;i<row.parts.length;i++) {
+            const part=row.parts[i];
+            const match=part.str.match(/^(\d{1,3}(?:\.\d+)?)\s*%$/);
+            if(match) percentages.push({x:part.x,grade:Number(match[1])});
+            else if(/^\d{1,3}(?:\.\d+)?$/.test(part.str) && row.parts[i+1]?.str==='%')
+              percentages.push({x:part.x,grade:Number(part.str)});
+          }
+          if(!percentages.length) continue;
+          const gradePart=percentages[percentages.length-1];
+          if(gradePart.grade<0 || gradePart.grade>200) continue;
+          // Name is the leftmost student cell. Avoid collecting slash, letter
+          // grade, or other optional columns between name and percentage.
+          const left=row.parts.filter(p=>p.x<gradePart.x-12).sort((a,b)=>a.x-b.x);
+          let name='';
+          for(const part of left) {
+            const value=part.str.trim();
+            if(value==='/' || /^[A-F][+-]?$/.test(value) || /^\d+(?:\.\d+)?$/.test(value)) break;
+            if(!name && !value.includes(',')) continue;
+            if(name && part.x>left[0].x+260) break;
+            name+=(name?' ':'')+value;
+          }
+          name=name.replace(/\s+/g,' ').trim();
+          if(name.includes(',') && name.length<=100 && !/^(Student|Teacher)/i.test(name))
+            found.push({className:reportClass.trim(),name,grade:gradePart.grade});
         }
       } else {
         // Retain support for other text-based roster PDFs.
@@ -1901,7 +1922,7 @@ $('classPdfUpload').addEventListener('change',async e=>{
       }
     }
     review.value=found.map(r=>`${r.className} | ${r.name} | ${r.grade}`).join('\n');
-    status.textContent=found.length ? `Found ${found.length} student records in ${new Set(found.map(r=>r.className)).size} classes. Check every line before importing.` : 'No records automatically detected. This PDF may use a different layout or be scanned. You can manually enter records in the format shown above.';
+    status.textContent=found.length ? `Found ${found.length} student records in ${new Set(found.map(r=>r.className)).size} classes. Check every line before importing.` : 'No student percentages detected. This report may omit the Final Grade percentage column or be scanned. Export with grade percentages included, or enter records manually.';
   } catch(err) {status.textContent=`Could not read PDF: ${err.message}`;}
 });
 $('cancelPdfImportBtn').addEventListener('click',()=>{
@@ -1985,7 +2006,7 @@ $('confirmPdfImportBtn').addEventListener('click',()=>{
   const byClass=new Map(),errors=[];
   lines.forEach((line,i)=>{
     const parts=line.split('|').map(s=>s.trim()), grade=Number(parts[2]);
-    if(parts.length!==3 || !parts[0] || !parts[1] || parts[1].length>100 || parts[0].length>100 || parts[2]==='' || !Number.isFinite(grade) || grade<0 || grade>100) {errors.push(i+1);return;}
+    if(parts.length!==3 || !parts[0] || !parts[1] || parts[1].length>100 || parts[0].length>100 || parts[2]==='' || !Number.isFinite(grade) || grade<0 || grade>200) {errors.push(i+1);return;}
     const key=normalizeName(parts[0]);
     if(!byClass.has(key))byClass.set(key,{name:parts[0],students:new Map()});
     const skey=normalizeName(parts[1]);
