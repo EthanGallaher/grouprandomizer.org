@@ -1,1 +1,1 @@
-BGR V63: Both Open teacher workspace buttons on the Home page now open Teacher Setup, even when classes already exist. Existing first-time welcome behavior retained. No changes to sync or class data. Replace index.html and sw.js; do not clear browser storage.
+V64: Moved Take the setup tutorial to the top of the Getting Started dialog, immediately below its title. No application data or sync changes. Upload index.html and sw.js. Do not clear browser storage.

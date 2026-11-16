@@ -634,6 +634,7 @@ body.bgr-home-active .workspace-class-bar{display:none!important}
 @media print{#homePage{display:none!important}}
 
 </style>
+<style>.welcome-tutorial-top{margin:10px 0 14px}.welcome-tutorial-top button{max-width:100%}</style>
 </head>
 <body>
 <div id="bgrStartupGate" role="dialog" aria-modal="true" aria-labelledby="bgrGateTitle" hidden>
@@ -689,6 +690,7 @@ body.bgr-home-active .workspace-class-bar{display:none!important}
 <dialog id="welcomeDialog" class="welcome-dialog" aria-labelledby="welcomeTitle">
   <div class="welcome-top"><span class="welcome-kicker">WELCOME TO BALANCED GROUP RANDOMIZER</span><button type="button" id="welcomeClose" class="secondary" aria-label="Close welcome">✕</button></div>
   <h2 id="welcomeTitle">Get your classes ready</h2>
+  <div class="welcome-tutorial-top"><button type="button" class="secondary" id="welcomeTutorial">Take the setup tutorial</button></div>
   <p>Create balanced groups, choose students randomly, and arrange seating charts. Start with the option that fits your roster.</p>
   <div class="welcome-choices">
     <button type="button" id="welcomePdf" class="welcome-choice"><strong>Import a PowerSchool PDF</strong><span>Automatically build classes and assign initial performance tiers from a supported numeric-grade report.</span></button>
@@ -696,7 +698,7 @@ body.bgr-home-active .workspace-class-bar{display:none!important}
     <button type="button" id="welcomeManual" class="welcome-choice"><strong>Create a class manually</strong><span>Name a new class and add students when you're ready.</span></button>
   </div>
   <div class="welcome-privacy"><strong><span aria-hidden="true">🔒</span> Your classroom data is stored locally by default</strong><p>Rosters, tiers, seating charts, and grouping settings are saved in this browser's local storage. Cloud sync is disabled until you explicitly enable it. If enabled, classroom records are encrypted inside this browser before being transferred to your Firebase cloud database. The decryption key stays on authorized devices; other devices must be approved once. Data may be lost if browser storage is cleared or the device is reset. Export backups to a school-approved secure location; backups contain student information. The feedback email opens your email app only when you choose to send it.</p></div>
-  <div class="welcome-footer"><button type="button" class="secondary" id="welcomeTutorial">Take the setup tutorial</button></div>
+  
 </dialog>
 <dialog id="feedbackDialog" class="feedback-dialog" aria-labelledby="feedbackTitle">
   <h2 id="feedbackTitle">Report a problem or suggest an improvement</h2>
