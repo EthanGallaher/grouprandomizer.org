@@ -1,1 +1,1 @@
-BGR V56: smaller teacher-view group names and role labels, plus Rebalance present students button. Absent students remain absent; rebalance generates new groups for present students, honoring separation and keep-together rules. Back up before deployment. Replace matching files on GitHub and test using fictional data.
+V57: Hide Rebalance present students and its entire button row in fullscreen group presentations, including iPad fallback. Teacher view remains unchanged. Replace index.html and sw.js, keep other files. Do not clear browser data.
