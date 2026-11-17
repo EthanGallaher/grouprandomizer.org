@@ -5,14 +5,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Balanced Group Randomizer</title>
-<link rel="manifest" href="./manifest.webmanifest">
+
 <meta name="theme-color" content="#172b4d">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
 
 
-<link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=19">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=19">
+
+
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
 :root {
   --navy:#172b4d; --blue:#2459a9; --red:#c63b46;
@@ -422,41 +422,6 @@ body.print-seating .desk-priority select { appearance:none; border:0; padding:0 
 .welcome-privacy p {font-size:12px;margin:6px 0 0;}
 @media(max-width:600px) {.welcome-dialog {padding:16px;}.welcome-dialog h2 {font-size:21px;}}
 
-/* Encrypted Google cloud sync pilot. */
-.cloud-card { border-top-color:#1856ad; }
-.cloud-head { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
-.cloud-head h2 { margin:0; }
-.cloud-beta { color:#3b5380; font-weight:800; font-size:11px; background:#eaf1fd; padding:4px 9px; border-radius:50px; }
-.cloud-sync-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:13px; margin-top:14px; }
-.cloud-step { background:#f6f9ff; border:1px solid #d8e5f6; border-radius:12px; padding:14px; min-width:0; }
-.cloud-step h3 { font-size:14px; margin:0 0 8px; color:var(--navy); }
-.cloud-step .field { margin:9px 0; }
-.cloud-step input,.cloud-step select { width:100%; }
-.cloud-sync-status { color:var(--navy); font-size:13px; margin:10px 0; overflow-wrap:anywhere; }
-.cloud-sync-status[data-error="true"] { color:#ad2638; }
-.cloud-warning { font-size:12px; color:#665222; background:#fff7e5; padding:10px 12px; border:1px solid #e5cf94; border-radius:9px; }
-.cloud-controls { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-.cloud-controls button { min-height:39px; }
-.cloud-detail {border:1px solid #dce5f3;border-radius:10px;padding:12px;background:#f5f9ff;margin:10px 0}
-.cloud-detail button {margin:5px 5px 5px 0}
-.cloud-detail[hidden] {display:none!important}
-.cloud-pair-code {font-size:clamp(27px,5vw,40px);font-weight:900;letter-spacing:.12em;color:var(--navy);margin:10px 0;text-align:center;font-variant-numeric:tabular-nums;}
-.cloud-danger {color:#ad2638!important;border-color:#e9bac4!important}
-@media(max-width:700px) { .cloud-sync-grid { grid-template-columns:1fr; } }
-.cloud-compact-head { justify-content:space-between; gap:12px; }
-.cloud-compact-head h2 { margin:0; }
-.cloud-info-btn {
-  width:34px;height:34px;min-width:34px;padding:0;border-radius:50%;
-  border:1px solid #a9bfdf;background:#eef4ff;color:var(--navy);
-  font-size:19px;font-weight:850;line-height:1;display:grid;place-items:center;
-}
-.cloud-info-btn:hover,.cloud-info-btn:focus-visible,.cloud-info-btn[aria-expanded="true"] {background:#dceaff;border-color:var(--blue);outline-offset:2px;}
-.cloud-info-btn.cloud-needs-attention { background:#fff2df;border-color:#d48b35;color:#7a4200;box-shadow:0 0 0 3px #f2c99055; }
-#cloudAdvancedContent[hidden] {display:none!important;}
-#cloudAdvancedContent {margin-top:12px;border-top:1px solid var(--line);padding-top:12px;}
-.cloud-advanced-intro .cloud-beta {display:inline-block;margin:0 0 6px;}
-
-
 /* iPadOS does not support requestFullscreen() for arbitrary page elements.
    This fixed-position presentation uses the same layout without the browser API. */
 body.ipad-presentation { overflow:hidden!important; }
@@ -477,26 +442,6 @@ body.ipad-presentation { overflow:hidden!important; }
   padding:7px 11px; font-size:12px; border-radius:10px;
 }
 body.ipad-presentation .ipad-exit-presentation {display:block;}
-
-/* Always-visible synchronization warning across all teacher pages. */
-#bgrSyncAlert{position:sticky;top:0;z-index:9000;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;background:#fff4dd;border-bottom:2px solid #b76d17;color:#603900;padding:10px 18px;font-size:13px;font-weight:700}
-#bgrSyncAlert[hidden]{display:none!important}
-#bgrSyncAlert[data-kind=conflict]{background:#fff0f2;border-color:#c92e42;color:#8d1b2d}
-#bgrSyncAlert button{background:white;color:#10346b;border:1px solid #a9bfdf;padding:7px 10px;font-size:12px}
-/* Cloud-bound data is hidden until the saved Google owner is verified. */
-#bgrStartupGate{position:fixed;inset:0;z-index:20000;background:#f2f5fb;display:flex;align-items:center;justify-content:center;padding:20px}
-#bgrStartupGate[hidden]{display:none!important}
-#bgrStartupGate .bgr-gate-card{max-width:480px;width:100%;background:white;border:1px solid #d9e2ef;border-top:5px solid #1856ad;border-radius:16px;padding:24px;box-shadow:0 12px 35px #102c5a27;color:#182230}
-#bgrStartupGate h2{margin:0 0 8px;color:#10346b;font-size:21px}
-#bgrStartupGate p{margin:8px 0 18px;line-height:1.5}
-#bgrStartupGate button{margin-right:8px;margin-bottom:8px}
-#bgrGateStatus{font-size:13px;color:#475467;overflow-wrap:anywhere}
-
-/* Compact sync state: teachers see a simple save message, not a banner for every edit. */
-#bgrCloudSaveState{font-size:12px;color:#e8f2ff;white-space:nowrap;max-width:240px;overflow:hidden;text-overflow:ellipsis;}
-#bgrCloudSaveState[data-kind="conflict"]{color:#ffcfb8;font-weight:800;}
-#bgrCloudSaveState[data-kind="offline"]{color:#ffe0ad;}
-#bgrCloudSaveState[hidden]{display:none!important;}
 
 /* V56: readable teacher display; fullscreen retains its own scaling rules. */
 #groupsPage:not(:fullscreen):not(.ipad-fullscreen) .member-name{font-size:clamp(15px,1.45vw,21px)!important;line-height:1.15;overflow-wrap:break-word;word-break:normal}
@@ -550,10 +495,20 @@ body.ipad-presentation .ipad-exit-presentation {display:block;}
  .site-brand h1{font-size:clamp(19px,5vw,24px);line-height:1.2;overflow-wrap:anywhere}
  .install-actions{width:100%;justify-content:flex-start;align-items:center;gap:7px}
  .install-actions .save-state{width:100%;max-width:none;font-size:11px}
- #bgrCloudSaveState{max-width:none;white-space:normal}
 }
 @media print{.workspace-bar{display:none!important}}
 body.print-seating .workspace-bar{display:none!important}
+
+
+/* Teacher-only group actions. Hidden from classroom fullscreen/print. */
+.member[data-student-id] {cursor:pointer;}
+.member.group-locked {box-shadow:inset 3px 0 #c63b46;}
+.group-locked-mark {font-size:12px;margin-left:5px;color:#ad2638;font-weight:800;}
+.group-action-menu {display:flex;gap:6px;flex-wrap:wrap;max-width:250px;background:white;color:#1d2b3d;padding:12px;border:1px solid #b8c5d8;border-radius:12px;box-shadow:0 8px 30px #15264045;}
+.group-action-menu strong {display:block;flex-basis:100%;overflow-wrap:anywhere;}
+.group-action-menu button {padding:7px 10px;min-width:70px;font-size:12px;}
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .group-locked-mark{display:none!important;}
+@media print {.group-locked-mark{display:none!important}.group-action-menu{display:none!important}}
 
 </style>
 <style>
@@ -635,58 +590,16 @@ body.bgr-home-active .workspace-class-bar{display:none!important}
 
 </style>
 <style>.welcome-tutorial-top{margin:10px 0 14px}.welcome-tutorial-top button{max-width:100%}</style>
+<meta name="bgr-build" content="P05.5-manual-only">
 </head>
 <body>
-<div id="bgrStartupGate" role="dialog" aria-modal="true" aria-labelledby="bgrGateTitle" hidden>
-  <div class="bgr-gate-card"><h2 id="bgrGateTitle">Checking your encrypted classrooms</h2>
-  <p id="bgrGateStatus" role="status">Verifying the Google account associated with the classroom cache.</p>
-  <button id="bgrGateSignIn" class="primary" type="button">Connect the original Google account</button>
-  <button id="bgrGateBackup" class="secondary" type="button">Export local safety backup</button>
-  <button id="bgrGateOffline" class="secondary" type="button" hidden>Use saved classes offline</button>
-  </div></div>
-<script>
-/* Gate before classroom initialization; don't expose a cloud-bound cache during auth startup. */
-(function(){
-  const gate=document.getElementById('bgrStartupGate');
-  let bound='';try{bound=localStorage.getItem('bgr.cloud.boundAccount')||'';}catch(_){}
-  if(bound)gate.hidden=false;
-  window.BGRStartupGate={
-    get bound(){try{return localStorage.getItem('bgr.cloud.boundAccount')||'';}catch(_){return "";}},
-    show(message,allowOffline=false){if(!bound)return;gate.hidden=false;document.getElementById('bgrGateStatus').textContent=message;document.getElementById('bgrGateOffline').hidden=!allowOffline;},
-    release(){gate.hidden=true;document.getElementById('bgrGateOffline').hidden=true;}
-  };
-  document.getElementById('bgrGateSignIn').addEventListener('click',()=>document.getElementById('googleConnectBtn')?.click());
-  document.getElementById('bgrGateBackup').addEventListener('click',()=>{if(window.BGRSyncBridge)window.BGRSyncBridge.backup('bgr-local-account-safety-copy');});
-  document.getElementById('bgrGateOffline').addEventListener('click',()=>{
-    // Never unlock account-bound cached classes without checking the actual
-    // Firebase-authenticated UID, even when offline.
-    if(!window.BGRStartupGate.identityVerified ||
-       window.BGRStartupGate.bound!==window.BGRSync?.uid){
-      window.BGRStartupGate.show('Verify the original Google account before opening saved classes.');
-      return;
-    }
-    window.BGRStartupGate.release();
-  });
-})();
-</script>
-
 <header class="top">
   <div class="top-inner">
-    <div class="site-brand"><img src="group-randomizer-icon.png" alt="" width="48" height="48"><h1>Balanced Group Randomizer</h1></div>
-    <div class="install-actions"><button type="button" class="install-app-btn" id="welcomeHelpBtn">Getting Started</button><button type="button" class="install-app-btn" id="feedbackBtn">Feedback</button><button type="button" class="install-app-btn" id="installAppBtn" hidden>Install Desktop App</button><div class="save-state" id="saveState">Saved on this device</div><div class="save-state" id="bgrCloudSaveState" role="status" aria-live="polite" hidden></div></div>
+    <div class="site-brand"><img src="app-icon-192.png" alt="" width="48" height="48"><h1>Balanced Group Randomizer</h1></div>
+    <div class="install-actions"><button type="button" class="install-app-btn" id="welcomeHelpBtn">Getting Started</button><button type="button" class="install-app-btn" id="feedbackBtn">Feedback</button><a href="./BGR-Manual-Local-Edition.zip" download class="install-app-btn" title="Download the standalone local-only HTML package">Download local edition</a><div class="save-state" id="saveState">Saved locally · manual backups</div></div>
   </div>
 </header>
 
-<dialog id="installAppDialog" class="install-dialog" aria-labelledby="installAppTitle">
-  <h2 id="installAppTitle">Install Balanced Group Randomizer</h2>
-  <div id="installAppInstructions"></div><p><button type="button" class="secondary" id="confirmInstalledBtn">I installed the app</button></p>
-  <div class="install-dialog-actions"><button type="button" class="secondary" id="closeInstallDialog">Close</button></div>
-</dialog>
-<div id="updateBanner" class="app-update-banner" role="status" hidden>
-  <span>A new version of Balanced Group Randomizer is ready.</span>
-  <button type="button" id="applyUpdateBtn">Restart to Update</button>
-  <button type="button" id="dismissUpdateBtn" aria-label="Dismiss update reminder">Later</button>
-</div>
 <dialog id="welcomeDialog" class="welcome-dialog" aria-labelledby="welcomeTitle">
   <div class="welcome-top"><span class="welcome-kicker">WELCOME TO BALANCED GROUP RANDOMIZER</span><button type="button" id="welcomeClose" class="secondary" aria-label="Close welcome">✕</button></div>
   <h2 id="welcomeTitle">Get your classes ready</h2>
@@ -697,7 +610,7 @@ body.bgr-home-active .workspace-class-bar{display:none!important}
     <button type="button" id="welcomePaste" class="welcome-choice"><strong>Paste a student roster</strong><span>Add student names to the selected class, one per line.</span></button>
     <button type="button" id="welcomeManual" class="welcome-choice"><strong>Create a class manually</strong><span>Name a new class and add students when you're ready.</span></button>
   </div>
-  <div class="welcome-privacy"><strong><span aria-hidden="true">🔒</span> Your classroom data is stored locally by default</strong><p>Rosters, tiers, seating charts, and grouping settings are saved in this browser's local storage. Cloud sync is disabled until you explicitly enable it. If enabled, classroom records are encrypted inside this browser before being transferred to your Firebase cloud database. The decryption key stays on authorized devices; other devices must be approved once. Data may be lost if browser storage is cleared or the device is reset. Export backups to a school-approved secure location; backups contain student information. The feedback email opens your email app only when you choose to send it.</p></div>
+  <div class="welcome-privacy"><strong><span aria-hidden="true">🔒</span> Your classroom data is stored locally on this device</strong><p>Rosters, tiers, seating charts, and grouping settings are saved in this browser's local storage. There is no website cloud synchronization. Data may be lost if browser storage is cleared or the device is reset. Export backups to a school-approved secure location; backups contain student information. The feedback email opens your email app only when you choose to send it.</p></div>
   
 </dialog>
 <dialog id="feedbackDialog" class="feedback-dialog" aria-labelledby="feedbackTitle">
@@ -716,10 +629,6 @@ body.bgr-home-active .workspace-class-bar{display:none!important}
   </div>
   <p id="feedbackStatus" role="status" aria-live="polite"></p>
 </dialog>
-<div id="bgrSyncAlert" role="status" aria-live="polite" hidden>
-  <span id="bgrSyncAlertText"></span>
-  <button type="button" id="bgrSyncAlertOpen">View cloud sync details</button>
-</div>
 <div class="workspace-bar">
   <nav class="page-nav" aria-label="Classroom tools">
     <button type="button" class="secondary" id="homeTab" aria-controls="homePage">Home</button>
@@ -781,7 +690,7 @@ body.bgr-home-active .workspace-class-bar{display:none!important}
         <article class="landing-feature"><div class="landing-feature-icon" aria-hidden="true">▦</div><h4>Real seating charts</h4><p>Arrange desks into rows, pairs, triangles, or pods. Drag groups around, lock a student in a seat, and populate the room.</p></article>
         <article class="landing-feature"><div class="landing-feature-icon" aria-hidden="true">⇧</div><h4>Less time entering rosters</h4><p>Paste names or import supported grade-report PDFs to build classes and assign initial performance tiers when numeric percentages are available.</p></article>
         <article class="landing-feature"><div class="landing-feature-icon" aria-hidden="true">◎</div><h4>Made for active lessons</h4><p>Mark absent students without reshuffling everyone, pick a random student, and switch to a clean student fullscreen display.</p></article>
-        <article class="landing-feature"><div class="landing-feature-icon" aria-hidden="true">✓</div><h4>Works across devices</h4><p>Use a local offline copy and optional end-to-end encrypted Google-connected sync between authorized devices.</p></article>
+        <article class="landing-feature"><div class="landing-feature-icon" aria-hidden="true">✓</div><h4>Manual backups, no cloud sync</h4><p>Keep your classroom workspace on one device, and use manual JSON backup/restore to transfer it when approved. No website account or cloud synchronization.</p></article>
       </div>
     </div>
     <div class="landing-steps landing-section" id="landingSteps">
@@ -797,7 +706,7 @@ body.bgr-home-active .workspace-class-bar{display:none!important}
         <div><h3>Ready to spend less time organizing?</h3><p>Open your teacher workspace and put your classroom needs first.</p></div>
         <button type="button" class="landing-action" id="homeOpenWorkspaceBottom">Open teacher workspace <span aria-hidden="true">→</span></button>
       </div>
-      <p class="landing-privacy">The sample names shown above are fictional. Google cloud sync is optional and encrypted; schools should approve student-data use before uploading real rosters.</p>
+      <p class="landing-privacy">The sample names shown above are fictional. Student records remain in this browser unless you manually export a backup. Follow school data-handling rules.</p>
     </div>
   </div>
 </section>
@@ -856,33 +765,8 @@ body.bgr-home-active .workspace-class-bar{display:none!important}
 <section class="panel teacher-card avoid-card"><h2>3. Grouping rules</h2>
 <p class="help">Choose which students must stay apart or together. Rules are optional and saved with this class. </p>
 
-<div class="field">
-  <label for="avoidRuleType">Separation rule type</label>
-  <select id="avoidRuleType">
-    <option value="2">Separate 2 students</option>
-    <option value="3plus">Separate 3+ students</option>
-    <option value="together">Keep students together (2–3)</option>
-  </select>
-</div>
-
-<div id="avoidPairControls">
-  <div class="field">
-    <label for="avoidStudentA">First student</label>
-    <select id="avoidStudentA"></select>
-  </div>
-  <div class="field">
-    <label for="avoidStudentB">Keep apart from</label>
-    <select id="avoidStudentB"></select>
-  </div>
-  <button class="secondary" id="addAvoidBtn">＋ Add separation rule</button>
-</div>
-
-<div id="avoidGroupControls" class="hidden">
-  <p class="help">Select at least three students. Every selected student must be in a different group from the others.</p>
-  <div id="avoidGroupStudents" class="avoid-student-options"></div>
-  <button class="secondary" id="addAvoidGroupBtn">＋ Add group separation rule</button>
-</div>
-
+<div class="field"><label for="avoidRuleType">Rule type</label><select id="avoidRuleType"><option value="separate">Keep separate</option><option value="together">Keep together</option></select></div>
+<div id="avoidGroupControls"><p class="help">Click two or more students. All selected students must be assigned to different groups.</p><div id="avoidGroupStudents" class="avoid-student-options"></div><button class="secondary" id="addAvoidGroupBtn">＋ Add separation rule</button></div>
 <div id="togetherControls" class="hidden">
   <p class="help">Select two or three students who must be assigned to the same group. This applies to group generation and automatic seating assignments.</p>
   <div id="togetherStudents" class="avoid-student-options"></div>
@@ -916,7 +800,7 @@ body.bgr-home-active .workspace-class-bar{display:none!important}
   <button class="secondary" id="importBtn">Import backup</button>
   <input id="importFile" type="file" accept=".json,application/json" class="hidden">
 </div>
-<p class="notice">Classes are saved locally in this browser. Authorized devices can also sync encrypted copies to the cloud. Manual backup files are separate, readable exports—store them in a school-approved secure location.</p>
+<p class="notice">Classes remain in this browser only. To move devices, export a JSON backup and import it on the other device. Backups are readable and contain student information—store them in a school-approved secure location.</p>
 <div id="backupReminder" class="backup-reminder hidden" role="status"></div>
 <p id="backupStatus" class="help" aria-live="polite">No backup recorded on this device yet.</p>
 <div id="restorePreview" class="restore-preview hidden">
@@ -930,77 +814,9 @@ body.bgr-home-active .workspace-class-bar{display:none!important}
   <p class="help">Replacing restores all settings and classes from the backup. A safety copy of your current data will download first.</p>
 </div>
 <button class="secondary" id="privacyBtn" style="margin-top:10px">Privacy &amp; data controls</button>
-<div id="privacyPanel" class="privacy-panel hidden" style="margin-top:12px"><strong>Local-first storage</strong><p>Class names, student names, performance tiers, source names from PDF imports, separation rules, and seating assignments are saved in this browser's local storage. Google sign-in requests basic identity information (your email and profile). When enabled, this browser encrypts rosters, rankings, class settings, and seating charts before sending them to Cloud Firestore. The encryption key is stored locally using IndexedDB and does not come from Google sign-in. A new device must be approved by an existing device. Local classroom records and manual JSON backups remain readable, and privileged code running in the browser can access them. Cloud sync remains off until explicitly enabled. This test build is not security-audited or district-approved and must not be used with actual student records. Disconnecting Google does not erase local data or cloud data. You can delete the cloud copy separately. The PDF reader is bundled with the app and PDF parsing occurs in the browser. Other browser extensions or users of this browser profile may be able to access local data. Backups contain student information and must be stored securely. Clearing browser data can erase your classes. Teachers should follow their school’s applicable student-data privacy and technology policies.</p><button class="secondary" id="clearAllDataBtn" style="color:#b42332">Delete all local class data</button></div>
+<div id="privacyPanel" class="privacy-panel hidden" style="margin-top:12px"><strong>Manual-only data handling</strong><p>Class names, student names, tiers, separation rules and seating assignments are stored in this browser's local storage, not automatically synchronized. JSON backups are readable and contain student information; export and transfer them only through school-approved channels. This website cannot protect data from someone with access to the device, browser profile, backups, extensions or malicious scripts. Removing cloud sync does not remove older Firebase data: any previously uploaded cloud records must be reviewed and deleted separately. Clearing website storage deletes local records. The optional PDF import parses locally when the PDF reader is bundled. Follow your school's student-data policies.</p><button class="secondary" id="clearAllDataBtn" style="color:#b42332">Delete all local class data</button></div>
 </section>
 </div>
-<section class="panel teacher-card cloud-card" id="googleCloudPanel" aria-label="Google and cloud sync beta">
-  <div class="cloud-head cloud-compact-head">
-    <h2>Google Account &amp; Cloud Sync</h2>
-    <button type="button" id="cloudInfoBtn" class="cloud-info-btn" aria-label="Show cloud sync details and controls" aria-expanded="false" aria-controls="cloudAdvancedContent" title="Cloud sync details, status, pairing and settings">?</button>
-  </div>
-  <div class="cloud-controls" style="margin-top:11px">
-    <button type="button" class="primary" id="googleConnectBtn">Connect Google account</button>
-  </div>
-  <label class="cloud-test-confirm" style="display:flex;align-items:flex-start;gap:10px;margin:12px 0 4px;padding:12px;border:1px solid #d5dfed;border-radius:10px;background:#f4f7fc">
-    <input id="cloudFictionalConfirm" type="checkbox" style="width:19px;height:19px;flex-shrink:0;margin-top:2px">
-    <span><strong>Enable fictional-data testing</strong><br><span class="help">I confirm that every name and record in this browser is invented and does not identify an actual student. Do not select for real student data.</span></span>
-  </label>
-  <div id="cloudAdvancedContent" hidden>
-    <div class="cloud-advanced-intro">
-      <span class="cloud-beta">BETA · OPT-IN</span>
-      <p class="help">Sign in with Google once on each device. The first device keeps a private encryption key; new devices must be authorized once by matching an 8-digit code. Classroom data remains saved locally.</p>
-      <p class="cloud-warning"><strong>Use fictional student data for testing.</strong> Firebase receives encrypted classroom records, not readable rosters. Google sign-in is not the encryption key. If you lose every authorized device, encrypted cloud data may become inaccessible. This beta has not been security-audited or district-approved.</p>
-    </div>
-    <div class="cloud-controls" style="margin-top:11px">
-      <button type="button" class="secondary hidden" id="googleDisconnectBtn">Disconnect Google</button>
-      <span class="help" id="googleAccountStatus">Not connected</span>
-    </div>
-    <p class="cloud-sync-status" id="googleSyncStatus" role="status" aria-live="polite">Student data is stored only on this device. Cloud sync is off.</p>
-    <p class="help" id="cloudLastSuccess" aria-live="polite">No verified encrypted cloud transfer on this device yet.</p>
-  <div id="cloudPanelDetails" class="cloud-detail" aria-live="polite">
-    <strong id="cloudModeLabel">Cloud sync is not configured</strong>
-    <p class="help" id="cloudModeHelp">A Firebase project and secure Firestore rules are required before sync can be enabled.</p>
-    <div id="cloudSetupActions" hidden>
-      <button type="button" class="primary" id="cloudUseThisBtn">Use this device's classes</button>
-      <button type="button" class="secondary" id="cloudUseRemoteBtn" hidden>Restore classes from cloud</button>
-    </div>
-    <div id="cloudPairActions" hidden>
-      <p class="help">Use the same Google account on both devices. On the NEW device, request access. On your EXISTING device, review the request. Compare the 8-digit numbers on both screens before approving.</p>
-      <div class="cloud-controls"><button type="button" class="primary" id="cloudPairRequestBtn">Request access from another device</button><button type="button" class="secondary" id="cloudPairCancelBtn" hidden>Cancel request</button></div>
-      <p class="help" id="cloudPairStatus">No pairing request started.</p>
-      <div class="cloud-pair-code" id="cloudPairCode" aria-label="Pairing verification number">—</div>
-      <button type="button" class="primary" id="cloudPairConfirmBtn" hidden>Numbers match on both devices</button>
-    </div>
-    <div class="cloud-detail" id="cloudPairHostPanel" hidden>
-      <strong>New device authorization request</strong>
-      <p class="help" id="cloudPairHostHelp">Another device is requesting your classroom key.</p>
-      <div class="cloud-pair-code" id="cloudPairHostCode" aria-label="Existing-device verification number">—</div>
-      <div class="cloud-controls"><button type="button" class="secondary" id="cloudPairReviewBtn">Review new device</button><button type="button" class="primary" id="cloudPairApproveBtn" hidden>Approve matching number and share key</button><button type="button" class="secondary cloud-danger" id="cloudPairRejectBtn" hidden>Reject request</button></div>
-    </div>
-    <div id="cloudActiveActions" hidden>
-      <p class="help">No Sync button is needed. Both authorized devices upload changes automatically and check the cloud about every two minutes while the app is open and visible. They also check when you return to the app. Background or sleeping devices may pause until opened again. Different edits merge automatically. If both devices change the exact same setting, the app will ask for review rather than discard data.</p>
-      <button type="button" class="secondary" id="cloudSyncNowBtn">Check now (optional)</button>
-      <button type="button" class="secondary" id="cloudStopBtn">Turn off sync on this device</button>
-    </div>
-    <div id="cloudConflictActions" hidden>
-      <div style="background:#f3f7ff;border:1px solid #b8cae8;padding:12px;border-radius:10px;margin:10px 0">
-        <strong>Combine changes safely</strong>
-        <p class="help" id="bgrMergeHint">Merging checks for edits to the same settings. A safety archive of both versions downloads before merging.</p>
-        <button type="button" class="primary" id="bgrMergeBtn">Try safe three-way merge</button>
-        <p class="help">For an existing V46 conflict without a verified baseline, choose which version has the correct rankings and which has the correct seating arrangements. This option refuses to merge if other settings differ.</p>
-        <div class="field"><label for="bgrMergeTierSource">Student performance rankings</label>
-          <select id="bgrMergeTierSource"><option value="local">This device</option><option value="cloud">Cloud version</option></select></div>
-        <div class="field"><label for="bgrMergeSeatingSource">Seating charts and assignments</label>
-          <select id="bgrMergeSeatingSource"><option value="cloud">Cloud version</option><option value="local">This device</option></select></div>
-        <button type="button" class="secondary" id="bgrMergeLegacyBtn">Combine selected rankings and seating</button>
-      </div>
-      <p class="cloud-warning">Both devices have changes. Merge non-overlapping changes, or keep a safety backup before choosing a full version.</p>
-      <button type="button" class="secondary" id="cloudConflictRemoteBtn">Use cloud version (back up this device)</button>
-      <button type="button" class="secondary cloud-danger" id="cloudConflictLocalBtn">Keep this device (back up cloud version)</button>
-    </div>
-    <div style="margin-top:8px"><button type="button" class="secondary" id="bgrDownloadMergeRecovery">Download latest encrypted-merge recovery copy</button><button type="button" class="secondary cloud-danger" id="cloudDeleteBtn" hidden>Delete my cloud copy</button></div>
-  </div>
-  </div>
 </section>
 </div>
 </div>
@@ -1023,7 +839,7 @@ body.bgr-home-active .workspace-class-bar{display:none!important}
   </div>
 </div>
 <div class="field" style="max-width:360px;margin:12px 0"><label for="groupStrategy">Grouping strategy</label><select id="groupStrategy"><option value="balanced">Balanced abilities (default)</option><option value="random">Random (respect separation rules)</option><option value="similar">Similar abilities</option><option value="variety">New partners (use group history)</option></select><p class="help" id="strategyHelp">Prioritizes mixed-ability groups.</p></div>
-<div class="notice" id="balanceNote">Groups of three are used whenever possible; pairs are used when needed.</div>
+<div class="notice" id="balanceNote">Groups of three are used whenever possible; pairs are used when needed.</div><p class="help">Click a student for Swap, Lock, or Absent. Locked students remain in their assigned group when you randomize.</p>
 <div class="btnrow" style="margin:10px 0"><button type="button" class="secondary" id="rebalancePresentBtn">Rebalance present students</button></div>
 <div id="groupsArea">
   <div class="empty">Your groups will appear here.</div>
@@ -1054,7 +870,7 @@ body.bgr-home-active .workspace-class-bar{display:none!important}
 <section class="page" id="seatingPage">
   <main class="panel">
     <div class="groups-page-head">
-      <div><h2>Seating Chart</h2><div class="subline">Desk positions and priorities are shared across classes; student assignments stay separate. "Populate" attempts to divide High, Middle, and Low students between groups.</div></div>
+      <div><h2>Seating Chart</h2><div class="subline">Desk positions and priorities are shared across classes; student assignments stay separate. "Populate" fills groups of at least two, favoring triples and preserving locked seats.</div></div>
       <div class="legacy-class-picker"><label for="seatingClassSelect">Class</label><select id="seatingClassSelect"></select></div>
     </div>
     <div class="seating-toolbar" id="seatingSetupControls">
@@ -1154,7 +970,7 @@ function updateBackupStatus() {
   reminder.classList.toggle('hidden', !due);
   if (due) reminder.textContent = last
     ? 'It has been over 3 weeks since your last manual backup export. Save a fresh copy before major changes.'
-    : 'No manual file backup has been exported on this device. Encrypted cloud sync, if enabled, does not replace a separate backup.';
+    : 'No manual file backup has been exported. Export one before clearing this browser or changing devices.';
 }
 function downloadBackup(snapshot, prefix='balanced-group-randomizer-backup') {
   const stamp = new Date().toISOString().slice(0,10);
@@ -1205,39 +1021,10 @@ function toast(message) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => $('toast').classList.add('hidden'), 2600);
 }
-// The chosen class is a personal viewing preference, not a shared classroom edit.
-// Compare persisted classroom CONTENT before notifying cloud sync. This also
-// prevents harmless re-saves of unchanged data from causing false conflicts.
-function cloudContentString(record) {
-  const copy = {...record};
-  delete copy.activeId;
-  return JSON.stringify(copy);
-}
-function save() {
-  try {
-    const previous = localStorage.getItem(KEY);
-    let classroomChanged = true;
-    if (previous !== null) {
-      try { classroomChanged = cloudContentString(JSON.parse(previous)) !== cloudContentString(db); }
-      catch (_) { classroomChanged = true; }
-    }
-    localStorage.setItem(KEY, JSON.stringify(db));
-    if (classroomChanged) {
-      // Persist unsynced-change marker even offline or if the page closes early.
-      const owner = localStorage.getItem('bgr.cloud.boundAccount');
-      if (owner) {
-        const syncKey = 'bgr.cloud.syncState.' + owner;
-        try { const state = JSON.parse(localStorage.getItem(syncKey) || '{}');
-          if (state.enabled) {state.dirty = true; localStorage.setItem(syncKey, JSON.stringify(state));}
-        } catch (_) {}
-      }
-      document.dispatchEvent(new Event('bgr:local-save'));
-    }
-    $('saveState').textContent = '✓ Saved on this device';
-    updateBackupStatus();
-  } catch(e) {
-    $('saveState').textContent = 'Could not save — export a backup';
-  }
+// Classes are stored locally. Backups move data between devices only on export/import.
+function save(){
+  try{localStorage.setItem(KEY,JSON.stringify(db));$('saveState').textContent='✓ Saved locally · Export backup to transfer';updateBackupStatus();}
+  catch(e){$('saveState').textContent='Local save failed — storage may be full';toast('Cannot save; check browser storage or permissions.');}
 }
 function current() {
   return db.classes.find(c => c.id === db.activeId) || null;
@@ -1393,55 +1180,18 @@ function renderStudents(c) {
 }
 
 function renderAvoidControls(c) {
-  const a = $('avoidStudentA');
-  const b = $('avoidStudentB');
-  const previousA = a.value;
-  const previousB = b.value;
-  a.innerHTML = '';
-  b.innerHTML = '';
-
-  const students = c ? c.students : [];
-  [a,b].forEach(select => {
-    if (students.length < 2) {
-      const o = document.createElement('option');
-      o.value = '';
-      o.textContent = 'Add at least two students';
-      select.append(o);
-      select.disabled = true;
-    } else {
-      students.forEach(s => {
-        const o = document.createElement('option');
-        o.value = s.id;
-        o.textContent = s.name;
-        select.append(o);
-      });
-      select.disabled = false;
-    }
+  const students=c?c.students:[];
+  const checklist=$('avoidGroupStudents');
+  const previouslyChecked=new Set([...checklist.querySelectorAll('input:checked')].map(x=>x.value));
+  checklist.innerHTML='';
+  if(!students.length)checklist.textContent='Add students first.';
+  else students.forEach(s=>{
+    const label=document.createElement('label');label.className='avoid-student-option';
+    const input=document.createElement('input');input.type='checkbox';input.value=s.id;
+    input.dataset.avoidGroupStudent='true';input.checked=previouslyChecked.has(s.id);
+    const text=document.createElement('span');text.textContent=s.name;
+    label.append(input,text);checklist.append(label);
   });
-
-  if (students.some(s => s.id === previousA)) a.value = previousA;
-  if (students.some(s => s.id === previousB)) b.value = previousB;
-
-  const checklist = $('avoidGroupStudents');
-  checklist.innerHTML = '';
-
-  if (!students.length) {
-    checklist.textContent = 'Add students to your roster first.';
-  } else {
-    students.forEach(s => {
-      const label = document.createElement('label');
-      label.className = 'avoid-student-option';
-      const input = document.createElement('input');
-      input.type = 'checkbox';
-      input.value = s.id;
-      input.dataset.avoidGroupStudent = 'true';
-      const text = document.createElement('span');
-      text.textContent = s.name;
-      label.append(input,text);
-      checklist.append(label);
-    });
-  }
-
   const togetherChecklist=$('togetherStudents');
   togetherChecklist.innerHTML='';
   students.forEach(s=>{
@@ -1451,11 +1201,8 @@ function renderAvoidControls(c) {
     label.append(input,span);togetherChecklist.append(label);
   });
   if(!students.length)togetherChecklist.textContent='Add students first.';
-  const pairControls = $('avoidPairControls');
-  const groupControls = $('avoidGroupControls');
   const ruleType=$('avoidRuleType').value;
-  pairControls.classList.toggle('hidden',ruleType!=='2');
-  groupControls.classList.toggle('hidden',ruleType!=='3plus');
+  $('avoidGroupControls').classList.toggle('hidden',ruleType!=='separate');
   $('togetherControls').classList.toggle('hidden',ruleType!=='together');
 
   const list = $('avoidList');
@@ -1467,7 +1214,7 @@ function renderAvoidControls(c) {
   if (!pairRules.length && !groupRules.length && !togetherRules.length) {
     const empty = document.createElement('p');
     empty.className = 'help';
-    empty.textContent = 'No separation rules added.';
+    empty.textContent = 'No grouping rules added.';
     list.append(empty);
     return;
   }
@@ -1680,7 +1427,108 @@ function arrangementScore(arr,c) {
   return score;
 }
 
+
+// Locking anchors a student to the same group number during Randomize and Rebalance.
+// An incompatible roster or rule produces an error instead of silently moving them.
+function arrangeWithGroupLocks(students,sizes,c){
+  const locks=c.groupLocks||{};
+  const present=new Set(students.map(s=>s.id));
+  const slots=sizes.map(size=>({size,students:[]}));
+  const blocks=togetherComponents({...c,students},c.togetherGroups||[],students);
+  const anchored=[],floating=[];
+  for(const block of blocks){
+    const assigned=new Set(block.map(s=>locks[s.id]).filter(n=>Number.isInteger(n)));
+    if(assigned.size>1)return null;
+    if(assigned.size){const dest=[...assigned][0];if(dest<0||dest>=slots.length)return null;anchored.push({dest,block});}
+    else floating.push(block);
+  }
+  for(const {dest,block} of anchored){
+    const slot=slots[dest];slot.students.push(...block);
+    if(slot.students.length>slot.size||separationViolations([slot.students],c))return null;
+  }
+  const order=floating.slice().sort((a,b)=>b.length-a.length||Math.random()-.5);
+  let nodes=0;
+  function place(i){
+    if(++nodes>16000)return false;
+    if(i===order.length)return slots.every(slot=>slot.students.length===slot.size);
+    const block=order[i];
+    const options=slots.map((slot,k)=>k).filter(k=>slots[k].students.length+block.length<=slots[k].size);
+    for(let j=options.length-1;j>0;j--){const k=Math.floor(Math.random()*(j+1));[options[j],options[k]]=[options[k],options[j]];}
+    for(const index of options){
+      const slot=slots[index];slot.students.push(...block);
+      if(!separationViolations([slot.students],c)&&place(i+1))return true;
+      slot.students.length-=block.length;
+    }
+    return false;
+  }
+  return place(0)?slots.map(x=>x.students):null;
+}
+function groupRoleRows(rows,c){
+  const roles=c.roles||defaultRoles;
+  return rows.map(row=>row.map((s,i)=>({...s,role:row.length===2?(i===0?roles[0]:`${roles[1]} + ${roles[2]}`):roles[i]||roles[2]})));
+}
+function saveGroupSnapshot(){
+  const c=current();if(!c||!groups.length)return;
+  c.savedGroups=groups.map(g=>g.map(s=>s.id));
+  save();
+}
+function restoreGroupSnapshot(){
+  const c=current();groups=[];absentIds.clear();absentOrigins.clear();
+  if(!c||!Array.isArray(c.savedGroups))return;
+  const byId=new Map(c.students.map(s=>[s.id,s]));
+  const viewed=c.savedGroups.map(ids=>Array.isArray(ids)?ids.map(id=>byId.get(id)).filter(Boolean):[]).filter(g=>g.length);
+  if(!viewed.length||viewed.some(g=>g.length<2||g.length>3))return;
+  if(new Set(viewed.flat().map(s=>s.id)).size!==viewed.flat().length)return;
+  if(viewed.flat().length!==c.students.length)return;
+  if(separationViolations(viewed,c)||togetherViolations(viewed,c))return;
+  if(Object.entries(c.groupLocks||{}).some(([id,index])=>byId.has(id)&&(!Number.isInteger(index)||!viewed[index]?.some(s=>s.id===id))))return;
+  groups=groupRoleRows(viewed,c);
+}
+let groupSwapId=null,groupActionMenu=null;
+function closeGroupActionMenu(){if(groupActionMenu)groupActionMenu.remove();groupActionMenu=null;}
+function switchGroupStudent(studentId){
+  const c=current();if(!c)return;
+  if(isPresentation($('groupsPage')))return; // teacher actions never appear in student presentation
+  const found=groups.flat().find(s=>s.id===studentId);
+  if(!found)return;
+  if(groupSwapId){
+    const sourceId=groupSwapId;groupSwapId=null;closeGroupActionMenu();
+    if(sourceId===studentId){toast('Swap cancelled.');return;}
+    const leftIndex=groups.findIndex(g=>g.some(s=>s.id===sourceId));
+    const rightIndex=groups.findIndex(g=>g.some(s=>s.id===studentId));
+    if(leftIndex<0||rightIndex<0){toast('Student not found in the current groups.');return;}
+    const sameGroup=leftIndex===rightIndex;
+    if(!sameGroup && (c.groupLocks?.[sourceId]!==undefined || c.groupLocks?.[studentId]!==undefined)){toast('Unlock the student before swapping groups.');return;}
+    const trial=groups.map(g=>g.map(s=>({...s})));
+    const a=trial[leftIndex].findIndex(s=>s.id===sourceId),b=trial[rightIndex].findIndex(s=>s.id===studentId);
+    // Swap positions, not role labels: groupRoleRows assigns roles by slot order.
+    [trial[leftIndex][a],trial[rightIndex][b]]=[trial[rightIndex][b],trial[leftIndex][a]];
+    if(separationViolations(trial,c)||togetherViolations(trial,c)){toast('Swap blocked by grouping rules.');return;}
+    groups=groupRoleRows(trial,c);saveGroupSnapshot();renderGroups();toast(sameGroup?'Roles swapped within the group.':'Students swapped between groups.');return;
+  }
+  closeGroupActionMenu();
+  const m=document.createElement('div');m.className='group-action-menu';m.setAttribute('role','group');m.setAttribute('aria-label','Actions for '+found.name);
+  const label=document.createElement('strong');label.textContent=found.name;m.append(label);
+  function action(text,fn){const b=document.createElement('button');b.type='button';b.className='secondary';b.textContent=text;b.addEventListener('click',e=>{e.stopPropagation();fn();});m.append(b);}
+  action('Swap',()=>{groupSwapId=studentId;closeGroupActionMenu();toast('Click any other student, including one in the same group, to swap positions and roles.');});
+  const idx=groups.findIndex(g=>g.some(s=>s.id===studentId));
+  const locked=c.groupLocks?.[studentId]!==undefined;
+  action(locked?'Unlock':'Lock',()=>{
+    if(!c.groupLocks)c.groupLocks={};
+    if(locked)delete c.groupLocks[studentId];else c.groupLocks[studentId]=idx;
+    closeGroupActionMenu();save();renderGroups();toast(locked?'Student unlocked.':'Student locked in Group '+(idx+1)+'.');
+  });
+  action('Absent',()=>{closeGroupActionMenu();markStudentAbsent(studentId);});
+  action('Close',closeGroupActionMenu);
+  groupActionMenu=m;document.body.append(m);
+  const target=document.querySelector('.member[data-student-id="'+CSS.escape(studentId)+'"]');
+  const r=target?.getBoundingClientRect();
+  m.style.position='fixed';m.style.zIndex='9999';m.style.left=Math.max(8,Math.min(innerWidth-230,(r?.left||20)))+'px';
+  m.style.top=Math.max(8,Math.min(innerHeight-210,(r?.bottom||50)+5))+'px';
+}
+
 function generate() {
+  closeGroupActionMenu();groupSwapId=null;
   const c = current();
   if (!c || c.students.length < 2) return;
   const issue=validateTogetherRules(c);if(issue){toast(issue);return;}
@@ -1690,7 +1538,7 @@ function generate() {
   const attempts = Math.min(5000,Math.max(800,c.students.length*120));
 
   for (let trial=0;trial<attempts;trial++) {
-    const arr=arrangeTogether(c.students,sizes,c);
+    const arr=arrangeWithGroupLocks(c.students,sizes,c);
     if(!arr)continue;
     const violations=separationViolations(arr,c);
     if(violations){if(violations<bestInvalidCount){bestInvalid=arr;bestInvalidCount=violations;}continue;}
@@ -1706,7 +1554,7 @@ function generate() {
     toast('Could not satisfy all separation rules.');return;
   }
   absentIds.clear();absentOrigins.clear();
-  recordGroupHistory(c,best);save();
+  recordGroupHistory(c,best);
   const roles = c.roles || defaultRoles;
   groups = best.map(g => g.map((s,i) => ({
     ...s,
@@ -1715,6 +1563,7 @@ function generate() {
       : roles[i]
   })));
 
+  saveGroupSnapshot();
   renderGroups();
 
   const violations = togetherViolations(groups,c) + [...c.avoidPairs].filter(pair =>
@@ -1734,6 +1583,7 @@ function generate() {
 
 function rebalancePresentStudents(){
   const c=current();if(!c)return;
+  closeGroupActionMenu();groupSwapId=null;
   const present=c.students.filter(s=>!absentIds.has(s.id));
   if(present.length<2){toast('Not enough present students to rebalance.');return;}
   const active={...c,students:present};
@@ -1743,7 +1593,7 @@ function rebalancePresentStudents(){
   let best=null,bestScore=-Infinity;
   const attempts=Math.min(5000,Math.max(800,present.length*120));
   for(let i=0;i<attempts;i++){
-    const candidate=arrangeTogether(present,sizes,active);
+    const candidate=arrangeWithGroupLocks(present,sizes,active);
     if(!candidate||separationViolations(candidate,active)||togetherViolations(candidate,active))continue;
     const score=strategyScore(candidate,active)+Math.random()*.06;
     if(score>bestScore){best=candidate;bestScore=score;}
@@ -1752,6 +1602,7 @@ function rebalancePresentStudents(){
   const roles=c.roles||defaultRoles;
   groups=best.map(g=>g.map((s,i)=>({...s,role:g.length===2?(i===0?roles[0]:`${roles[1]} + ${roles[2]}`):roles[i]})));
   absentOrigins.clear();
+  if(!absentIds.size)saveGroupSnapshot();
   renderGroups();
   const threes=groups.filter(g=>g.length===3).length,pairs=groups.filter(g=>g.length===2).length;
   $('balanceNote').textContent=`${present.length} present · ${threes} groups of 3 · ${pairs} pairs. All separation rules were followed.`;
@@ -1960,14 +1811,14 @@ function renderGroups() {
       if (absentIds.has(s.id)) return;
       const m = document.createElement('div');
       m.className = 'member';
-      m.title = `Click to mark ${s.name} absent and rebalance groups`;
+      m.title = `Click to swap positions or roles, lock, or mark ${s.name} absent`;
       m.setAttribute('role','button');
       m.setAttribute('tabindex','0');
-      const markAbsent = () => markStudentAbsent(s.id);
-      m.addEventListener('click',markAbsent);
-      m.addEventListener('keydown',e => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); markAbsent(); }
-      });
+      m.dataset.studentId=s.id;
+      if(current()?.groupLocks?.[s.id]!==undefined) m.classList.add('group-locked');
+      const openGroupActions=()=>switchGroupStudent(s.id);
+      m.addEventListener('click',openGroupActions);
+      m.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openGroupActions();}});
       const avatar = document.createElement('div');
       avatar.className = 'avatar';
       avatar.textContent = s.role || 'Role';
@@ -1980,6 +1831,7 @@ function renderGroups() {
       const nameRow = document.createElement('div');
       nameRow.className = 'member-name-row';
       nameRow.append(name,makeTierLetter(s.tier,'member-tier'));
+      if(current()?.groupLocks?.[s.id]!==undefined){const lockMark=document.createElement('span');lockMark.className='group-locked-mark';lockMark.textContent='🔒';lockMark.title='Locked to this group';nameRow.append(lockMark);}
       info.append(nameRow);
       m.append(avatar,info);
       members.append(m);
@@ -2098,6 +1950,7 @@ function switchClass(id) {
   db.activeId = id;
   groups = [];
   absentIds = new Set();
+  restoreGroupSnapshot();
   $('randomStudentResult').textContent = 'Click “Pick a random student” to choose a name.';
   save();
   render();
@@ -2398,42 +2251,22 @@ $('avoidRuleType').addEventListener('change',() => {
   renderAvoidControls(current());
 });
 
-$('addAvoidBtn').addEventListener('click',() => {
-  const c = current();
-  const a = $('avoidStudentA').value;
-  const b = $('avoidStudentB').value;
-  if (!c || !a || !b || a === b) {
-    toast('Choose two different students.');
-    return;
+$('addAvoidGroupBtn').addEventListener('click',()=>{
+  const c=current();if(!c)return;
+  const ids=[...$('avoidGroupStudents').querySelectorAll('input:checked')].map(input=>input.value);
+  if(ids.length<2){toast('Select at least two students to separate.');return;}
+  if(ids.length===2){
+    if(c.avoidPairs.some(pair=>pair.length===2&&pair.every(id=>ids.includes(id)))){toast('That separation rule already exists.');return;}
+    const proposed={...c,avoidPairs:[...c.avoidPairs,ids]};
+    if(validateTogetherRules(proposed)){toast('This rule conflicts with a Keep Together rule.');return;}
+    c.avoidPairs.push(ids);
+  }else{
+    if(c.avoidGroups.some(rule=>rule.length===ids.length&&rule.every(id=>ids.includes(id)))){toast('That separation rule already exists.');return;}
+    const proposed={...c,avoidGroups:[...c.avoidGroups,ids]};
+    if(validateTogetherRules(proposed)){toast('This rule conflicts with a Keep Together rule.');return;}
+    c.avoidGroups.push(ids);
   }
-  if (c.avoidPairs.some(p => p.includes(a) && p.includes(b))) {
-    toast('That separation rule already exists.');
-    return;
-  }
-  c.avoidPairs.push([a,b]);
-  groups = [];
-  save();
-  render();
-  toast('Two-student separation rule saved.');
-});
-
-$('addAvoidGroupBtn').addEventListener('click',() => {
-  const c = current();
-  if (!c) return;
-  const ids = [...$('avoidGroupStudents').querySelectorAll('input[data-avoid-group-student]:checked')].map(input => input.value);
-  if (ids.length < 3) {
-    toast('Select at least three students.');
-    return;
-  }
-  if (c.avoidGroups.some(rule => rule.length === ids.length && rule.every(id => ids.includes(id)))) {
-    toast('That group separation rule already exists.');
-    return;
-  }
-  c.avoidGroups.push(ids);
-  groups = [];
-  save();
-  render();
-  toast('Group separation rule saved.');
+  groups=[];c.savedGroups=[];save();render();toast('Separation rule saved.');
 });
 
 $('addTogetherBtn').addEventListener('click',()=>{
@@ -2645,110 +2478,11 @@ $('restoreReplaceBtn').addEventListener('click', () => {
   db = pendingRestore;
   if (!db.classes.some(c => c.id === db.activeId)) db.activeId = db.classes[0]?.id || null;
   syncRolesAcrossClasses();
+  restoreGroupSnapshot();
   save(); render();
   closeRestorePreview();
   toast('Backup restored. A safety copy of previous data was downloaded.');
 });
-
-// Google authentication and encrypted Firestore sync are handled by cloud-sync.js.
-// Pairing and recovery controls stay available inside the expandable help panel.
-// Normal view stays compact. All pairing, recovery, settings and status controls
-// remain in the DOM, available via the question-mark button.
-const cloudInfoButton = $('cloudInfoBtn');
-const cloudAdvancedContent = $('cloudAdvancedContent');
-let cloudAutoOpenedDetails = false;
-function setCloudDetailsOpen(open, automatic=false) {
-  cloudAdvancedContent.hidden = !open;
-  cloudInfoButton.setAttribute('aria-expanded', String(open));
-  cloudInfoButton.setAttribute('aria-label',open?'Hide cloud sync details and controls':'Show cloud sync details and controls');
-  cloudInfoButton.title = open?'Hide cloud sync details':'Cloud sync details, status, pairing and settings';
-  cloudAutoOpenedDetails = automatic && open;
-}
-cloudInfoButton.addEventListener('click', () => setCloudDetailsOpen(cloudAdvancedContent.hidden));
-document.addEventListener('bgr:cloud-attention', event => {
-  const kind=event.detail?.kind;
-  if(kind==='setup' || kind==='pair' || kind==='conflict' || kind==='pair-request') {
-    cloudInfoButton.classList.add('cloud-needs-attention');
-    setCloudDetailsOpen(true,true); // Required first-time setup, key pairing or conflict actions.
-    cloudInfoButton.title='Cloud sync needs attention — open details';
-  } else if(kind==='active') {
-    cloudInfoButton.classList.remove('cloud-needs-attention');
-    // Return to the compact view after an automatic first-time setup or pairing.
-    // Do not override details opened intentionally with the question-mark button.
-    if (cloudAutoOpenedDetails) setCloudDetailsOpen(false);
-  }
-});
-
-// Sync state is visible outside the expandable cloud settings. Never claim
-// both devices are synchronized when a local upload or conflict is pending.
-const syncAlert = document.getElementById('bgrSyncAlert');
-const syncPill = document.getElementById('bgrCloudSaveState');
-document.addEventListener('bgr:sync-status',event=>{
-  const {kind,message}=event.detail||{};
-  syncAlert.hidden=kind!=='conflict';
-  if(kind==='conflict'){
-    syncAlert.dataset.kind='conflict';
-    document.getElementById('bgrSyncAlertText').textContent='One setting needs review — '+(message||'Two edits could not be safely combined.');
-  }
-  if(!['clean','pending','offline','conflict'].includes(kind))return;
-  const labels={clean:'✓ All changes saved',pending:'↻ Saving changes…',offline:'◌ Offline — saved on this device',conflict:'! Review sync changes'};
-  syncPill.hidden=false;
-  syncPill.dataset.kind=kind;
-  syncPill.textContent=labels[kind];
-  syncPill.title=message||labels[kind];
-  document.getElementById('saveState').hidden=true;
-});
-document.getElementById('bgrSyncAlertOpen').addEventListener('click',()=>{
-  showPage('teacher');setCloudDetailsOpen(true);
-  document.getElementById('cloudModeLabel')?.scrollIntoView({block:'center'});
-});
-let googleIdentityBusy = false;
-function googleIdentityStatus(message, isError=false) {
-  $('googleSyncStatus').textContent = message;
-  $('googleSyncStatus').dataset.error = isError ? 'true' : 'false';
-  if (isError) setCloudDetailsOpen(true);
-}
-function googleIdentityControls() {
-  const connected = !!window.BGRSync?.signedIn;
-  // Keep sign-in interactive even if the Firebase module has not yet emitted a ready event.
-  // The click handler displays an actionable status if Firebase is still unavailable.
-  $('googleConnectBtn').disabled = googleIdentityBusy;
-  $('googleConnectBtn').textContent = connected ? 'Switch Google account' : 'Connect Google account';
-  $('googleDisconnectBtn').classList.toggle('hidden', !connected);
-}
-async function googleIdentityStart() {
-  if (!window.BGRSync?.configured) {
-    googleIdentityStatus('Firebase is loading or not configured. Try again shortly.',true); return;
-  }
-  if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
-    googleIdentityStatus('Open your deployed HTTPS website to sign in.',true); return;
-  }
-  googleIdentityBusy=true; googleIdentityControls();
-  try {
-    const email=await window.BGRSync.signInWithGoogle();
-    $('googleAccountStatus').textContent=email||'Connected';
-    googleIdentityStatus('Google account connected through Firebase. Enable encrypted sync when ready.');
-  } catch (error) {
-    googleIdentityStatus(error.message||'Google sign-in failed.',true);
-  } finally {
-    googleIdentityBusy=false; googleIdentityControls();
-  }
-}
-$('googleConnectBtn').addEventListener('click',googleIdentityStart);
-$('googleDisconnectBtn').addEventListener('click',async()=> {
-  try {
-    await window.BGRSync?.disconnect();
-    $('googleAccountStatus').textContent='Not connected';
-    googleIdentityStatus('Google disconnected. Local classroom data remains on this device.');
-  } catch(e) {googleIdentityStatus(e.message,true);}
-  googleIdentityControls();
-});
-document.addEventListener('bgr:cloud-auth', e => {
-  $('googleAccountStatus').textContent = e.detail?.email || 'Not connected';
-  googleIdentityControls();
-});
-document.addEventListener('bgr:cloud-ready',googleIdentityControls);
-googleIdentityControls();
 
 // Templates are shared between classes; student assignments belong to each class and template.
 function ensureSeatingTemplates() {
@@ -3407,98 +3141,120 @@ function seatingScore(layout,c,strategy=c.groupingStrategy||'balanced') {
   }
   return score;
 }
+
+// Never create a one-person group while populating the seating chart.
+// Exhaustive bounded dynamic programming respects seat locks and desk priorities.
+function planSeatingOccupancies(ordered, studentCount, lockedByGroup) {
+  const memo=new Map(), MAX_PLANS=12;
+  function solve(index,remaining){
+    if(index===ordered.length)return remaining===0?[{targets:[],score:0}]:[];
+    const key=index+'|'+remaining;
+    if(memo.has(key))return memo.get(key);
+    const g=ordered[index];
+    const locked=(lockedByGroup.get(g.id)||[]).filter(Boolean).length;
+    const choices=[];
+    if(locked===0)choices.push(0);
+    for(let count=Math.max(2,locked);count<=Math.min(g.size,remaining);count++)choices.push(count);
+    const all=[];
+    for(const count of choices){
+      if(count>remaining)continue;
+      const reward=count===4?116:count===3?120:count===2?70:0;
+      for(const suffix of solve(index+1,remaining-count)){
+        const priority=count*(ordered.length-index)*0.075;
+        all.push({targets:[count,...suffix.targets],score:reward+priority+suffix.score});
+      }
+    }
+    all.sort((a,b)=>b.score-a.score || b.targets[0]-a.targets[0]);
+    const top=all.slice(0,MAX_PLANS);
+    memo.set(key,top);return top;
+  }
+  return solve(0,studentCount);
+}
 $('populateDesksBtn').addEventListener('click',() => {
-  const c = current(), layout = seatingLayout();
-  if (!c || !c.students.length) { toast('Add students to this class first.'); return; }
-  if (!layout.length) { toast('Add desk groups first.'); return; }
-  const capacity = layout.reduce((n,g)=>n+g.size,0);
-  if (capacity < c.students.length) { toast(`Not enough seats: ${capacity} seats for ${c.students.length} students.`); return; }
+  const c=current(),layout=seatingLayout();
+  if(!c||c.students.length<2){toast('Add at least two students first.');return;}
+  if(!layout.length){toast('Add desk groups first.');return;}
+  const capacity=layout.reduce((sum,g)=>sum+g.size,0);
+  if(capacity<c.students.length){toast('Not enough seats for this class.');return;}
   const issue=validateTogetherRules(c);if(issue){toast(issue);return;}
-  // Fill strictly by teacher-selected priority, regardless of desk group size.
   normalizeSeatingPriorities(layout);
-  const ordered = [...layout].sort((a,b)=>a.priority-b.priority);
-  let best=null, bestScore=-Infinity, bestOccupancy=null;
-  const locks=seatingLocks(c), currentAssignments=seatingAssignments(c);
-  const validIds=new Set(c.students.map(st=>st.id));
+  const ordered=[...layout].sort((a,b)=>a.priority-b.priority);
+  const locks=seatingLocks(c),assignments=seatingAssignments(c);
+  const ids=new Set(c.students.map(s=>s.id));
   const lockedByGroup=new Map(ordered.map(g=>[g.id,Array(g.size).fill(null)]));
   const lockedIds=new Set();
   for(const [id,place] of Object.entries(locks)){
     const slots=lockedByGroup.get(place.groupId);
-    if(!validIds.has(id)||!slots||!Number.isInteger(place.seatIndex)||place.seatIndex<0||place.seatIndex>=slots.length)continue;
-    if((currentAssignments[place.groupId]||[])[place.seatIndex]!==id)continue;
-    if(slots[place.seatIndex])continue;
+    if(!ids.has(id)||!slots||!Number.isInteger(place.seatIndex)||place.seatIndex<0||place.seatIndex>=slots.length)continue;
+    if((assignments[place.groupId]||[])[place.seatIndex]!==id||slots[place.seatIndex])continue;
     slots[place.seatIndex]=id;lockedIds.add(id);
   }
-  // Build indivisible together-rule components, placing anchored members in their fixed groups.
-  const blocks=togetherComponents(c,c.togetherGroups||[],c.students);
-  const fixedGroup=new Map();
+  const plans=planSeatingOccupancies(ordered,c.students.length,lockedByGroup);
+  if(!plans.length){toast('No way to seat everyone in groups of 2 or more with this layout and its locks. Add or resize desks.');return;}
+  const blocks=togetherComponents(c,c.togetherGroups||[],c.students),fixedGroup=new Map();
   for(const g of ordered)for(const id of lockedByGroup.get(g.id))if(id)fixedGroup.set(id,g.id);
   const anchored=[],floating=[];
-  let conflict=false;
   for(const block of blocks){
-    const destinations=new Set(block.map(st=>fixedGroup.get(st.id)).filter(Boolean));
-    if(destinations.size>1){conflict=true;break;}
-    if(destinations.size)anchored.push({groupId:[...destinations][0],students:block.filter(st=>!lockedIds.has(st.id))});
+    const dests=new Set(block.map(st=>fixedGroup.get(st.id)).filter(Boolean));
+    if(dests.size>1){toast('Seat locks conflict with Keep Together. Unlock a student.');return;}
+    if(dests.size)anchored.push({groupId:[...dests][0],students:block.filter(st=>!lockedIds.has(st.id))});
     else floating.push(block);
   }
-  if(conflict){toast('Locked seats conflict with Keep Together rules. Unlock or move a student.');return;}
-  const attempts=Math.min(6000,Math.max(1200,c.students.length*140));
-  for(let trial=0;trial<attempts;trial++) {
-    const candidate=layout.map(g=>({...g,students:lockedByGroup.get(g.id).slice()}));
-    const byId=new Map(candidate.map(g=>[g.id,g]));
-    let valid=true;
-    for(const item of anchored){
-      const slots=byId.get(item.groupId).students;
-      const vacancies=slots.map((id,i)=>id?null:i).filter(i=>i!==null);
-      if(vacancies.length<item.students.length){valid=false;break;}
-      item.students.forEach((st,i)=>{slots[vacancies[i]]=st.id;});
-    }
-    if(!valid)continue;
-    const orderedBlocks=floating.slice().sort((a,b)=>b.length-a.length||(Math.random()-.5));
-    // Backtrack through the available desk groups while enforcing Keep Apart rules.
-    function placeBlock(i){
-      if(i===orderedBlocks.length)return true;
-      // Earlier priorities are always tried first; backtracking only uses later desks
-      // when the earlier placement cannot satisfy capacity or grouping restrictions.
-      const block=orderedBlocks[i],choices=ordered;
-      for(const g of choices){
-        const slots=byId.get(g.id).students;
-        const free=slots.map((id,k)=>id?null:k).filter(k=>k!==null);
-        if(free.length<block.length)continue;
-        block.forEach((st,k)=>{slots[free[k]]=st.id;});
-        const people=slots.filter(Boolean).map(id=>c.students.find(st=>st.id===id));
-        if(!separationViolations([people],c)&&placeBlock(i+1))return true;
-        block.forEach((st,k)=>{slots[free[k]]=null;});
+  let best=null,bestScore=-Infinity;
+  // Explore several valid occupancy layouts. An unfilled group is preferable to a singleton.
+  for(const plan of plans.slice(0,8)){
+    for(let trial=0;trial<Math.min(35,Math.max(12,c.students.length));trial++){
+      const candidate=layout.map(g=>({...g,students:lockedByGroup.get(g.id).slice()}));
+      const byId=new Map(candidate.map(g=>[g.id,g]));
+      const targetById=new Map(ordered.map((g,i)=>[g.id,plan.targets[i]]));
+      let valid=true;
+      for(const item of anchored){
+        const slots=byId.get(item.groupId).students;
+        const free=slots.map((id,i)=>id?null:i).filter(i=>i!==null);
+        if(slots.filter(Boolean).length+item.students.length>targetById.get(item.groupId)||free.length<item.students.length){valid=false;break;}
+        item.students.forEach((s,i)=>{slots[free[i]]=s.id;});
       }
-      return false;
+      if(!valid)continue;
+      if(candidate.some(g=>separationViolations([g.students.filter(Boolean).map(id=>c.students.find(s=>s.id===id))],c)))continue;
+      const orderedBlocks=floating.slice().sort((a,b)=>b.length-a.length||(Math.random()-.5));
+      let nodes=0;
+      function place(i){
+        if(++nodes>16000)return false;
+        if(i===orderedBlocks.length)return ordered.every(g=>byId.get(g.id).students.filter(Boolean).length===targetById.get(g.id));
+        const block=orderedBlocks[i];
+        const choices=ordered.slice().filter(g=>{
+          const occupied=byId.get(g.id).students.filter(Boolean).length;
+          return occupied+block.length<=targetById.get(g.id);
+        });
+        for(let j=choices.length-1;j>0;j--){const k=Math.floor(Math.random()*(j+1));[choices[k],choices[j]]=[choices[j],choices[k]];}
+        for(const g of choices){
+          const slots=byId.get(g.id).students;
+          const free=slots.map((id,k)=>id?null:k).filter(k=>k!==null).slice(0,block.length);
+          if(free.length<block.length)continue;
+          block.forEach((st,k)=>{slots[free[k]]=st.id;});
+          const people=slots.filter(Boolean).map(id=>c.students.find(s=>s.id===id));
+          if(!separationViolations([people],c)&&place(i+1))return true;
+          free.forEach(k=>{slots[k]=null;});
+        }
+        return false;
+      }
+      if(!place(0))continue;
+      const populated=candidate.map(g=>g.students.filter(Boolean).map(id=>c.students.find(s=>s.id===id)));
+      if(separationViolations(populated,c)||togetherViolations(populated,c))continue;
+      if(populated.some(g=>g.length===1)){throw Error('Singleton seating invariant violated');}
+      const score=plan.score*10+seatingScore(candidate,c,$('seatingStrategy').value)+Math.random()*0.01;
+      if(score>bestScore){best=candidate;bestScore=score;}
     }
-    if(!placeBlock(0))continue;
-    // Preserve actual seat indexes (including gaps) for locked students.
-    for(const g of candidate)g.students=g.students.map(id=>id||null);
-    const candidateGroups=candidate.map(g=>g.students.map(id=>c.students.find(st=>st.id===id)).filter(Boolean));
-    if(separationViolations(candidateGroups,c)||togetherViolations(candidateGroups,c)) continue;
-    // A vacancy in an earlier-priority group must outweigh every ability/history
-    // preference. Lexicographic occupancy is encoded by comparing the vacancy
-    // vector before the secondary grouping score.
-    const occupancy=ordered.map(g=>byId.get(g.id).students.filter(Boolean).length);
-    const strategy=$('seatingStrategy').value;
-    const score=seatingScore(candidate,c,strategy)+Math.random()*.01;
-    const betterPriority=!bestOccupancy || occupancy.some((n,i)=>n!==bestOccupancy[i] && occupancy.slice(0,i).every((v,j)=>v===bestOccupancy[j]) && n>bestOccupancy[i]);
-    const samePriority=bestOccupancy && occupancy.every((n,i)=>n===bestOccupancy[i]);
-    if(betterPriority || (samePriority && score>bestScore)){bestScore=score;best=candidate;bestOccupancy=occupancy;}
   }
-  if(!best){toast('No valid seating arrangement satisfies all grouping rules. Existing seats unchanged.');return;}
+  if(!best){toast('Cannot meet all grouping rules without a one-person group. Adjust the layout, locks or separation rules.');return;}
   rememberSeatingEdit();
-  const assignments = seatingAssignments(c);
-  best.forEach(g => { assignments[g.id] = g.students; });
-  recordGroupHistory(c,best.map(g=>g.students.map(id=>c.students.find(st=>st.id===id)).filter(Boolean)));
-  save(); renderSeating();
-  const violations=best.some(g=>{
-    const ids=new Set(g.students);
-    return c.avoidPairs.some(p=>p.every(id=>ids.has(id))) ||
-      c.avoidGroups.some(rule=>rule.filter(id=>ids.has(id)).length>1);
-  });
-  toast('Students seated successfully using '+$('seatingStrategy').selectedOptions[0].textContent+'.');
+  const dest=seatingAssignments(c);
+  best.forEach(g=>{dest[g.id]=g.students.map(id=>id||null);});
+  recordGroupHistory(c,best.map(g=>g.students.filter(Boolean).map(id=>c.students.find(st=>st.id===id))));
+  save();renderSeating();
+  const pairs=best.filter(g=>g.students.filter(Boolean).length===2).length;
+  const triples=best.filter(g=>g.students.filter(Boolean).length===3).length;
+  toast(`Students seated: ${triples} groups of 3, ${pairs} pairs; no singletons.`);
 });
 
 const guideSteps = [
@@ -3553,11 +3309,13 @@ $('privacyBtn').addEventListener('click',()=>{$('privacyPanel').classList.toggle
 $('clearAllDataBtn').addEventListener('click',()=>{
  if(!confirm('Delete ALL locally saved classes, rankings, rules, history, and seating charts? Export a backup first if needed. This cannot be undone.'))return;
  if(!confirm('Final confirmation: permanently erase all data saved by this app in this browser?'))return;
- window.BGRSync?.pauseForLocalErase();
- localStorage.removeItem('bgr.cloud.boundAccount');
  localStorage.removeItem(KEY);localStorage.removeItem(BACKUP_META_KEY);db={classes:[],activeId:null,sharedRoles:null};groups=[];absentIds=new Set();makeClass('My Class');toast('All previous local app data deleted.');
 });
 try {
+  if(localStorage.getItem('bgr.cloud.boundAccount')){
+    const block=document.createElement('div');block.style.cssText='position:fixed;inset:0;z-index:2147483647;background:#f5f7fb;display:grid;place-items:center;padding:24px';block.innerHTML='<main style="max-width:660px;padding:30px;font:16px/1.6 system-ui;background:white;border-radius:16px"><h1>Manual migration required</h1><p>This browser contains data previously linked to a Google cloud account. To avoid exposing another teacher’s cached roster, this manual-only edition will not open that cache automatically.</p><p>Use your prior verified version to export a backup, then import it in a clean browser profile. Do not erase this browser until the backup has been verified. Existing Firebase cloud data is not automatically deleted.</p></main>';document.body.append(block);
+    return;
+  }
   const raw = localStorage.getItem(KEY);
   if (raw) {
     const parsed = JSON.parse(raw);
@@ -3571,6 +3329,8 @@ try {
         if (!Array.isArray(c.roles)) c.roles = defaultRoles.slice();
         if(!strategyDescriptions[c.groupingStrategy])c.groupingStrategy='balanced';
         if(!Array.isArray(c.groupHistory))c.groupHistory=[];
+        if(!c.groupLocks||typeof c.groupLocks!=='object'||Array.isArray(c.groupLocks))c.groupLocks={};
+        if(!Array.isArray(c.savedGroups))c.savedGroups=[];
         c.roles = c.roles.slice(0,3);
         while (c.roles.length < 3) c.roles.push(defaultRoles[c.roles.length]);
         c.students.forEach(s => {
@@ -3585,147 +3345,21 @@ try {
   console.warn('Saved data could not be loaded.',e);
 }
 if (!db.classes.length) makeClass('My Class');
-else render();
+else {restoreGroupSnapshot();render();}
 // Groups is the everyday home screen; initial setup remains obvious for empty rosters.
 showPage(db.classes.some(c => c.students.length > 0) ? 'groups' : (window.__bgrHadPriorData === false ? 'home' : 'teacher'));
 updateBackupStatus();
-// Bridge for optional cloud module: validated import; local backup precedes any replacement.
-window.BGRSyncBridge = {
-  read: () => JSON.parse(JSON.stringify(db)),
-  // Preflight a merged snapshot without replacing the teacher's current classes.
-  validate: (snapshot) => validateBackup(JSON.parse(JSON.stringify(snapshot))),
-  backup: (label = 'bgr-local-before-cloud-restore') => downloadBackup(db,label),
-  apply: (snapshot) => {
-    const next = validateBackup(JSON.parse(JSON.stringify(snapshot)));
-    const deviceSelectedClass = db.activeId;
-    db = next;
-    if (db.classes.some(c => c.id === deviceSelectedClass)) db.activeId = deviceSelectedClass;
-    if (!db.classes.some(c => c.id === db.activeId)) db.activeId = db.classes[0]?.id || null;
-    groups=[]; absentIds=new Set(); absentOrigins=new Map();
-    syncRolesAcrossClasses(); save(); render();
-  }
-};
 
 })();
 </script>
-<!-- Optional Firebase sync module. If Firebase isn't configured, local-only app still works. -->
-<script src="./firebase-config.js"></script>
-<script type="module" src="./cloud-sync.js?v=48-auto-merge1"></script>
+<!-- BGR P05.5 MANUAL ONLY: no Firebase, Google authentication, cloud database or background sync. -->
 <script>
-// Offer the native PWA install prompt when supported, otherwise explain the browser-specific steps.
-(() => {
-  const installButton = document.getElementById('installAppBtn');
-  const dialog = document.getElementById('installAppDialog');
-  const instructions = document.getElementById('installAppInstructions');
-  const closeButton = document.getElementById('closeInstallDialog');
-  const confirmInstalledButton = document.getElementById('confirmInstalledBtn');
-  const installFlagKey = 'bgr-pwa-installed';
-  let installEvent = null;
-  const installed = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-  // iPadOS may identify itself as a Mac in desktop-class Safari.
-  const isIPad = /iPad/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  const isIOS = isIPad || /iPhone|iPod/.test(navigator.userAgent);
-  const isIPhone = isIOS && !isIPad;
-  const isChromeIOS = /CriOS/i.test(navigator.userAgent);
-  const isSafari = /^((?!chrome|chromium|crios|edg|opr|fxios).)*safari/i.test(navigator.userAgent);
-  function showButton() { installButton.hidden = installed() || localStorage.getItem(installFlagKey) === 'yes'; installButton.textContent = isIPad ? 'Install on iPad' : isIPhone ? 'Install on iPhone' : 'Install Desktop App'; }
-  function markInstalled() { localStorage.setItem(installFlagKey, 'yes'); installButton.hidden = true; }
-  window.addEventListener('storage', event => { if (event.key === installFlagKey) showButton(); });
-  function showHelp(message) {
-    instructions.textContent = message;
-    if (typeof dialog.showModal === 'function') dialog.showModal();
-    else alert(message);
-  }
-  function showIOSGuide() {
-    // Safari's Add to Home Screen sheet cannot be invoked programmatically.
-    // Use a clear in-app guide rather than a non-functional install prompt.
-    const device = isIPad ? 'iPad' : 'iPhone';
-    const safariMessage = isSafari ? '' : '<p class="ipad-tip"><strong>First:</strong> Open this page in <span class="ipad-browser">Safari</span> for the most reliable installation experience. Copy this page’s address and paste it into Safari.</p>';
-    instructions.innerHTML = '<div class="ipad-guide">' + safariMessage +
-      '<p>To put Balanced Group Randomizer on your ' + device + ' Home Screen:</p>' +
-      '<ol>' +
-      '<li>In Safari, tap <span class="step-icon" aria-label="Share">⇧</span> <strong>Share</strong> (the square with an upward arrow, usually near the address bar).</li>' +
-      '<li>Scroll through the Share menu and tap <strong>Add to Home Screen</strong>. If you don’t see it, scroll to the bottom and check <strong>Edit Actions</strong>.</li>' +
-      '<li>Turn on <strong>Open as Web App</strong> if that option appears, then tap <strong>Add</strong>.</li>' +
-      '</ol>' +
-      '<p class="ipad-tip">The app will appear on your Home Screen with the same icon as the website. Open it once while online to finish caching the offline files.</p>' +
-      '<p class="ipad-note">Apple requires these final taps; websites cannot automatically add apps to the Home Screen.</p>' +
-      '</div>';
-    confirmInstalledButton.textContent = 'Done — I added it';
-    if (typeof dialog.showModal === 'function') dialog.showModal();
-    else alert(instructions.textContent);
-  }
-  window.addEventListener('beforeinstallprompt', event => {
-    event.preventDefault();
-    installEvent = event;
-    showButton();
-  });
-  window.addEventListener('appinstalled', () => { installEvent = null; markInstalled(); });
-  installButton.addEventListener('click', async () => {
-    if (installEvent) {
-      const promptEvent = installEvent;
-      installEvent = null;
-      try {
-        await promptEvent.prompt();
-        const result = await promptEvent.userChoice;
-        if (result?.outcome === 'accepted') { markInstalled(); return; }
-      } catch (error) { console.warn('App installation prompt unavailable:', error); }
-    }
-    if (isIOS) showIOSGuide();
-    else if (isSafari) showHelp('In Safari on Mac, choose File → Add to Dock. The app will appear in your Dock and Applications.');
-    else showHelp('In Chrome or Edge, open the browser menu and choose Install Balanced Group Randomizer or Install page as app. After installing, pin it to your desktop, Dock, or taskbar if desired.');
-  });
-  confirmInstalledButton.addEventListener('click', () => { markInstalled(); dialog.close(); });
-  closeButton.addEventListener('click', () => dialog.close());
-  if (installed()) markInstalled();
-  showButton();
-})();
-
-// Installable app: service workers require HTTPS (GitHub Pages) or localhost.
-if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js', {updateViaCache:'none'}).then(registration => {
-      let refreshing = false;
-      const banner = document.getElementById('updateBanner');
-      const showUpdate = () => {
-        if (registration.waiting && navigator.serviceWorker.controller) banner.hidden = false;
-      };
-      showUpdate();
-      registration.addEventListener('updatefound', () => {
-        const worker = registration.installing;
-        if (!worker) return;
-        worker.addEventListener('statechange', () => {
-          if (worker.state === 'installed') showUpdate();
-        });
-      });
-      document.getElementById('applyUpdateBtn').addEventListener('click', () => {
-        if (registration.waiting) {
-          document.getElementById('applyUpdateBtn').disabled = true;
-          registration.waiting.postMessage({type:'SKIP_WAITING'});
-        }
-      });
-      document.getElementById('dismissUpdateBtn').addEventListener('click', () => { banner.hidden = true; });
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (refreshing) return;
-        // A first-time visitor must finish or dismiss the welcome dialog first.
-        // Reloading while it is open can make the onboarding vanish unexpectedly.
-        if (document.getElementById('welcomeDialog')?.open) {
-          banner.hidden = false;
-          return;
-        }
-        refreshing = true;
-        window.location.reload();
-      });
-      // Check when the teacher returns online or reopens the app.
-      window.addEventListener('online', () => registration.update().catch(() => {}));
-      document.addEventListener('visibilitychange', () => {
-        if (!document.hidden && navigator.onLine) registration.update().catch(() => {});
-      });
-      // A periodic check while the app stays open (once per hour).
-      setInterval(() => { if (navigator.onLine) registration.update().catch(() => {}); }, 60*60*1000);
-    }).catch(err => console.warn('Offline support could not be registered:', err));
-  });
-}
+// Retire any service worker installed by previous cloud/PWA releases. This does
+// not delete local classroom data or remove a previously uploaded Firebase copy.
+if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(list=>{
+  list.filter(reg=>reg.scope.startsWith(new URL('./',location.href).href)).forEach(reg=>reg.unregister());
+}).catch(()=>{});}
+if('caches' in window){caches.keys().then(keys=>keys.filter(k=>k.startsWith('bgr-pwa-')).forEach(k=>caches.delete(k))).catch(()=>{});}
 </script>
 <script>
 (() => {
