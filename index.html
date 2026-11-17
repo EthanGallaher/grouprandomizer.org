@@ -590,7 +590,7 @@ body.bgr-home-active .workspace-class-bar{display:none!important}
 
 </style>
 <style>.welcome-tutorial-top{margin:10px 0 14px}.welcome-tutorial-top button{max-width:100%}</style>
-<meta name="bgr-build" content="P05.5-manual-only">
+<meta name="bgr-build" content="P05.6-manual-only">
 </head>
 <body>
 <header class="top">
@@ -3312,10 +3312,6 @@ $('clearAllDataBtn').addEventListener('click',()=>{
  localStorage.removeItem(KEY);localStorage.removeItem(BACKUP_META_KEY);db={classes:[],activeId:null,sharedRoles:null};groups=[];absentIds=new Set();makeClass('My Class');toast('All previous local app data deleted.');
 });
 try {
-  if(localStorage.getItem('bgr.cloud.boundAccount')){
-    const block=document.createElement('div');block.style.cssText='position:fixed;inset:0;z-index:2147483647;background:#f5f7fb;display:grid;place-items:center;padding:24px';block.innerHTML='<main style="max-width:660px;padding:30px;font:16px/1.6 system-ui;background:white;border-radius:16px"><h1>Manual migration required</h1><p>This browser contains data previously linked to a Google cloud account. To avoid exposing another teacher’s cached roster, this manual-only edition will not open that cache automatically.</p><p>Use your prior verified version to export a backup, then import it in a clean browser profile. Do not erase this browser until the backup has been verified. Existing Firebase cloud data is not automatically deleted.</p></main>';document.body.append(block);
-    return;
-  }
   const raw = localStorage.getItem(KEY);
   if (raw) {
     const parsed = JSON.parse(raw);
@@ -3352,7 +3348,7 @@ updateBackupStatus();
 
 })();
 </script>
-<!-- BGR P05.5 MANUAL ONLY: no Firebase, Google authentication, cloud database or background sync. -->
+<!-- BGR P05.6 MANUAL ONLY: no Firebase, Google authentication, cloud database or background sync. -->
 <script>
 // Retire any service worker installed by previous cloud/PWA releases. This does
 // not delete local classroom data or remove a previously uploaded Firebase copy.

@@ -1,7 +1,7 @@
-# BGR Website P05.5 — manual-only verification update
+# BGR P05.6 — Manual-only website, no migration blocker
 
-The Google/Firebase synchronization settings are absent from the shipped website HTML. No cloud-sync or Firebase SDK is loaded. Classroom data stays in browser storage, and JSON export/import is the manual transfer method.
+Removed the automatic **Manual migration required** overlay. Existing local classroom data is loaded using the ordinary local-storage path. Google sign-in and cloud synchronization are not present. No browser reset or backup import is required to continue using existing locally saved data.
 
-**Deployment:** Back up existing classroom data before replacing the website. Upload the contents of this ZIP to the GitHub Pages publishing directory, replacing the old `index.html`. Commit and wait for Pages deployment. Open the site in a private window or hard-refresh (Mac: Cmd+Shift+R). Inspect page source for `<meta name="bgr-build" content="P05.5-manual-only">`. If Google sync settings still appear, the live site is serving an older page, a different publishing branch/folder, or a cached installed app/service worker.
+**Important:** If the browser previously belonged to a different teacher or shared account, check the loaded class data before using it. The local data is not automatically encrypted. Removing cloud code does not delete historical Firebase records. Make a JSON backup before replacing website files.
 
-**Important:** Removing synchronization does not erase any existing Firebase data. Browser local storage and JSON backups are not automatically encrypted. A legacy cloud-account marker triggers a safety migration notice rather than silently opening old data. Do not clear the old browser profile until a verified backup has been made.
+Deploy the contents of this ZIP to your GitHub Pages publishing folder and hard-refresh the site. The source contains the build marker `P05.6-manual-only`.
