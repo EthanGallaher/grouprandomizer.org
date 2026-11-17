@@ -1,0 +1,3466 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Balanced Group Randomizer</title>
+
+<meta name="theme-color" content="#172b4d">
+
+
+
+
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+:root {
+  --navy:#172b4d; --blue:#2459a9; --red:#c63b46;
+  --ink:#182230; --muted:#667085; --line:#dfe5ed;
+  --paper:#f5f7fb; --high:#e5f5e9; --mid:#fff2d8; --low:#e8efff;
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--paper); color:var(--ink); font:15px/1.45 system-ui,sans-serif; }
+button,input,select,textarea { font:inherit; }
+button { cursor:pointer; border:0; border-radius:10px; padding:10px 14px; font-weight:700; }
+button:disabled { opacity:.45; cursor:not-allowed; }
+.primary { background:var(--blue); color:white; }
+.secondary { background:white; border:1px solid var(--line); color:var(--ink); }
+.wrap { max-width:1180px; margin:auto; padding:22px; }
+.top { background:var(--navy); color:white; padding:24px 0; }
+.top-inner { max-width:1180px; margin:auto; padding:0 22px; display:flex; justify-content:space-between; align-items:center; gap:18px; }
+.top h1 { font-size:clamp(21px,3vw,29px); margin:0; }
+.save-state { font-size:12px; color:#d8e2f2; }
+.page-nav { display:flex; gap:8px; max-width:1180px; margin:auto; padding:14px 22px 0; }
+.page-nav button.active { background:var(--navy); color:white; }
+.page { display:none; }
+.page.active { display:block; }
+.teacher-layout { display:grid; grid-template-columns:minmax(290px,360px) minmax(0,1fr); gap:20px; align-items:start; }
+.panel { background:white; border:1px solid var(--line); border-radius:16px; padding:18px; box-shadow:0 3px 12px #18223008; }
+.panel h2 { font-size:18px; margin:0 0 14px; }
+.field { display:grid; gap:6px; margin-bottom:13px; }
+.field label,.label { font-size:12px; font-weight:800; letter-spacing:.035em; text-transform:uppercase; color:var(--muted); }
+input,select,textarea { width:100%; border:1px solid #cfd7e3; border-radius:9px; padding:10px 11px; background:white; color:var(--ink); }
+textarea { resize:vertical; min-height:90px; }
+.row,.btnrow { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.row .grow { flex:1; min-width:0; }
+.divider { height:1px; background:var(--line); margin:17px 0; }
+.help,.notice { font-size:12px; color:var(--muted); margin:8px 0 0; }
+.stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:14px 0; }
+.stat { background:#f6f8fc; border-radius:10px; padding:10px; }
+.stat strong { display:block; font-size:22px; }
+.stat span { font-size:11px; color:var(--muted); }
+.roster-head { display:flex; justify-content:space-between; align-items:center; margin:17px 0 8px; }
+.student-list,.role-list,.avoid-list { display:grid; gap:7px; }
+.student-list { max-height:430px; overflow:auto; }
+.student { display:grid; grid-template-columns:minmax(0,1fr) 104px 30px; gap:6px; align-items:center; }
+.student-name { font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.student-name-wrap { display:flex; align-items:center; gap:4px; min-width:0; }
+.student-name-wrap .student-name { min-width:0; }
+.edit-student-name { flex:none; width:25px; height:27px; padding:3px; border:0; border-radius:6px; background:transparent; color:var(--muted); display:grid; place-items:center; }
+.edit-student-name:hover,.edit-student-name:focus-visible { background:#e8efff; color:var(--blue); }
+.student-name-input { min-width:0; width:100%; padding:5px 6px; font-size:13px; }
+.student select { padding:7px 6px; font-size:12px; }
+.remove { width:30px; height:32px; padding:0; background:#f5f6f8; color:#667085; font-size:18px; }
+.role-item { display:flex; gap:8px; align-items:center; }
+.role-item input { flex:1; }
+.avoid-student-options { display:grid; gap:7px; max-height:240px; overflow:auto; border:1px solid var(--line); border-radius:9px; padding:10px; margin:10px 0; }
+.avoid-student-option { display:flex; gap:8px; align-items:center; font-size:13px; }
+.avoid-student-option input { width:auto; }
+.avoid-item { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:9px 10px; border:1px solid var(--line); border-radius:9px; font-size:13px; }
+.avoid-item span { overflow-wrap:anywhere; }
+.hidden { display:none!important; }
+.groups-page-head { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
+.subline { font-size:13px; color:var(--muted); margin-top:5px; }
+.groups { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin-top:18px; }
+.group-card { background:white; border:1px solid var(--line); border-radius:14px; overflow:hidden; min-width:0; }
+.group-title { display:flex; justify-content:space-between; padding:12px 14px; background:#f0f4fa; border-bottom:1px solid var(--line); font-weight:800; }
+.group-title small { font-weight:600; color:var(--muted); }
+.members { padding:10px; display:grid; gap:8px; }
+.member { display:flex; gap:10px; align-items:center; padding:10px; border:1px solid var(--line); border-radius:10px; min-width:0; }
+.avatar { min-width:34px; max-width:116px; min-height:34px; padding:5px 8px; border-radius:10px; display:grid; place-items:center; text-align:center; font-weight:800; font-size:10px; line-height:1.15; overflow-wrap:anywhere; background:#e8edf5; color:#243b5a; }
+.member-name { font-weight:700; overflow-wrap:anywhere; }
+.member { cursor:pointer; }
+.member:hover { border-color:var(--red); background:#fff8f8; }
+/* Fullscreen is a clean, read-only student presentation. */
+#groupsPage:is(:fullscreen,.ipad-fullscreen) #rebalancePresentBtn,
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .btnrow:has(#rebalancePresentBtn),
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .groups-page-head,
+#groupsPage:is(:fullscreen,.ipad-fullscreen) #groupStrategy,
+#groupsPage:is(:fullscreen,.ipad-fullscreen) #strategyHelp,
+#groupsPage:is(:fullscreen,.ipad-fullscreen) #balanceNote,
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .field { display:none!important; }
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .group-card { break-inside:avoid; }
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .member { cursor:default; pointer-events:none; }
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .member:hover { border-color:var(--line); background:white; }
+/* One-screen student presentation: layout and type are sized by fitGroupFullscreen(). */
+#groupsPage:is(:fullscreen,.ipad-fullscreen) { display:block!important; width:100vw; height:100vh; overflow:hidden; background:white; padding:0; }
+#groupsPage:is(:fullscreen,.ipad-fullscreen) > main.panel { width:100%; height:100%; min-height:0; margin:0; border:0; border-radius:0; box-shadow:none; padding:var(--fg-outer,12px); overflow:hidden; }
+#groupsPage:is(:fullscreen,.ipad-fullscreen) #groupsArea { height:100%; min-height:0; overflow:hidden; }
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .groups {
+  display:grid; width:100%; height:100%; min-height:0; margin:0;
+  grid-template-columns:repeat(var(--fg-cols,4),minmax(0,1fr));
+  grid-template-rows:repeat(var(--fg-rows,3),minmax(0,1fr));
+  gap:var(--fg-gap,8px);
+}
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .group-card { display:flex; flex-direction:column; min-width:0; min-height:0; border-width:1px; overflow:hidden; }
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .group-title { flex:none; font-size:var(--fg-title,18px); padding:var(--fg-title-pad,7px) var(--fg-pad,9px); gap:5px; white-space:nowrap; }
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .group-title small { font-size:var(--fg-small,12px); }
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .members { flex:1; min-height:0; display:grid; grid-template-rows:repeat(var(--fg-members,3),minmax(0,1fr)); padding:var(--fg-pad,9px); gap:var(--fg-member-gap,5px); }
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .member { min-height:0; min-width:0; padding:var(--fg-member-pad,5px); gap:var(--fg-member-gap,5px); border-radius:7px; }
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .member-name { font-size:var(--fg-name,18px); line-height:1.1; white-space:nowrap; overflow:visible; overflow-wrap:normal; }
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .avatar { flex:none; min-width:0; max-width:none; min-height:0; height:var(--fg-role-height,48px); width:var(--fg-role-width,90px); padding:4px 6px; font-size:var(--fg-role,16px); line-height:1.15; overflow-wrap:break-word; word-break:normal; }
+/* Absent students remain accessible without disturbing the four-column group grid. */
+.groups-shell {display:grid;grid-template-columns:minmax(0,1fr) 185px;gap:12px;align-items:start;}
+.groups-shell > .groups {min-width:0;}
+.absent-sidebar {border:1px solid #f2c4c8;background:#fff7f8;border-radius:12px;padding:12px;min-width:0;}
+.absent-sidebar h3 {margin:0;font-size:15px;color:#a52d39;}
+.absent-student {display:block;width:100%;margin-top:7px;text-align:left;padding:9px;overflow-wrap:anywhere;font-size:13px;}
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .groups-shell {height:100%;min-height:0;grid-template-columns:minmax(0,1fr);gap:0;}
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .groups-shell > .groups {height:100%;min-height:0;}
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .absent-sidebar {display:none!important;}
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .absent-sidebar h3 {font-size:clamp(13px,1.4vw,20px);}
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .absent-student {font-size:clamp(11px,1vw,16px);}
+@media(max-width:700px){.groups-shell{grid-template-columns:1fr;}.absent-sidebar{order:-1;}}
+.random-result { margin-top:18px; padding:24px; border:2px dashed #cfd7e3; border-radius:14px; text-align:center; background:#f8faff; }
+.random-result strong { display:block; font-size:clamp(24px,4vw,36px); color:var(--navy); margin-top:8px; }
+.empty { padding:50px 20px; text-align:center; color:var(--muted); border:2px dashed #d5deea; border-radius:15px; margin-top:18px; }
+.toast { position:fixed; bottom:18px; left:50%; transform:translateX(-50%); background:#182230; color:white; padding:10px 16px; border-radius:10px; z-index:10; max-width:90vw; text-align:center; }
+.footer { font-size:12px; color:var(--muted); text-align:center; padding:24px 0 8px; }
+@media(max-width:800px) { .teacher-layout { grid-template-columns:1fr; } }
+@media print {
+  body { background:white; }
+  .top { background:white; color:black; }
+  .save-state,.sidebar,.actions,.footer,.page-nav,#teacherPage { display:none!important; }
+  .wrap { padding:0; }
+  .page#groupsPage { display:block!important; }
+  .panel { border:0; box-shadow:none; }
+  .groups { grid-template-columns:repeat(3,1fr); gap:8px; }
+  .group-card { break-inside:avoid; }
+}
+
+
+/* Performance tiers are visible only to teachers, never in student presentation. */
+.tier-letter{display:inline-flex;align-items:center;justify-content:center;flex:none;width:23px;height:23px;border-radius:7px;font-size:12px;font-weight:900;line-height:1;border:1px solid transparent;vertical-align:middle}
+.tier-high{background:var(--high);color:#176334;border-color:#9bd3aa}
+.tier-middle{background:var(--mid);color:#845200;border-color:#e6ca79}
+.tier-low{background:var(--low);color:#174d9a;border-color:#a9c2ef}
+.member-tier{margin-left:7px}
+.desk .tier-letter{position:absolute;left:2px;bottom:2px;width:14px;height:14px;font-size:9px;border-radius:4px;pointer-events:none}
+.desk{position:relative}
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .tier-letter,.seating-scroll:is(:fullscreen,.ipad-fullscreen) .tier-letter{display:none!important}
+@media print{.tier-letter{display:none!important}}
+
+/* Seating chart */
+
+/* Only the classroom canvas enters fullscreen; no toolbars or buttons. */
+.seating-scroll:is(:fullscreen,.ipad-fullscreen) {
+  width:100vw; height:100vh; max-width:none;
+  padding:0; margin:0; overflow:hidden;
+  display:flex; align-items:center; justify-content:center;
+  background:#101c32;
+}
+.seating-scroll:is(:fullscreen,.ipad-fullscreen) .seating-room {
+  flex:none; border-radius:0; margin:0;
+  zoom:var(--seating-fullscreen-zoom,1);
+}
+.seating-scroll:is(:fullscreen,.ipad-fullscreen) .desk-delete,
+.seating-scroll:is(:fullscreen,.ipad-fullscreen) .desk-priority { display:none!important; }
+.seating-scroll:is(:fullscreen,.ipad-fullscreen) .desk-group { cursor:default; }
+@media(max-width:1150px) { .seating-scroll { overflow:auto; } }
+
+.seating-controls { display:flex; align-items:end; gap:10px; flex-wrap:wrap; margin:14px 0; }
+.seating-controls .field { margin:0; min-width:125px; }
+.seating-controls button { min-height:42px; }
+.seating-room { position:relative; width:1100px; height:660px; background:#f8fafc;
+  border:2px solid #b9c7db; border-radius:14px; overflow:hidden;
+  background-image:linear-gradient(#dce5f055 1px,transparent 1px),linear-gradient(90deg,#dce5f055 1px,transparent 1px);
+  background-size:25px 25px; touch-action:none; }
+.seating-scroll { max-width:100%; overflow:auto; }
+.front-of-class { position:absolute; top:0; left:0; right:0; height:48px;
+  background:#172b4d; color:#fff; display:flex; align-items:center; justify-content:center;
+  font-weight:800; font-size:18px; letter-spacing:.12em; border-radius:10px 10px 0 0;
+  z-index:1; pointer-events:none; }
+.desk-group { position:absolute; display:grid; gap:4px; padding:6px;
+  background:#e4eaf4; border:2px solid #8fa5c4; border-radius:12px;
+  cursor:grab; user-select:none; touch-action:none; }
+
+[hidden]{display:none!important}\n/* Compact staggered group of three. Positions move, not the desk labels. */
+.desk-group.compact-stagger {display:block;width:160px;height:106px;box-sizing:border-box}
+.desk-group.compact-stagger .desk {position:absolute;margin:0;transform:none}
+.desk-group.compact-stagger.stagger-down .desk[data-seat-index="0"] {left:6px;top:6px}
+.desk-group.compact-stagger.stagger-down .desk[data-seat-index="1"] {left:80px;top:6px}
+.desk-group.compact-stagger.stagger-down .desk[data-seat-index="2"] {left:43px;top:53px}
+.desk-group.compact-stagger.stagger-up .desk[data-seat-index="0"] {left:43px;top:6px}
+.desk-group.compact-stagger.stagger-up .desk[data-seat-index="1"] {left:6px;top:53px}
+.desk-group.compact-stagger.stagger-up .desk[data-seat-index="2"] {left:80px;top:53px}
+.desk-group.compact-stagger.stagger-right .desk[data-seat-index="0"] {left:6px;top:6px}
+.desk-group.compact-stagger.stagger-right .desk[data-seat-index="1"] {left:6px;top:53px}
+.desk-group.compact-stagger.stagger-right .desk[data-seat-index="2"] {left:80px;top:29.5px}
+.desk-group.compact-stagger.stagger-left .desk[data-seat-index="0"] {left:80px;top:6px}
+.desk-group.compact-stagger.stagger-left .desk[data-seat-index="1"] {left:80px;top:53px}
+.desk-group.compact-stagger.stagger-left .desk[data-seat-index="2"] {left:6px;top:29.5px}
+
+.desk-group.dragging { cursor:grabbing; z-index:20; box-shadow:0 10px 25px #18223035; }
+.desk { width:70px; height:43px; min-height:43px; padding:4px; border:1px solid #9daec4;
+  border-radius:8px; background:white; display:flex; align-items:center; justify-content:center;
+  text-align:center; white-space:nowrap; overflow:hidden; font-size:10px; line-height:1.1; font-weight:700; }
+
+.desk-group.multi-selected { outline:3px solid #2459a9; outline-offset:2px; background:#dceafe; }
+.seating-marquee { position:absolute; z-index:50; pointer-events:none; border:2px dashed #2459a9; background:#2459a928; border-radius:3px; }
+/* Click two seats to swap students, including an occupied and empty seat. */
+body:not(.ipad-presentation) .seating-room:not(:fullscreen) .desk { cursor:pointer; }
+ .desk.seat-locked { border:2px solid #bf3549; background:#fff3f4; position:relative; }
+.desk .seat-lock-icon { position:absolute; top:1px; right:2px; font-size:11px; line-height:1; }
+.seat-action-menu { position:fixed; z-index:9999; display:flex; gap:8px; align-items:center; background:white; border:1px solid #9daec4; border-radius:12px; padding:8px; box-shadow:0 8px 28px #18223040; }
+.seat-action-menu button { padding:9px 13px; min-height:38px; }
+.desk.swap-selected { outline:3px solid #2459a9; outline-offset:-2px; background:#dbeafe; box-shadow:0 0 0 3px #2459a966; }
+
+.desk.empty-seat { color:#98a2b3; font-weight:400; }
+.desk-group .desk-delete { position:absolute; right:-7px; top:-9px; width:20px; height:20px;
+  box-sizing:border-box; border:0; border-radius:50%; padding:0; margin:0;
+  display:flex; align-items:center; justify-content:center;
+  line-height:1; font-family:Arial,sans-serif; font-size:18px; font-weight:600;
+  letter-spacing:0; text-align:center; background:#c63b46; color:white; z-index:2; }
+
+
+
+.desk-priority { position:absolute; left:5px; top:-25px; display:flex; align-items:center; gap:5px;
+  padding:3px 7px; background:#172b4d; color:white; border-radius:7px 7px 0 0;
+  font-size:10px; font-weight:700; cursor:default; }
+.desk-priority select { width:auto; min-width:38px; padding:1px 3px; border-radius:4px;
+  font-size:12px; color:#182230; }
+.desk-group { margin-top:0; }
+body.print-seating .desk-priority { background:#172b4d; color:white; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+body.print-seating .desk-priority select { appearance:none; border:0; padding:0 2px; }
+.seating-note { font-size:13px; color:#667085; margin:10px 0; }
+@media print {
+  #seatingPage { display:block!important; }
+  #seatingPage .seating-controls,#seatingPage .seating-note { display:none!important; }
+  .seating-scroll { overflow:visible; }
+  .seating-room { transform:scale(.72); transform-origin:top left; }
+}
+@media print {
+  @page { size:landscape; margin:10mm; }
+  body.print-seating .top, body.print-seating .page-nav,
+  body.print-seating .footer, body.print-seating #toast,
+  body.print-seating #teacherPage, body.print-seating #groupsPage,
+  body.print-seating #randomStudentPage { display:none!important; }
+  body.print-seating .wrap { max-width:none; padding:0; }
+  body.print-seating #seatingPage { display:block!important; }
+  body.print-seating #seatingPage > main.panel { border:0; padding:0; box-shadow:none; }
+  body.print-seating #seatingPage .groups-page-head,
+  body.print-seating #seatingPage .seating-controls,
+  body.print-seating #seatingPage .seating-note { display:none!important; }
+  body.print-seating .seating-scroll { overflow:visible!important; width:792px; height:476px; }
+  body.print-seating .seating-room { transform:scale(.72); transform-origin:top left;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  body.print-seating .desk-delete, body.print-seating .desk-priority { display:none!important; }
+}
+
+/* Blue, red and white dashboard theme */
+:root { --navy:#10346b; --blue:#1856ad; --red:#c92e42; --paper:#f2f5fb; --line:#d9e2ef; }
+.top { background:linear-gradient(110deg,#102c5a 0%,#164b98 72%,#ba2d43 100%); border-bottom:4px solid var(--red); }
+.page-nav button.active { background:var(--blue); box-shadow:inset 0 -3px 0 var(--red); }
+.primary { background:var(--blue); }
+.primary:hover { background:#103d82; }
+.secondary:hover { border-color:#91acd3; background:#f1f6ff; }
+#teacherPage.active { width:100%; }
+.wrap:has(#teacherPage.active) { max-width:1580px; }
+.teacher-dashboard { display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:18px; align-items:start; }
+.teacher-dashboard > * { min-width:0; }
+.teacher-heading { grid-column:1/-1; display:flex; justify-content:space-between; align-items:center; gap:16px; padding:4px 2px 0; }
+.teacher-heading h2 { font-size:clamp(24px,2.6vw,32px); margin:3px 0; color:var(--navy); }
+.teacher-heading p { margin:0; color:var(--muted); }
+.teacher-intro { display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+
+.eyebrow { font-size:11px; font-weight:850; letter-spacing:.13em; color:var(--red); }
+.school-pill { font-size:11px; font-weight:850; letter-spacing:.08em; color:var(--navy); background:#e6eefb; border:1px solid #bcd0ed; padding:10px 14px; border-radius:30px; white-space:nowrap; }
+.teacher-card { border-top:4px solid var(--blue); box-shadow:0 5px 18px #102c5a0a; }
+.teacher-card h2 { color:var(--navy); font-size:17px; }
+.class-card { grid-column:span 5; }
+.actions-card { grid-column:span 7; border-top-color:var(--red); background:linear-gradient(130deg,#fff,#f7f9ff); }
+.roster-card { grid-column:span 6; grid-row:span 2; }
+.add-card { grid-column:span 6; }
+.pdf-card { grid-column:span 6; }
+.avoid-card { grid-column:span 6; }
+.roles-card { grid-column:span 3; border-top-color:var(--red); }
+.backup-card { grid-column:span 3; border-top-color:var(--red); }
+.teacher-card .student-list { max-height:550px; }
+.teacher-card .stat:nth-child(1) { background:#e9f5ed; }
+.teacher-card .stat:nth-child(2) { background:#fff4dc; }
+.teacher-card .stat:nth-child(3) { background:#eaf0ff; }
+.teacher-card .stat strong { color:var(--navy); }
+.teacher-card .field:last-child { margin-bottom:0; }
+.teacher-card .avoid-student-options { max-height:300px; }
+.teacher-card .role-item { flex-wrap:wrap; }
+@media(max-width:1100px) { .class-card,.actions-card,.roster-card,.add-card,.pdf-card,.avoid-card { grid-column:span 6; } .roles-card,.backup-card { grid-column:span 6; } .roster-card { grid-row:auto; } }
+@media(max-width:700px) { .teacher-dashboard > .teacher-card { grid-column:1/-1; } .teacher-heading { align-items:flex-start; } .school-pill { display:none; } .wrap { padding:14px; } .page-nav { overflow-x:auto; } .page-nav button { white-space:nowrap; } }
+
+/* Align the header and navigation with the workspace at normal desktop zoom. */
+@media (min-width:761px) {
+  .top-inner, .page-nav {
+    max-width:none !important;
+    width:100%;
+    margin-left:0;
+    margin-right:0;
+    padding-left:26px;
+    padding-right:26px;
+  }
+  .wrap:has(#teacherPage.active) {
+    max-width:none !important;
+    width:100%;
+    padding-left:26px;
+    padding-right:26px;
+  }
+}
+
+/* Balanced desktop workspace: independent columns prevent tall rosters from creating gaps. */
+.teacher-dashboard { grid-template-columns: minmax(0,1fr) minmax(0,1.12fr); gap:20px; align-items:start; }
+.teacher-heading { grid-column:1/-1; }
+.teacher-column { min-width:0; display:grid; align-content:start; gap:18px; }
+.teacher-column > .teacher-card { grid-column:auto; grid-row:auto; }
+.teacher-mini-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; align-items:start; }
+.teacher-mini-grid > .teacher-card { grid-column:auto; grid-row:auto; }
+.teacher-column-right .student-list { max-height:650px; }
+@media (min-width:1500px) {
+ .wrap:has(#teacherPage.active), .top-inner, .page-nav { max-width:1740px; }
+ .teacher-dashboard { grid-template-columns:minmax(0,1fr) minmax(0,1.12fr); gap:24px; }
+ .teacher-column { gap:20px; }
+}
+@media (max-width:1050px) {
+ .teacher-dashboard { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .teacher-mini-grid { grid-template-columns:1fr; }
+}
+@media (max-width:760px) {
+ .teacher-dashboard { grid-template-columns:minmax(0,1fr); }
+ .teacher-column { grid-column:1/-1; }
+ .teacher-mini-grid { grid-template-columns:1fr; }
+}
+
+.site-brand { display:flex; align-items:center; gap:13px; min-width:0; }
+.site-brand img { width:48px; height:48px; flex:none; border-radius:11px; }
+@media(max-width:600px) { .site-brand img { width:38px; height:38px; } }
+
+/* Interactive, non-blocking guided tour. The highlighted controls remain usable. */
+.guide-overlay[hidden] { display:none!important; }
+.guide-overlay { position:fixed; inset:0; z-index:1000; pointer-events:none; }
+.guide-dialog { position:fixed; bottom:18px; right:18px; width:min(420px,calc(100vw - 36px)); max-height:min(52vh,440px); overflow:auto; padding:20px; background:white; border:2px solid var(--blue); border-radius:16px; box-shadow:0 12px 40px #102c5a45; pointer-events:auto; }
+.guide-dialog h2 { margin:8px 0; color:var(--navy); font-size:19px; }
+.guide-dialog p { margin:8px 0 18px; font-size:14px; line-height:1.55; }
+.guide-progress { color:var(--blue); font-weight:800; font-size:12px; }
+.guide-target { position:relative; z-index:2; outline:4px solid var(--red)!important; outline-offset:5px; border-radius:9px; box-shadow:0 0 0 9px #c92e421a; }
+@media(max-width:700px) { .guide-dialog { left:12px; right:12px; bottom:12px; width:auto; max-height:43vh; } }
+
+/* Clear, responsive seating chart toolbar. */
+.seating-toolbar { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:16px 0 12px; }
+.seating-tool-section { min-width:0;background:#f7f9fd;border:1px solid var(--line);border-radius:13px;padding:14px; }
+.seating-tool-heading { display:flex;align-items:center;gap:9px;margin-bottom:12px; }
+.seating-tool-heading h3 { font-size:14px;color:var(--navy);margin:0; }
+.tool-number { background:var(--blue);color:white;border-radius:50%;width:23px;height:23px;display:grid;place-items:center;font-size:12px;font-weight:800; }
+.seating-tool-row { display:flex;align-items:flex-end;gap:9px;flex-wrap:wrap; }
+.seating-tool-row .field { min-width:135px;flex:1 1 145px;margin:0; }
+.seating-tool-row .strategy-field { flex:2 1 205px; }
+/* Keep the template picker and New action visually separated. */
+#templateControls { column-gap:16px; row-gap:12px; }
+#templateControls #addSeatingTemplateBtn { margin-left:8px; }
+/* Highlight the entire seating setup area during the guided tour. */
+#seatingSetupControls.guide-target { border-radius:16px; outline-offset:7px; }
+.seating-tool-row button { min-height:42px;white-space:nowrap; }
+.seating-tool-section .danger-outline { color:#ad2638; }
+.seating-present-section { grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;background:#eaf1fd; }
+.seating-present-section .seating-tool-heading { margin:0; }
+@media(max-width:950px){ .seating-toolbar { grid-template-columns:1fr; } }
+@media(max-width:600px){ .seating-tool-row button { flex:1 1 auto; } }
+/* App installation */
+.install-actions { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.install-app-btn { background:#fff; color:#10346b; border:1px solid #dbe5f6; border-radius:8px; padding:6px 10px; font-size:12px; line-height:1.2; font-weight:700; }
+.install-app-btn:hover { background:#e6eefb; }
+.install-app-btn[hidden] { display:none!important; }
+.install-dialog { border:1px solid #d9e2ef; border-radius:16px; max-width:min(480px,calc(100vw - 30px)); width:100%; padding:24px; box-shadow:0 20px 60px #0005; color:#182230; }
+.install-dialog::backdrop { background:#0a1936a8; }
+.install-dialog h2 { margin:0 0 12px; color:#10346b; }
+.install-dialog p { line-height:1.5; }
+.install-dialog .ipad-guide { margin:12px 0; }
+.install-dialog .ipad-guide ol { margin:12px 0 8px; padding-left:24px; }
+.install-dialog .ipad-guide li { margin:12px 0; padding-left:3px; }
+.install-dialog .ipad-guide .step-icon { display:inline-flex; vertical-align:middle; align-items:center; justify-content:center; width:30px; height:30px; border:1px solid #c6d7ef; border-radius:8px; background:#eef4ff; color:#1854a5; font-size:19px; font-weight:800; margin-right:6px; }
+.install-dialog .ipad-guide .ipad-tip { background:#eef4ff; border-radius:10px; padding:10px 12px; font-size:13px; }
+.install-dialog .ipad-guide .ipad-note { font-size:13px; color:#475467; }
+.install-dialog .ipad-guide .ipad-browser { font-weight:700; }
+
+.install-dialog .install-dialog-actions { display:flex; justify-content:flex-end; margin-top:18px; }
+@media(max-width:700px) { .install-app-btn { padding:5px 8px; font-size:11px; } }
+
+.backup-reminder {margin-top:12px;padding:11px 13px;background:#fff3db;border:1px solid #ebc87d;border-radius:10px;font-size:13px;}
+.restore-preview {margin-top:12px;padding:14px;border:1px solid #a8bbd7;background:#f2f6fd;border-radius:10px;}
+.restore-preview .btnrow {margin:10px 0;flex-wrap:wrap;}
+
+.app-update-banner {position:sticky;top:0;z-index:200;background:#e9f2ff;color:#172b4d;padding:10px 18px;display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;border-bottom:2px solid #2459a9;font-size:14px;}
+.app-update-banner[hidden],.install-app-btn[hidden] {display:none!important;}
+.app-update-banner button {padding:6px 11px;font-size:12px;}
+.feedback-dialog {border:1px solid #dfe5ed;border-radius:14px;padding:22px;width:min(94vw,540px);max-height:90vh;}
+.feedback-dialog::backdrop {background:rgba(15,25,42,.55);}
+.feedback-dialog label {display:block;margin:12px 0 5px;font-weight:700;}
+.feedback-dialog textarea,.feedback-dialog select {width:100%;box-sizing:border-box;}
+.feedback-actions {display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;}
+.feedback-actions button {font-size:12px;padding:8px 10px;}
+
+.welcome-dialog {width:min(94vw,640px);max-height:90vh;overflow-y:auto;border:1px solid #dfe5ed;border-radius:18px;padding:24px;color:var(--ink);box-shadow:0 20px 60px #102c5a55;}
+.welcome-dialog::backdrop {background:rgba(12,27,52,.64);}
+.welcome-top,.welcome-footer {display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+.welcome-kicker {font-size:11px;font-weight:800;letter-spacing:.09em;color:var(--blue);}
+.welcome-dialog h2 {margin:10px 0 6px;font-size:25px;color:var(--navy);}
+.welcome-dialog p {font-size:14px;line-height:1.5;}
+.welcome-choices {display:grid;gap:10px;margin:18px 0;}
+.welcome-choice {display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:4px;width:100%;border:1px solid #cdd8e8;background:#f5f8fd;color:var(--ink);border-radius:12px;padding:14px 16px;}
+.welcome-choice:hover,.welcome-choice:focus-visible {border-color:var(--blue);background:#eaf2ff;outline-offset:2px;}
+.welcome-choice strong {color:var(--navy);font-size:15px;}
+.welcome-choice span {font-weight:400;font-size:13px;line-height:1.4;}
+.welcome-privacy {border-left:4px solid var(--blue);background:#edf4ff;padding:12px 14px;border-radius:8px;margin:12px 0 18px;}
+.welcome-privacy strong {font-size:13px;color:var(--navy);}
+.welcome-privacy p {font-size:12px;margin:6px 0 0;}
+@media(max-width:600px) {.welcome-dialog {padding:16px;}.welcome-dialog h2 {font-size:21px;}}
+
+/* iPadOS does not support requestFullscreen() for arbitrary page elements.
+   This fixed-position presentation uses the same layout without the browser API. */
+body.ipad-presentation { overflow:hidden!important; }
+#groupsPage.ipad-fullscreen {
+  position:fixed!important; inset:0!important; z-index:9998!important;
+  width:100vw!important; height:100vh!important; height:100dvh!important;
+  margin:0!important; padding:0!important; background:white!important;
+}
+.seating-scroll.ipad-fullscreen {
+  position:fixed!important; inset:0!important; z-index:9998!important;
+  width:100vw!important; height:100vh!important; height:100dvh!important;
+  margin:0!important; background:white!important;
+}
+.ipad-exit-presentation {
+  display:none; position:fixed; z-index:10000; top:max(8px,env(safe-area-inset-top));
+  right:max(8px,env(safe-area-inset-right)); border:1px solid #a9bad2;
+  background:#fff; color:#172b4d; box-shadow:0 2px 9px #0002;
+  padding:7px 11px; font-size:12px; border-radius:10px;
+}
+body.ipad-presentation .ipad-exit-presentation {display:block;}
+
+/* V56: readable teacher display; fullscreen retains its own scaling rules. */
+#groupsPage:not(:fullscreen):not(.ipad-fullscreen) .member-name{font-size:clamp(15px,1.45vw,21px)!important;line-height:1.15;overflow-wrap:break-word;word-break:normal}
+#groupsPage:not(:fullscreen):not(.ipad-fullscreen) .avatar{font-size:clamp(10px,.95vw,13px)!important;min-width:55px;max-width:96px;overflow-wrap:normal;word-break:normal;hyphens:none;flex-shrink:0}
+#groupsPage:not(:fullscreen):not(.ipad-fullscreen) .member{padding:8px;gap:8px}
+#groupsPage:not(:fullscreen):not(.ipad-fullscreen) .member>div:last-child{flex:1;min-width:0}
+
+
+/* V58: performance letters align to the right in teacher-facing group and seating views. */
+#groupsPage:not(:fullscreen):not(.ipad-fullscreen) .member > div:last-child { flex:1; min-width:0; }
+.member-name-row { display:flex; align-items:center; justify-content:space-between; gap:8px; min-width:0; width:100%; }
+.member-name-row .member-name { flex:1; min-width:0; overflow-wrap:break-word; }
+.member-name-row .member-tier { margin-left:auto; flex:none; }
+.desk .tier-letter { left:auto; right:2px; bottom:2px; }
+/* Preserve the student-only presentation: never reveal rankings in fullscreen. */
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .tier-letter,
+.seating-scroll:is(:fullscreen,.ipad-fullscreen) .tier-letter { display:none!important; }
+
+
+/* V59: one obvious class switcher, with the daily classroom tools first. */
+.workspace-bar{max-width:1740px;margin:0 auto;padding:15px 26px 10px;display:flex;
+  align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.workspace-bar .page-nav{display:flex;flex:1 1 auto;align-items:center;gap:8px;
+  min-width:0;max-width:none!important;width:auto!important;margin:0!important;padding:0!important;
+  overflow-x:auto;scrollbar-width:thin}
+.workspace-bar .page-nav button{flex:none;white-space:nowrap;min-height:43px;padding:10px 16px}
+.workspace-bar .page-nav button.active{background:var(--blue);color:white;
+  box-shadow:inset 0 -3px 0 var(--red)}
+.workspace-class-bar{display:flex;align-items:center;gap:9px;flex:0 1 auto;min-width:0;
+  padding:6px 10px;background:white;border:1px solid var(--line);border-radius:12px}
+.workspace-class-bar label{color:var(--muted);font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+.workspace-class-bar select{width:220px;min-width:130px;max-width:28vw;padding:8px 10px;border-radius:8px;
+  font-size:14px;font-weight:650}
+.workspace-class-meta{color:var(--muted);font-size:12px;white-space:nowrap}
+.legacy-class-picker{display:none!important}
+.selected-class-actions{align-items:center}
+.selected-class-name{flex:1 1 140px;min-width:0;overflow-wrap:anywhere;
+  padding:10px 12px;background:#f4f7fc;border:1px solid var(--line);border-radius:9px;color:var(--navy)}
+@media(max-width:1050px){.workspace-bar{align-items:stretch}.workspace-class-bar{margin-left:auto}}
+@media(max-width:700px){
+ .workspace-bar{padding:12px 14px;gap:10px}
+ .workspace-bar .page-nav{flex:1 1 100%;width:100%!important;overflow-x:auto}
+ .workspace-bar .page-nav button{padding:9px 12px;min-height:40px;font-size:13px}
+ .workspace-class-bar{width:100%;margin:0;flex:1 1 100%;flex-wrap:wrap}
+ .workspace-class-bar select{flex:1;max-width:none;width:auto;min-width:145px}
+ .workspace-class-meta{width:100%;padding-left:2px}
+}
+@media(max-width:640px){
+ .top-inner{display:flex;flex-direction:column;align-items:stretch;gap:11px}
+ .site-brand{width:100%;align-items:center}
+ .site-brand h1{font-size:clamp(19px,5vw,24px);line-height:1.2;overflow-wrap:anywhere}
+ .install-actions{width:100%;justify-content:flex-start;align-items:center;gap:7px}
+ .install-actions .save-state{width:100%;max-width:none;font-size:11px}
+ #bgrCloudSaveState{max-width:none;white-space:normal}
+}
+@media print{.workspace-bar{display:none!important}}
+body.print-seating .workspace-bar{display:none!important}
+
+
+/* Teacher-only group actions. Hidden from classroom fullscreen/print. */
+.member[data-student-id] {cursor:pointer;}
+.member.group-locked {box-shadow:inset 3px 0 #c63b46;}
+.group-locked-mark {font-size:12px;margin-left:5px;color:#ad2638;font-weight:800;}
+.group-action-menu {display:flex;gap:6px;flex-wrap:wrap;max-width:250px;background:white;color:#1d2b3d;padding:12px;border:1px solid #b8c5d8;border-radius:12px;box-shadow:0 8px 30px #15264045;}
+.group-action-menu strong {display:block;flex-basis:100%;overflow-wrap:anywhere;}
+.group-action-menu button {padding:7px 10px;min-width:70px;font-size:12px;}
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .group-locked-mark{display:none!important;}
+@media print {.group-locked-mark{display:none!important}.group-action-menu{display:none!important}}
+
+</style>
+<style>
+.seating-tool-row #triangleVariantField{flex:0 0 100%;width:100%;min-width:0;max-width:100%;align-self:stretch}
+#triangleVariantField .triangle-picker{display:grid!important;grid-template-columns:repeat(2,72px)!important;gap:8px;width:max-content;max-width:100%;margin-top:7px}
+#triangleVariantField .triangle-choice{width:72px;min-width:0;box-sizing:border-box}
+.triangle-choice{display:flex;align-items:center;justify-content:center;background:#f5f8fd;border:2px solid #d6e1f1;border-radius:10px;padding:5px;min-width:0;min-height:54px;cursor:pointer}
+.triangle-choice svg{width:100%;max-width:65px;height:auto;fill:#dce8fa;stroke:#4673b2;stroke-width:2.5}
+.triangle-choice.selected{background:#e8efff;border-color:#2459a9;box-shadow:0 0 0 2px rgba(36,89,169,.15)}
+.triangle-choice:focus-visible{outline:3px solid #c63b46;outline-offset:2px}
+.visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+
+</style>
+<style>
+
+/* V60: public-facing introduction without disrupting the teacher workspace. */
+body.bgr-home-active .workspace-class-bar{display:none!important}
+.wrap:has(#homePage.active){max-width:1560px;padding-top:10px}
+#homePage{color:#18283f}
+.landing-shell{overflow:hidden;border:1px solid #d9e3f2;border-radius:26px;background:#fff;box-shadow:0 16px 50px rgba(14,48,96,.055)}
+.landing-hero{position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:24px;min-height:515px;padding:clamp(28px,4.6vw,68px);align-items:center;background:linear-gradient(130deg,#f8fbff 0%,#eef4ff 55%,#fff6f6 100%)}
+.landing-hero:before{content:'';pointer-events:none;position:absolute;right:-120px;top:-140px;width:490px;height:490px;border:1px solid rgba(38,88,163,.12);border-radius:50%;box-shadow:0 0 0 50px rgba(38,88,163,.035),0 0 0 120px rgba(38,88,163,.025);z-index:-1}
+.landing-hero-copy{max-width:680px}
+.landing-eyebrow{display:inline-flex;align-items:center;gap:9px;color:#2256a5;font-size:11px;font-weight:850;letter-spacing:.13em;text-transform:uppercase;margin-bottom:22px}
+.landing-eyebrow:before{content:'';height:7px;width:7px;border-radius:50%;background:#c92e42;box-shadow:0 0 0 5px #c92e4219}
+.landing-hero h2{font-size:clamp(35px,4.4vw,67px);letter-spacing:-.052em;line-height:1.055;margin:0 0 20px;color:#102b56;font-weight:850}
+.landing-hero h2 em{font-style:normal;color:#b72f46}
+.landing-hero-copy>p{max-width:580px;margin:0;color:#53667f;font-size:clamp(16px,1.45vw,19px);line-height:1.65}
+.landing-cta{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:29px}
+.landing-action{display:inline-flex;align-items:center;justify-content:center;gap:9px;text-decoration:none;border-radius:12px;min-height:47px;padding:12px 20px;font-size:14px;font-weight:800;cursor:pointer}
+.landing-action.primary{background:#1856ad;color:white;border:1px solid #1856ad;box-shadow:0 8px 18px #1856ad24}
+.landing-action.primary:hover{background:#103d82}
+.landing-action.secondary{background:#fff;color:#1c457e;border:1px solid #ced9ea}
+.landing-note{margin-top:16px;font-size:12px;color:#63748a}
+.landing-showcase{position:relative;max-width:495px;width:100%;margin:0 auto;padding:14px}
+.landing-showcase:before{content:'';position:absolute;inset:36px 0 3px 45px;background:#dfeaff;border-radius:28px;transform:rotate(5deg);z-index:-1}
+.landing-demo{background:white;border:1px solid #d9e4f3;border-radius:20px;padding:18px;box-shadow:0 25px 60px rgba(30,64,120,.15);transform:rotate(-1.5deg)}
+.landing-demo-head{display:flex;justify-content:space-between;align-items:start;gap:10px;margin-bottom:12px}
+.landing-demo-overline{font-size:10px;letter-spacing:.1em;color:#6b7f9a;font-weight:800;text-transform:uppercase}
+.landing-demo-head h3{margin:4px 0 0;color:#132d58;font-size:22px;line-height:1.2}
+.landing-demo-chip{background:#e5f4eb;color:#19623d;border:1px solid #bce1c8;border-radius:30px;padding:6px 10px;font-size:11px;font-weight:800;white-space:nowrap}
+.landing-demo-list{display:grid;gap:9px}
+.landing-demo-person{display:grid;grid-template-columns:104px minmax(0,1fr);gap:12px;align-items:center;padding:12px;border-radius:11px;border:1px solid #e4ebf5;background:#fbfcff}
+.landing-demo-role{border-radius:8px;background:#e8eef7;color:#244675;padding:7px 6px;font-size:11px;font-weight:800;text-align:center}
+.landing-demo-name{font-size:16px;font-weight:800;color:#142e50}
+.landing-demo-footer{display:flex;justify-content:space-between;align-items:center;gap:10px;padding-top:16px;color:#62748c;font-size:11px}
+.landing-avatar-stack{display:flex;padding-left:7px}
+.landing-avatar-stack span{display:grid;place-items:center;width:27px;height:27px;border-radius:50%;border:2px solid white;background:#2459a9;color:#fff;font-size:10px;font-weight:900;margin-left:-7px}
+.landing-avatar-stack span:nth-child(2){background:#d2505c}.landing-avatar-stack span:nth-child(3){background:#6c7e9e}
+.landing-promise{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid #e5ebf5;border-bottom:1px solid #e5ebf5;background:white}
+.landing-promise>div{padding:22px 25px;text-align:center;font-size:12px;font-weight:800;color:#425872}
+.landing-promise>div+div{border-left:1px solid #e5ebf5}
+.landing-promise strong{color:#1856ad}
+.landing-section{padding:clamp(30px,4.7vw,68px)}
+.landing-section-head{max-width:750px;margin-bottom:29px}
+.landing-section-head .landing-kicker{display:block;font-size:11px;font-weight:850;color:#c03950;letter-spacing:.13em;text-transform:uppercase;margin-bottom:12px}
+.landing-section-head h3{font-size:clamp(26px,3vw,40px);line-height:1.14;letter-spacing:-.03em;color:#102b56;margin:0 0 13px}
+.landing-section-head p{font-size:15px;color:#62748a;line-height:1.7;margin:0}
+.landing-features{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.landing-feature{background:#f9fbff;border:1px solid #e1e9f4;border-radius:16px;padding:22px;min-width:0}
+.landing-feature-icon{width:40px;height:40px;display:grid;place-items:center;background:#eaf1fe;color:#2359aa;border-radius:12px;font-size:19px;font-weight:900;margin-bottom:16px}
+.landing-feature:nth-child(2) .landing-feature-icon,.landing-feature:nth-child(5) .landing-feature-icon{background:#fdebee;color:#bc3850}
+.landing-feature h4{font-size:17px;color:#14325e;margin:0 0 9px}
+.landing-feature p{font-size:13px;line-height:1.65;color:#5b6e85;margin:0}
+.landing-steps{background:#f0f5fd;border-top:1px solid #e1eaf7;border-bottom:1px solid #e1eaf7}
+.landing-step-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px}
+.landing-step{position:relative;padding-left:5px}
+.landing-step-number{width:37px;height:37px;display:grid;place-items:center;border:1px solid #b8cdec;border-radius:50%;background:white;color:#1a56a6;font-size:13px;font-weight:850;margin-bottom:16px}
+.landing-step h4{font-size:17px;color:#173664;margin:0 0 8px}
+.landing-step p{font-size:13px;line-height:1.65;color:#5a708a;margin:0}
+.landing-bottom{background:linear-gradient(115deg,#102d60,#174b94 70%,#9f2d48);color:white;border-radius:18px;padding:34px;display:flex;align-items:center;justify-content:space-between;gap:28px}
+.landing-bottom h3{font-size:clamp(23px,2.3vw,31px);line-height:1.15;margin:0 0 9px;color:white}
+.landing-bottom p{color:#e0e9f5;font-size:13px;line-height:1.65;margin:0;max-width:650px}
+.landing-bottom .landing-action{background:white;color:#14396c;border-color:white;flex:none}
+.landing-privacy{margin:18px 0 4px;color:#7b889b;font-size:11px;line-height:1.6;text-align:center}
+@media(max-width:1050px){.landing-hero{grid-template-columns:1fr 0.9fr;padding:32px;min-height:440px}.landing-demo-name{font-size:14px}.landing-features{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.landing-shell{border-radius:17px}.landing-hero{grid-template-columns:1fr;min-height:0;padding:30px 23px 35px}.landing-hero h2{font-size:clamp(36px,8vw,49px)}.landing-showcase{max-width:430px;padding:8px 0 0}.landing-demo{transform:none}.landing-promise{grid-template-columns:1fr}.landing-promise>div{padding:12px}.landing-promise>div+div{border-left:0;border-top:1px solid #e5ebf5}.landing-section{padding:30px 22px}.landing-features{grid-template-columns:1fr}.landing-step-grid{grid-template-columns:1fr;gap:24px}.landing-bottom{flex-direction:column;align-items:flex-start;padding:24px}.landing-bottom .landing-action{width:100%}}
+@media print{#homePage{display:none!important}}
+
+</style>
+<style>.welcome-tutorial-top{margin:10px 0 14px}.welcome-tutorial-top button{max-width:100%}</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <div class="site-brand"><img src="app-icon-192.png" alt="" width="48" height="48"><h1>Balanced Group Randomizer</h1></div>
+    <div class="install-actions"><button type="button" class="install-app-btn" id="welcomeHelpBtn">Getting Started</button><button type="button" class="install-app-btn" id="feedbackBtn">Feedback</button><a href="./BGR-Manual-Local-Edition.zip" download class="install-app-btn" title="Download the standalone local-only HTML package">Download local edition</a><div class="save-state" id="saveState">Saved locally · manual backups</div></div>
+  </div>
+</header>
+
+<dialog id="welcomeDialog" class="welcome-dialog" aria-labelledby="welcomeTitle">
+  <div class="welcome-top"><span class="welcome-kicker">WELCOME TO BALANCED GROUP RANDOMIZER</span><button type="button" id="welcomeClose" class="secondary" aria-label="Close welcome">✕</button></div>
+  <h2 id="welcomeTitle">Get your classes ready</h2>
+  <div class="welcome-tutorial-top"><button type="button" class="secondary" id="welcomeTutorial">Take the setup tutorial</button></div>
+  <p>Create balanced groups, choose students randomly, and arrange seating charts. Start with the option that fits your roster.</p>
+  <div class="welcome-choices">
+    <button type="button" id="welcomePdf" class="welcome-choice"><strong>Import a PowerSchool PDF</strong><span>Automatically build classes and assign initial performance tiers from a supported numeric-grade report.</span></button>
+    <button type="button" id="welcomePaste" class="welcome-choice"><strong>Paste a student roster</strong><span>Add student names to the selected class, one per line.</span></button>
+    <button type="button" id="welcomeManual" class="welcome-choice"><strong>Create a class manually</strong><span>Name a new class and add students when you're ready.</span></button>
+  </div>
+  <div class="welcome-privacy"><strong><span aria-hidden="true">🔒</span> Your classroom data is stored locally on this device</strong><p>Rosters, tiers, seating charts, and grouping settings are saved in this browser's local storage. There is no website cloud synchronization. Data may be lost if browser storage is cleared or the device is reset. Export backups to a school-approved secure location; backups contain student information. The feedback email opens your email app only when you choose to send it.</p></div>
+  
+</dialog>
+<dialog id="feedbackDialog" class="feedback-dialog" aria-labelledby="feedbackTitle">
+  <h2 id="feedbackTitle">Report a problem or suggest an improvement</h2>
+  <p>Describe what happened or what you would like changed. Student names and classroom data are not included automatically.</p>
+  <label for="feedbackType">Feedback type</label>
+  <select id="feedbackType"><option value="Problem">Report a problem</option><option value="Suggestion">Suggest an improvement</option></select>
+  <label for="feedbackMessage">Your feedback</label>
+  <textarea id="feedbackMessage" rows="5" placeholder="What happened? What would help?" maxlength="5000"></textarea>
+  <p class="help">Select Send Email to open your email app with the report addressed to egallaher@clevelandschools.org. Review the message and press Send in your email app. No student information is attached automatically.</p>
+  <div class="feedback-actions">
+    <button type="button" class="primary" id="emailFeedbackBtn">Send Email</button>
+    <button type="button" class="secondary" id="copyFeedbackBtn">Copy Feedback</button>
+    <button type="button" class="secondary" id="downloadFeedbackBtn">Save as Text</button>
+    <button type="button" class="secondary" id="closeFeedbackBtn">Close</button>
+  </div>
+  <p id="feedbackStatus" role="status" aria-live="polite"></p>
+</dialog>
+<div class="workspace-bar">
+  <nav class="page-nav" aria-label="Classroom tools">
+    <button type="button" class="secondary" id="homeTab" aria-controls="homePage">Home</button>
+    <button type="button" class="secondary" id="groupsTab" aria-controls="groupsPage">Groups</button>
+    <button type="button" class="secondary" id="seatingTab" aria-controls="seatingPage">Seating Chart</button>
+    <button type="button" class="secondary" id="randomStudentTab" aria-controls="randomStudentPage">Random Student</button>
+    <button type="button" class="secondary active" id="teacherTab" aria-controls="teacherPage">Teacher Setup</button>
+  </nav>
+  <div class="workspace-class-bar">
+    <label for="workspaceClassSelect">Class</label>
+    <select id="workspaceClassSelect" aria-label="Current class for all classroom tools"></select>
+    <span class="workspace-class-meta" id="workspaceClassMeta" aria-live="polite">Select a class</span>
+  </div>
+</div>
+
+<div class="wrap">
+<div class="layout">
+
+<section class="page" id="homePage" aria-labelledby="landingTitle">
+  <div class="landing-shell">
+    <div class="landing-hero">
+      <div class="landing-hero-copy">
+        <span class="landing-eyebrow">Built for real classrooms</span>
+        <h2 id="landingTitle">Less time making groups.<br><em>More time making them work.</em></h2>
+        <p>Random groups are easy. Creating groups that work for your students takes more thought. Balanced Group Randomizer brings thoughtful grouping, classroom rules, seating charts, and student selection into one simple teacher workspace.</p>
+        <div class="landing-cta">
+          <button type="button" class="landing-action primary" id="homeOpenWorkspace">Open teacher workspace <span aria-hidden="true">→</span></button>
+          <a href="#landingWhy" class="landing-action secondary">See what makes BGR different ↓</a>
+        </div>
+        <div class="landing-note">Designed for groups of three. Flexible enough for your classroom.</div>
+      </div>
+      <div class="landing-showcase" aria-label="Illustration of a three-student classroom group">
+        <div class="landing-demo">
+          <div class="landing-demo-head">
+            <div><span class="landing-demo-overline">Sample group · Illustration</span><h3>Group 1</h3></div>
+            <span class="landing-demo-chip">3 students</span>
+          </div>
+          <div class="landing-demo-list">
+            <div class="landing-demo-person"><span class="landing-demo-role">Facilitator</span><span class="landing-demo-name">Avery</span></div>
+            <div class="landing-demo-person"><span class="landing-demo-role">Recorder</span><span class="landing-demo-name">Jordan</span></div>
+            <div class="landing-demo-person"><span class="landing-demo-role">Reporter</span><span class="landing-demo-name">Morgan</span></div>
+          </div>
+          <div class="landing-demo-footer"><span>Student presentation hides performance levels</span><span class="landing-avatar-stack" aria-hidden="true"><span>A</span><span>J</span><span>M</span></span></div>
+        </div>
+      </div>
+    </div>
+    <div class="landing-promise" aria-label="BGR principles">
+      <div><strong>01</strong> &nbsp; Purposeful grouping</div><div><strong>02</strong> &nbsp; Teacher control</div><div><strong>03</strong> &nbsp; Ready for instruction</div>
+    </div>
+    <div class="landing-section" id="landingWhy">
+      <div class="landing-section-head">
+        <span class="landing-kicker">Why BGR exists</span>
+        <h3>It's not just about who sits together.</h3>
+        <p>Teachers need a fast way to mix students thoughtfully without losing control of classroom dynamics. BGR starts with randomization, then adds the everyday tools that make the groups usable.</p>
+      </div>
+      <div class="landing-features">
+        <article class="landing-feature"><div class="landing-feature-icon" aria-hidden="true">≋</div><h4>Balanced by design</h4><p>Prioritize groups of three and mix teacher-assigned High, Middle, and Low performance levels—not just names from a hat.</p></article>
+        <article class="landing-feature"><div class="landing-feature-icon" aria-hidden="true">↔</div><h4>Your classroom rules matter</h4><p>Keep specific students apart or together while building groups. Teachers remain in control of the constraints.</p></article>
+        <article class="landing-feature"><div class="landing-feature-icon" aria-hidden="true">▦</div><h4>Real seating charts</h4><p>Arrange desks into rows, pairs, triangles, or pods. Drag groups around, lock a student in a seat, and populate the room.</p></article>
+        <article class="landing-feature"><div class="landing-feature-icon" aria-hidden="true">⇧</div><h4>Less time entering rosters</h4><p>Paste names or import supported grade-report PDFs to build classes and assign initial performance tiers when numeric percentages are available.</p></article>
+        <article class="landing-feature"><div class="landing-feature-icon" aria-hidden="true">◎</div><h4>Made for active lessons</h4><p>Mark absent students without reshuffling everyone, pick a random student, and switch to a clean student fullscreen display.</p></article>
+        <article class="landing-feature"><div class="landing-feature-icon" aria-hidden="true">✓</div><h4>Manual backups, no cloud sync</h4><p>Keep your classroom workspace on one device, and use manual JSON backup/restore to transfer it when approved. No website account or cloud synchronization.</p></article>
+      </div>
+    </div>
+    <div class="landing-steps landing-section" id="landingSteps">
+      <div class="landing-section-head"><span class="landing-kicker">How it works</span><h3>From roster to ready in three steps.</h3></div>
+      <div class="landing-step-grid">
+        <div class="landing-step"><div class="landing-step-number">01</div><h4>Add your classes</h4><p>Import a supported PDF report, paste a roster, or create a class manually.</p></div>
+        <div class="landing-step"><div class="landing-step-number">02</div><h4>Set your preferences</h4><p>Review ability tiers, choose a grouping strategy, and set any keep-apart or keep-together rules.</p></div>
+        <div class="landing-step"><div class="landing-step-number">03</div><h4>Teach, don't sort</h4><p>Randomize groups, arrange seating, present to students, and adjust when attendance changes.</p></div>
+      </div>
+    </div>
+    <div class="landing-section">
+      <div class="landing-bottom">
+        <div><h3>Ready to spend less time organizing?</h3><p>Open your teacher workspace and put your classroom needs first.</p></div>
+        <button type="button" class="landing-action" id="homeOpenWorkspaceBottom">Open teacher workspace <span aria-hidden="true">→</span></button>
+      </div>
+      <p class="landing-privacy">The sample names shown above are fictional. Student records remain in this browser unless you manually export a backup. Follow school data-handling rules.</p>
+    </div>
+  </div>
+</section>
+
+<section class="page active" id="teacherPage">
+<div class="teacher-dashboard">
+<div class="teacher-heading"><div><h2>Teacher Setup</h2><div class="teacher-intro"><p>Manage classes, students, grouping rules, and classroom roles in one place.</p></div></div></div>
+<div class="teacher-column teacher-column-left">
+<section class="panel teacher-card class-card"><h2>1. Your classes</h2>
+<div class="field">
+  <div class="legacy-class-picker"><label for="classSelect">Class selector</label><select id="classSelect"></select></div>
+  <div class="row selected-class-actions">
+    <strong class="selected-class-name" id="setupSelectedClassName">Current class</strong>
+    <button class="secondary" id="renameClassBtn" title="Rename selected class">Rename</button>
+    <button class="secondary" id="deleteClassBtn" title="Delete selected class" style="color:#c63b46">Delete</button>
+  </div>
+  <p class="help">Switch classes using the selector above the tabs. Your choice applies everywhere.</p>
+</div>
+<div class="row">
+  <input class="grow" id="newClassName" placeholder="New class name">
+  <button class="secondary" id="createClassBtn">Create</button>
+</div>
+
+</section>
+<section class="panel teacher-card add-card"><h2>2. Add students</h2>
+<div class="field">
+  <label for="bulkNames">Paste roster</label>
+  <textarea id="bulkNames" placeholder="One student per line&#10;Jordan Smith&#10;Alex Johnson&#10;Taylor Lee"></textarea>
+  <div class="btnrow">
+    <button class="primary" id="addNamesBtn">Add students</button>
+    <button class="secondary" id="clearTextBtn">Clear text</button>
+  </div>
+  <p class="help">One name per line. Duplicate names are skipped.</p>
+</div>
+
+</section>
+<section class="panel teacher-card pdf-card"><h2>Automatic class building &amp; student ranking</h2>
+<p class="help">Import a PowerSchool Final Grades Report PDF containing all your classes, student names, and numeric grades. Grades are used only to assign tiers, not stored.</p>
+<div class="field">
+  <label for="classPdfUpload">Upload class roster PDF</label>
+  <input id="classPdfUpload" type="file" accept="application/pdf,.pdf">
+  <p class="help">Supports PowerSchool Final Grades Reports (one class per page), and other text-based PDFs with lines such as <strong>Jordan Smith 92</strong> or <strong>Smith, Jordan 92%</strong>.</p>
+</div>
+<div id="pdfImportPanel" class="field" style="display:none">
+  <label for="pdfImportReview">Review and correct extracted records</label>
+  <p class="help">One student per line: <strong>Class name | Student name | Grade</strong>. Grade must be 0–100. You can edit, add, or remove lines. Each class is divided as evenly as possible into High, Middle, and Low by grade.</p>
+  <textarea id="pdfImportReview" style="min-height:190px" spellcheck="false"></textarea>
+  <div class="btnrow">
+    <button class="primary" id="confirmPdfImportBtn">Create / update classes</button>
+    <button class="secondary" id="cancelPdfImportBtn">Cancel import</button>
+  </div>
+  <div id="pdfSyncMappings" style="display:none;max-height:260px;overflow:auto;margin:12px 0"></div>
+  <p id="pdfImportStatus" class="help" role="status" aria-live="polite"></p>
+</div>
+</section>
+<section class="panel teacher-card avoid-card"><h2>3. Grouping rules</h2>
+<p class="help">Choose which students must stay apart or together. Rules are optional and saved with this class. </p>
+
+<div class="field"><label for="avoidRuleType">Rule type</label><select id="avoidRuleType"><option value="separate">Keep separate</option><option value="together">Keep together</option></select></div>
+<div id="avoidGroupControls"><p class="help">Click two or more students. All selected students must be assigned to different groups.</p><div id="avoidGroupStudents" class="avoid-student-options"></div><button class="secondary" id="addAvoidGroupBtn">＋ Add separation rule</button></div>
+<div id="togetherControls" class="hidden">
+  <p class="help">Select two or three students who must be assigned to the same group. This applies to group generation and automatic seating assignments.</p>
+  <div id="togetherStudents" class="avoid-student-options"></div>
+  <button class="secondary" id="addTogetherBtn">＋ Add keep-together rule</button>
+</div>
+<div id="avoidList" class="avoid-list"></div>
+
+</section>
+</div>
+<div class="teacher-column teacher-column-right">
+<section class="panel teacher-card roster-card"><h2>Student roster &amp; performance</h2><p class="help">Edit names and adjust performance tiers for the selected class.</p><div class="roster-head">
+  <strong>Student performance</strong>
+  <span class="help" id="rosterCount">0 students</span>
+</div>
+<div class="stats">
+  <div class="stat"><strong id="highCount">0</strong><span>High</span></div>
+  <div class="stat"><strong id="midCount">0</strong><span>Middle</span></div>
+  <div class="stat"><strong id="lowCount">0</strong><span>Low</span></div>
+</div>
+<div id="studentList" class="student-list"></div>
+
+</section>
+<div class="teacher-mini-grid">
+<section class="panel teacher-card roles-card"><h2>4. Group roles</h2><p class="help">Role titles are shared automatically across every class.</p>
+<p class="help">Customize the role titles displayed beside each student. In pairs, the second student gets Roles 2 and 3.</p>
+<div id="roleList" class="role-list"></div>
+
+</section>
+<section class="panel teacher-card backup-card"><h2>Backup &amp; restore</h2><div class="btnrow">
+  <button class="secondary" id="exportBtn">Export backup</button>
+  <button class="secondary" id="importBtn">Import backup</button>
+  <input id="importFile" type="file" accept=".json,application/json" class="hidden">
+</div>
+<p class="notice">Classes remain in this browser only. To move devices, export a JSON backup and import it on the other device. Backups are readable and contain student information—store them in a school-approved secure location.</p>
+<div id="backupReminder" class="backup-reminder hidden" role="status"></div>
+<p id="backupStatus" class="help" aria-live="polite">No backup recorded on this device yet.</p>
+<div id="restorePreview" class="restore-preview hidden">
+  <strong>Review backup before restoring</strong>
+  <p id="restoreSummary"></p>
+  <div class="btnrow">
+    <button class="secondary" id="restoreMergeBtn">Add classes from backup</button>
+    <button class="primary" id="restoreReplaceBtn">Replace all current data</button>
+    <button class="secondary" id="restoreCancelBtn">Cancel</button>
+  </div>
+  <p class="help">Replacing restores all settings and classes from the backup. A safety copy of your current data will download first.</p>
+</div>
+<button class="secondary" id="privacyBtn" style="margin-top:10px">Privacy &amp; data controls</button>
+<div id="privacyPanel" class="privacy-panel hidden" style="margin-top:12px"><strong>Manual-only data handling</strong><p>Class names, student names, tiers, separation rules and seating assignments are stored in this browser's local storage, not automatically synchronized. JSON backups are readable and contain student information; export and transfer them only through school-approved channels. This website cannot protect data from someone with access to the device, browser profile, backups, extensions or malicious scripts. Removing cloud sync does not remove older Firebase data: any previously uploaded cloud records must be reviewed and deleted separately. Clearing website storage deletes local records. The optional PDF import parses locally when the PDF reader is bundled. Follow your school's student-data policies.</p><button class="secondary" id="clearAllDataBtn" style="color:#b42332">Delete all local class data</button></div>
+</section>
+</div>
+</section>
+</div>
+</div>
+</div>
+</section>
+
+<section class="page" id="groupsPage">
+<main class="panel">
+<div class="groups-page-head">
+  <div>
+    <h2 id="displayTitle">Class groups</h2>
+    <div class="subline" id="classSummary">Add students to get started.</div>
+  </div>
+  <div class="btnrow actions">
+    <div class="legacy-class-picker"><label for="displayClassSelect">Class</label><select id="displayClassSelect"></select></div>
+    
+    <button class="secondary" id="printBtn">Print groups</button>
+    <button class="secondary" id="fullscreenBtn">⛶ Student Fullscreen</button>
+    <button class="primary" id="generateBtn">⤨ Randomize groups</button>
+  </div>
+</div>
+<div class="field" style="max-width:360px;margin:12px 0"><label for="groupStrategy">Grouping strategy</label><select id="groupStrategy"><option value="balanced">Balanced abilities (default)</option><option value="random">Random (respect separation rules)</option><option value="similar">Similar abilities</option><option value="variety">New partners (use group history)</option></select><p class="help" id="strategyHelp">Prioritizes mixed-ability groups.</p></div>
+<div class="notice" id="balanceNote">Groups of three are used whenever possible; pairs are used when needed.</div><p class="help">Click a student for Swap, Lock, or Absent. Locked students remain in their assigned group when you randomize.</p>
+<div class="btnrow" style="margin:10px 0"><button type="button" class="secondary" id="rebalancePresentBtn">Rebalance present students</button></div>
+<div id="groupsArea">
+  <div class="empty">Your groups will appear here.</div>
+</div>
+</main>
+</section>
+
+<section class="page" id="randomStudentPage">
+  <main class="panel">
+    <div class="groups-page-head">
+      <div>
+        <h2>Random Student Picker</h2>
+        <div class="subline">Select a student at random from the selected class roster.</div>
+      </div>
+      <div class="btnrow actions">
+        <div class="legacy-class-picker"><label for="randomClassSelect">Class</label><select id="randomClassSelect"></select></div>
+        
+      </div>
+    </div>
+    <button class="primary" id="pickRandomStudentBtn">Pick a random student</button>
+    <div class="random-result" id="randomStudentResult" aria-live="polite">
+      Click “Pick a random student” to choose a name.
+    </div>
+  </main>
+</section>
+
+
+<section class="page" id="seatingPage">
+  <main class="panel">
+    <div class="groups-page-head">
+      <div><h2>Seating Chart</h2><div class="subline">Desk positions and priorities are shared across classes; student assignments stay separate. "Populate" fills groups of at least two, favoring triples and preserving locked seats.</div></div>
+      <div class="legacy-class-picker"><label for="seatingClassSelect">Class</label><select id="seatingClassSelect"></select></div>
+    </div>
+    <div class="seating-toolbar" id="seatingSetupControls">
+      <section class="seating-tool-section" aria-label="Seating chart templates">
+        <div class="seating-tool-heading"><span class="tool-number">1</span><h3>Layout templates</h3></div>
+        <div class="seating-tool-row" id="templateControls">
+          <div class="field"><label for="seatingTemplateSelect">Saved layout</label>
+            <select id="seatingTemplateSelect" style="min-width:180px"></select></div>
+          <button class="secondary" id="addSeatingTemplateBtn">＋ New</button>
+          <button class="secondary" id="renameSeatingTemplateBtn">Rename</button>
+          <button class="secondary danger-outline" id="deleteSeatingTemplateBtn">Delete template</button>
+        </div>
+      </section>
+      <section class="seating-tool-section" aria-label="Desk arrangement">
+        <div class="seating-tool-heading"><span class="tool-number">2</span><h3>Arrange desks</h3></div>
+        <div class="seating-tool-row">
+          <div class="field"><label for="deskSize">Desk group</label>
+            <select id="deskSize"><option value="1">1 desk</option><option value="2">2 desks</option><option value="3">3 desks</option><option value="4">4 desks (2×2)</option></select></div>
+          <div class="field"><label for="deskOrientation">Orientation</label>
+            <select id="deskOrientation"><option value="row">Row (horizontal)</option><option value="column">Column (vertical)</option><option value="triangle">Triangle</option></select></div>
+          <div class="field" id="triangleVariantField" hidden><label for="triangleVariant">Triangle arrangement</label>
+            <select id="triangleVariant" class="visually-hidden" aria-label="Triangle arrangement"><option value="stagger-down">Two above</option><option value="stagger-up">Two below</option><option value="stagger-right">Two left</option><option value="stagger-left">Two right</option></select>
+            <div class="triangle-picker" role="group" aria-label="Choose triangle desk arrangement">
+              <button type="button" class="triangle-choice selected" data-triangle="stagger-down" aria-label="Two desks above, one below" aria-pressed="true"><svg viewBox="0 0 112 84" aria-hidden="true"><rect x="7" y="9" width="46" height="27" rx="5"/><rect x="59" y="9" width="46" height="27" rx="5"/><rect x="33" y="46" width="46" height="27" rx="5"/></svg></button>
+              <button type="button" class="triangle-choice" data-triangle="stagger-up" aria-label="One desk above, two below" aria-pressed="false"><svg viewBox="0 0 112 84" aria-hidden="true"><rect x="33" y="9" width="46" height="27" rx="5"/><rect x="7" y="46" width="46" height="27" rx="5"/><rect x="59" y="46" width="46" height="27" rx="5"/></svg></button>
+              <button type="button" class="triangle-choice" data-triangle="stagger-right" aria-label="Two desks on the left, one on the right" aria-pressed="false"><svg viewBox="0 0 112 84" aria-hidden="true"><rect x="7" y="5" width="46" height="27" rx="5"/><rect x="7" y="52" width="46" height="27" rx="5"/><rect x="59" y="28" width="46" height="27" rx="5"/></svg></button>
+              <button type="button" class="triangle-choice" data-triangle="stagger-left" aria-label="One desk on the left, two on the right" aria-pressed="false"><svg viewBox="0 0 112 84" aria-hidden="true"><rect x="59" y="5" width="46" height="27" rx="5"/><rect x="59" y="52" width="46" height="27" rx="5"/><rect x="7" y="28" width="46" height="27" rx="5"/></svg></button>
+            </div></div>
+          <button class="secondary" id="addDeskBtn">＋ Add desks</button>
+          <button class="secondary danger-outline" id="clearDesksBtn">Clear desks</button>
+        </div>
+      </section>
+      <section class="seating-tool-section" aria-label="Assign students">
+        <div class="seating-tool-heading"><span class="tool-number">3</span><h3>Assign students</h3></div>
+        <div class="seating-tool-row">
+          <div class="field strategy-field"><label for="seatingStrategy">Grouping strategy</label><select id="seatingStrategy"><option value="balanced">Balanced abilities</option><option value="random">Fully random</option><option value="similar">Similar abilities</option><option value="variety">New partners</option></select></div>
+          <button class="primary" id="populateDesksBtn">Populate desks</button>
+          <button class="secondary" id="clearStudentsBtn">Clear students</button>
+        </div>
+      </section>
+      <section class="seating-tool-section seating-present-section" aria-label="Present or print seating chart">
+        <div class="seating-tool-heading"><h3>Present &amp; print</h3></div>
+        <div class="seating-tool-row">
+          <button class="primary" id="seatingFullscreenBtn">⛶ Student fullscreen</button>
+          <button class="secondary" id="printSeatingBtn">Print seating chart</button>
+        </div>
+      </section>
+    </div>
+    <div class="seating-note" id="seatingStatus">Add desks to create your classroom layout.</div>
+    <div class="seating-scroll"><div class="seating-room" id="seatingRoom" aria-label="Draggable classroom desk layout"><div class="front-of-class">FRONT OF CLASS</div></div></div>
+  </main>
+</section>
+</div>
+<div class="footer">Made for classroom collaboration</div>
+</div>
+
+<div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+<div class="guide-overlay" id="guideOverlay" hidden><section class="guide-dialog" role="dialog" aria-modal="false" aria-labelledby="guideTitle"><div class="guide-progress" id="guideProgress"></div><h2 id="guideTitle"></h2><p id="guideText"></p><div class="btnrow" style="justify-content:flex-end"><button class="secondary" id="guideClose">Close</button><button class="secondary" id="guidePrev">Back</button><button class="primary" id="guideNext">Next</button></div></section></div>
+
+<script>
+// Remember that onboarding started before the app writes its starter class.
+// The pending marker survives a service-worker reload and is cleared only by a deliberate choice.
+window.__bgrHadPriorData = (() => {
+  try {
+    const had = localStorage.getItem('balancedGroupRandomizer.v1') !== null;
+    if (!had && localStorage.getItem('balancedGroupRandomizer.welcomeSeen.v1') !== '1') {
+      localStorage.setItem('balancedGroupRandomizer.welcomePending.v1', '1');
+    }
+    return had;
+  } catch (_) { return true; }
+})();
+</script>
+<script src="./pdf.min.js"></script>
+<button type="button" id="ipadExitPresentation" class="ipad-exit-presentation" aria-label="Exit student presentation">✕ Exit fullscreen</button>
+<script>
+(() => {
+const KEY = 'balancedGroupRandomizer.v1';
+const BACKUP_META_KEY = 'balancedGroupRandomizer.backupMeta.v1';
+const BACKUP_INTERVAL_DAYS = 21;
+let pendingRestore = null;
+function readBackupMeta() {
+  try { return JSON.parse(localStorage.getItem(BACKUP_META_KEY) || '{}') || {}; }
+  catch (_) { return {}; }
+}
+function writeBackupMeta(meta) {
+  try { localStorage.setItem(BACKUP_META_KEY, JSON.stringify(meta)); } catch (_) {}
+}
+function updateBackupStatus() {
+  const meta = readBackupMeta(), status = document.getElementById('backupStatus');
+  const reminder = document.getElementById('backupReminder');
+  if (!status || !reminder) return;
+  const last = Number(meta.lastExport || 0), hasStudents = db.classes.some(c => c.students?.length);
+  status.textContent = last
+    ? 'Last backup exported on this device: ' + new Date(last).toLocaleDateString()
+    : 'No local file backup exported from this device yet.';
+  const due = hasStudents && (!last || (Date.now() - last > BACKUP_INTERVAL_DAYS*86400000));
+  reminder.classList.toggle('hidden', !due);
+  if (due) reminder.textContent = last
+    ? 'It has been over 3 weeks since your last manual backup export. Save a fresh copy before major changes.'
+    : 'No manual file backup has been exported. Export one before clearing this browser or changing devices.';
+}
+function downloadBackup(snapshot, prefix='balanced-group-randomizer-backup') {
+  const stamp = new Date().toISOString().slice(0,10);
+  const blob = new Blob([JSON.stringify(snapshot,null,2)],{type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = prefix + '-' + stamp + '.json';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+function validateBackup(parsed) {
+  if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.classes) || parsed.classes.length > 200)
+    throw new Error('Invalid backup structure');
+  const classIds = new Set();
+  parsed.classes.forEach(c => {
+    if (!c || typeof c.id !== 'string' || typeof c.name !== 'string' || !c.name.trim() ||
+        !Array.isArray(c.students) || c.students.length > 2000 || classIds.has(c.id))
+      throw new Error('Invalid class data');
+    classIds.add(c.id);
+    c.students.forEach(s => {
+      if (!s || typeof s.name !== 'string' || !s.name.trim()) throw new Error('Invalid student data');
+    });
+    if (!Array.isArray(c.avoidPairs)) c.avoidPairs = [];
+    if (!Array.isArray(c.avoidGroups)) c.avoidGroups = [];
+    if (!Array.isArray(c.togetherGroups)) c.togetherGroups = [];
+    if (!Array.isArray(c.roles)) c.roles = defaultRoles.slice();
+    c.students.forEach(s => { if (!tiers.includes(s.tier)) s.tier = 'Middle'; });
+  });
+  return parsed;
+}
+let db = {classes:[], activeId:null, sharedRoles:null};
+let groups = [];
+let absentIds = new Set();
+let absentOrigins = new Map();
+let toastTimer;
+const $ = id => document.getElementById(id);
+const tiers = ['High','Middle','Low'];
+const defaultRoles = ['Facilitator','Recorder','Reporter'];
+const uid = () => Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4);
+const normalizeName = s => s.trim().replace(/\s+/g,' ').toLocaleLowerCase();
+
+function toast(message) {
+  $('toast').textContent = message;
+  $('toast').classList.remove('hidden');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => $('toast').classList.add('hidden'), 2600);
+}
+// Classes are stored locally. Backups move data between devices only on export/import.
+function save(){
+  try{localStorage.setItem(KEY,JSON.stringify(db));$('saveState').textContent='✓ Saved locally · Export backup to transfer';updateBackupStatus();}
+  catch(e){$('saveState').textContent='Local save failed — storage may be full';toast('Cannot save; check browser storage or permissions.');}
+}
+function current() {
+  return db.classes.find(c => c.id === db.activeId) || null;
+}
+function sharedRoles() {
+  if (!Array.isArray(db.sharedRoles)) db.sharedRoles = (current()?.roles || defaultRoles).slice(0,3);
+  while (db.sharedRoles.length < 3) db.sharedRoles.push(defaultRoles[db.sharedRoles.length]);
+  return db.sharedRoles;
+}
+function syncRolesAcrossClasses() {
+  const roles = sharedRoles();
+  db.classes.forEach(c => { c.roles = roles.slice(); });
+}
+function makeClass(name) {
+  const c = {
+    id:uid(), name:name.trim() || `Class ${db.classes.length+1}`,
+    students:[], avoidPairs:[], avoidGroups:[], togetherGroups:[],
+    roles:sharedRoles().slice(), seating:[], groupingStrategy:"balanced", groupHistory:[]
+  };
+  db.classes.push(c);
+  db.activeId = c.id;
+  groups = [];
+  save();
+  render();
+  return c;
+}
+function syncClassDropdowns() {
+  ['workspaceClassSelect','classSelect','displayClassSelect','randomClassSelect','seatingClassSelect'].forEach(id => {
+    const select = $(id);
+    const prior = select.value;
+    select.innerHTML = '';
+    db.classes.forEach(c => {
+      const option = document.createElement('option');
+      option.value = c.id;
+      option.textContent = c.name;
+      option.selected = c.id === db.activeId;
+      select.append(option);
+    });
+    if (!db.classes.length) {
+      const option = document.createElement('option');
+      option.value = '';
+      option.textContent = 'Create a class first';
+      select.append(option);
+    }
+    select.disabled = !db.classes.length;
+    if (db.classes.some(c => c.id === prior) && prior === db.activeId) select.value = prior;
+  });
+}
+function makeTierLetter(tier,extraClass=''){
+  const span=document.createElement('span');
+  const safe=tiers.includes(tier)?tier:'Middle';
+  span.className='tier-letter tier-'+safe.toLowerCase()+(extraClass?' '+extraClass:'');
+  span.textContent=safe[0];
+  span.title=safe+' performance tier (teacher view only)';
+  span.setAttribute('aria-label',safe+' performance tier');
+  return span;
+}
+function renderStudents(c) {
+  const list = $('studentList');
+  list.innerHTML = '';
+  const counts = {High:0,Middle:0,Low:0};
+
+  if (c) c.students.forEach(s => {
+    counts[s.tier]++;
+    const row = document.createElement('div');
+    row.className = 'student';
+
+    const name = document.createElement('div');
+    name.className = 'student-name';
+    name.textContent = s.name;
+    name.title = s.name;
+
+    const nameWrap = document.createElement('div');
+    nameWrap.className = 'student-name-wrap';
+    const edit = document.createElement('button');
+    edit.type = 'button';
+    edit.className = 'edit-student-name';
+    edit.title = `Edit preferred name for ${s.name}`;
+    edit.setAttribute('aria-label', `Edit preferred name for ${s.name}`);
+    edit.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4Z"/></svg>';
+    nameWrap.append(makeTierLetter(s.tier),name, edit);
+    edit.addEventListener('click', () => {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'student-name-input';
+      input.value = s.name;
+      input.maxLength = 80;
+      input.setAttribute('aria-label', 'Preferred student name');
+      nameWrap.replaceChildren(input);
+      input.focus();
+      input.select();
+      let finished = false;
+      const finish = (commit) => {
+        if (finished) return;
+        const value = input.value.trim().replace(/\s+/g, ' ');
+        if (commit && !value) { toast('Student name cannot be blank.'); input.focus(); return; }
+        if (commit && c.students.some(other => other.id !== s.id && normalizeName(other.name) === normalizeName(value))) {
+          toast('Another student in this class already uses that name.'); input.focus(); return;
+        }
+        finished = true;
+        if (commit && value !== s.name) {
+          s.name = value;
+          save();
+          toast(`Preferred name saved: ${value}`);
+        }
+        render();
+      };
+      input.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); finish(true); }
+        if (e.key === 'Escape') { e.preventDefault(); finish(false); }
+      });
+      input.addEventListener('blur', () => finish(true));
+    });
+
+    const select = document.createElement('select');
+    select.setAttribute('aria-label', `Performance tier for ${s.name}`);
+    tiers.forEach(t => {
+      const o = document.createElement('option');
+      o.value = t;
+      o.textContent = t;
+      o.selected = t === s.tier;
+      select.append(o);
+    });
+    select.addEventListener('change', () => {
+      s.tier = select.value;
+      groups = [];
+      save();
+      render();
+    });
+
+    const del = document.createElement('button');
+    del.className = 'remove';
+    del.textContent = '×';
+    del.title = `Remove ${s.name}`;
+    del.addEventListener('click', () => {
+      c.students = c.students.filter(x => x.id !== s.id);
+      c.avoidPairs = c.avoidPairs.filter(p => !p.includes(s.id));
+      c.avoidGroups = c.avoidGroups.map(rule => rule.filter(id => id !== s.id)).filter(rule => rule.length >= 3);
+      c.togetherGroups = (c.togetherGroups||[]).map(rule=>rule.filter(id=>id!==s.id)).filter(rule=>rule.length>=2);
+      groups = [];
+      save();
+      render();
+    });
+
+    row.append(nameWrap,select,del);
+    list.append(row);
+  });
+
+  $('rosterCount').textContent = `${c ? c.students.length : 0} students`;
+  $('highCount').textContent = counts.High;
+  $('midCount').textContent = counts.Middle;
+  $('lowCount').textContent = counts.Low;
+}
+
+function renderAvoidControls(c) {
+  const students=c?c.students:[];
+  const checklist=$('avoidGroupStudents');
+  const previouslyChecked=new Set([...checklist.querySelectorAll('input:checked')].map(x=>x.value));
+  checklist.innerHTML='';
+  if(!students.length)checklist.textContent='Add students first.';
+  else students.forEach(s=>{
+    const label=document.createElement('label');label.className='avoid-student-option';
+    const input=document.createElement('input');input.type='checkbox';input.value=s.id;
+    input.dataset.avoidGroupStudent='true';input.checked=previouslyChecked.has(s.id);
+    const text=document.createElement('span');text.textContent=s.name;
+    label.append(input,text);checklist.append(label);
+  });
+  const togetherChecklist=$('togetherStudents');
+  togetherChecklist.innerHTML='';
+  students.forEach(s=>{
+    const label=document.createElement('label');label.className='avoid-student-option';
+    const input=document.createElement('input');input.type='checkbox';input.value=s.id;input.dataset.togetherStudent='true';
+    const span=document.createElement('span');span.textContent=s.name;
+    label.append(input,span);togetherChecklist.append(label);
+  });
+  if(!students.length)togetherChecklist.textContent='Add students first.';
+  const ruleType=$('avoidRuleType').value;
+  $('avoidGroupControls').classList.toggle('hidden',ruleType!=='separate');
+  $('togetherControls').classList.toggle('hidden',ruleType!=='together');
+
+  const list = $('avoidList');
+  list.innerHTML = '';
+  const pairRules = c ? c.avoidPairs : [];
+  const groupRules = c ? c.avoidGroups : [];
+  const togetherRules = c ? (c.togetherGroups||[]) : [];
+
+  if (!pairRules.length && !groupRules.length && !togetherRules.length) {
+    const empty = document.createElement('p');
+    empty.className = 'help';
+    empty.textContent = 'No grouping rules added.';
+    list.append(empty);
+    return;
+  }
+
+  pairRules.forEach(pair => {
+    const s1 = students.find(s => s.id === pair[0]);
+    const s2 = students.find(s => s.id === pair[1]);
+    if (!s1 || !s2) return;
+    addRuleDisplay(`${s1.name} ↔ ${s2.name}`, () => {
+      c.avoidPairs = c.avoidPairs.filter(p => !(p.includes(pair[0]) && p.includes(pair[1])));
+      groups = [];
+      save();
+      render();
+    });
+  });
+
+  groupRules.forEach(rule => {
+    const names = rule.map(id => students.find(s => s.id === id)?.name).filter(Boolean);
+    if (names.length < 3) return;
+    addRuleDisplay(`Keep separate: ${names.join(', ')}`, () => {
+      c.avoidGroups = c.avoidGroups.filter(r => !(r.length === rule.length && r.every(id => rule.includes(id))));
+      groups = [];
+      save();
+      render();
+    });
+  });
+
+  togetherRules.forEach(rule=>{
+    const names=rule.map(id=>students.find(s=>s.id===id)?.name).filter(Boolean);
+    if(names.length<2)return;
+    addRuleDisplay(`Keep together: ${names.join(', ')}`,()=>{
+      c.togetherGroups=c.togetherGroups.filter(r=>!(r.length===rule.length&&r.every(id=>rule.includes(id))));
+      groups=[];absentIds.clear();absentOrigins.clear();save();render();
+    });
+  });
+
+  function addRuleDisplay(text,removeFn) {
+    const item = document.createElement('div');
+    item.className = 'avoid-item';
+    const span = document.createElement('span');
+    span.textContent = text;
+    const button = document.createElement('button');
+    button.className = 'remove';
+    button.textContent = '×';
+    button.title = 'Remove separation rule';
+    button.addEventListener('click',removeFn);
+    item.append(span,button);
+    list.append(item);
+  }
+}
+
+function renderRoles(c) {
+  const list = $('roleList');
+  list.innerHTML = '';
+  if (!c) return;
+
+  syncRolesAcrossClasses();
+  sharedRoles().forEach((role,index) => {
+    const item = document.createElement('div');
+    item.className = 'role-item';
+    const label = document.createElement('label');
+    label.className = 'label';
+    label.textContent = `Role ${index+1}`;
+    label.style.minWidth = '54px';
+    const input = document.createElement('input');
+    input.value = role;
+    input.maxLength = 40;
+    input.addEventListener('change',() => {
+      if (!input.value.trim()) {
+        input.value = c.roles[index];
+        toast('Role titles cannot be blank.');
+        return;
+      }
+      sharedRoles()[index] = input.value.trim();
+      syncRolesAcrossClasses();
+      groups = [];
+      save();
+      renderGroups();
+    });
+    item.append(label,input);
+    list.append(item);
+  });
+}
+
+function render() {
+  syncClassDropdowns();
+  const c = current();
+  $('setupSelectedClassName').textContent = c?.name || 'No class selected';
+  $('workspaceClassMeta').textContent = c ? `${c.students.length} student${c.students.length===1?'':'s'}` : 'Create a class in Teacher Setup';
+  renderStudents(c);
+  renderAvoidControls(c);
+  renderRoles(c);
+  $('classSummary').textContent = c ? `${c.name} · ${c.students.length} students` : 'Create a class and add students.';
+  $('displayTitle').textContent = c ? `${c.name} — Groups` : 'Class groups';
+  $('generateBtn').disabled = !c || c.students.length < 2;
+  renderGroups();
+  const strategy=$('groupStrategy');
+  if(strategy) {strategy.value=c?.groupingStrategy || 'balanced'; updateStrategyHelp();}
+  if($('seatingStrategy')) $('seatingStrategy').value=c?.groupingStrategy || 'balanced';
+  renderSeating();
+}
+
+function createGroupSizes(n) {
+  const sizes = [];
+  if (n < 2) return sizes;
+  let threes = Math.floor(n/3);
+  const rem = n%3;
+  if (rem === 1) {
+    threes = Math.max(0,threes-1);
+    for (let i=0;i<threes;i++) sizes.push(3);
+    sizes.push(2,2);
+  } else {
+    for (let i=0;i<threes;i++) sizes.push(3);
+    if (rem === 2) sizes.push(2);
+  }
+  return sizes;
+}
+
+const strategyDescriptions={balanced:'Prioritizes mixed-ability groups.',random:'Shuffles without using ability tiers. Separation rules remain mandatory.',similar:'Prioritizes groups of students with similar performance tiers.',variety:'Prefers partners who have not worked together recently, while retaining some ability balance.'};
+function updateStrategyHelp(){ $('strategyHelp').textContent=strategyDescriptions[$('groupStrategy').value] || strategyDescriptions.balanced; }
+$('groupStrategy').addEventListener('change',()=>{const c=current();if(c){c.groupingStrategy=$('groupStrategy').value;$('seatingStrategy').value=c.groupingStrategy;save();}updateStrategyHelp();});
+$('seatingStrategy').addEventListener('change',()=>{const c=current();if(c){c.groupingStrategy=$('seatingStrategy').value;$('groupStrategy').value=c.groupingStrategy;updateStrategyHelp();save();}});
+function togetherComponents(c,rules=c.togetherGroups||[],students=c.students){
+  const byId=new Map(students.map(s=>[s.id,s]));const parent=new Map(students.map(s=>[s.id,s.id]));
+  const root=id=>{while(parent.get(id)!==id)id=parent.get(id);return id;};
+  for(const rule of rules){const valid=rule.filter(id=>parent.has(id));for(const id of valid.slice(1))parent.set(root(id),root(valid[0]));}
+  const blocks=new Map();for(const s of students){const key=root(s.id);if(!blocks.has(key))blocks.set(key,[]);blocks.get(key).push(s);}
+  return [...blocks.values()];
+}
+function validateTogetherRules(c,rules=c.togetherGroups||[]){
+  const blocks=togetherComponents(c,rules);
+  if(blocks.some(b=>b.length>3))return 'Combined keep-together rules exceed the three-student group limit.';
+  if(blocks.some(b=>separationViolations([b],c)>0))return 'Keep-together and separation rules conflict for these students.';
+  return '';
+}
+// Pack linked students as indivisible units, then fill the remaining group seats.
+function arrangeTogether(students,sizes,c){
+  const blocks=togetherComponents(c,c.togetherGroups||[],students);
+  const slots=sizes.map(size=>({size,students:[]}));
+  const ordered=blocks.slice().sort((a,b)=>b.length-a.length||Math.random()-.5);
+  function place(i){
+    if(i===ordered.length)return true;
+    const block=ordered[i];
+    const choices=slots.map((slot,index)=>index).filter(index=>slots[index].students.length+block.length<=slots[index].size);
+    for(let j=choices.length-1;j>0;j--){const k=Math.floor(Math.random()*(j+1));[choices[j],choices[k]]=[choices[k],choices[j]];}
+    for(const index of choices){
+      const slot=slots[index];slot.students.push(...block);
+      if(!separationViolations([slot.students],c)&&place(i+1))return true;
+      slot.students.length-=block.length;
+    }
+    return false;
+  }
+  return place(0)?slots.map(slot=>slot.students):null;
+}
+function togetherViolations(arr,c){
+  const locations=new Map();arr.forEach((g,i)=>g.forEach(s=>locations.set(s.id,i)));
+  return (c.togetherGroups||[]).filter(rule=>{
+    const found=rule.filter(id=>locations.has(id));
+    return found.length>1&&found.some(id=>locations.get(id)!==locations.get(found[0]));
+  }).length;
+}
+function separationViolations(arr,c){let n=0;for(const g of arr){const ids=new Set(g.map(s=>s.id));n+=c.avoidPairs.filter(p=>p.every(id=>ids.has(id))).length;n+=c.avoidGroups.filter(rule=>rule.filter(id=>ids.has(id)).length>1).length;}return n;}
+function strategyScore(arr,c){
+ const strategy=c.groupingStrategy||'balanced';
+ if(strategy==='random')return 0;
+ if(strategy==='balanced')return arrangementScore(arr,c);
+ if(strategy==='similar')return arr.reduce((score,g)=>{const counts=tiers.map(t=>g.filter(s=>s.tier===t).length);return score+counts.reduce((sum,n)=>sum+n*n,0)*15;},0);
+ const history=(c.groupHistory||[]).slice(-20),counts=new Map();
+ for(const session of history)for(const pair of session)counts.set(pair,(counts.get(pair)||0)+1);
+ let penalty=0;
+ for(const g of arr)for(let i=0;i<g.length;i++)for(let j=i+1;j<g.length;j++){const key=[g[i].id,g[j].id].sort().join(':');penalty+=(counts.get(key)||0)*40;}
+ return arrangementScore(arr,c)*0.4-penalty;
+}
+function recordGroupHistory(c,arr){
+ const pairs=[];for(const g of arr)for(let i=0;i<g.length;i++)for(let j=i+1;j<g.length;j++)pairs.push([g[i].id,g[j].id].sort().join(':'));
+ c.groupHistory=[...(c.groupHistory||[]),pairs].slice(-20);
+}
+function arrangementScore(arr,c) {
+  let score = 0;
+  const totals = {High:0,Middle:0,Low:0};
+
+  for (const g of arr) {
+    const ids = new Set(g.map(s => s.id));
+    for (const pair of c.avoidPairs) {
+      if (ids.has(pair[0]) && ids.has(pair[1])) score -= 100000;
+    }
+    for (const rule of c.avoidGroups) {
+      if (rule.filter(id => ids.has(id)).length > 1) score -= 100000;
+    }
+    g.forEach(s => totals[s.tier]++);
+    const cnt = {High:0,Middle:0,Low:0};
+    g.forEach(s => cnt[s.tier]++);
+    if (g.length === 3) {
+      if (cnt.High && cnt.Middle && cnt.Low) score += 32;
+      else if (Object.values(cnt).filter(x => x>0).length === 2) score += 12;
+      else score -= 8;
+      score += Object.values(cnt).filter(x => x===1).length * 2;
+    } else if (Object.values(cnt).filter(x => x>0).length === 2) {
+      score += 13;
+    }
+  }
+
+  const k = arr.length;
+  for (const tier of tiers) {
+    const vals = arr.map(g => g.filter(s => s.tier === tier).length);
+    const mean = totals[tier]/k;
+    const variance = vals.reduce((sum,x) => sum + (x-mean)**2,0)/k;
+    score -= variance*5;
+  }
+  return score;
+}
+
+
+// Locking anchors a student to the same group number during Randomize and Rebalance.
+// An incompatible roster or rule produces an error instead of silently moving them.
+function arrangeWithGroupLocks(students,sizes,c){
+  const locks=c.groupLocks||{};
+  const present=new Set(students.map(s=>s.id));
+  const slots=sizes.map(size=>({size,students:[]}));
+  const blocks=togetherComponents({...c,students},c.togetherGroups||[],students);
+  const anchored=[],floating=[];
+  for(const block of blocks){
+    const assigned=new Set(block.map(s=>locks[s.id]).filter(n=>Number.isInteger(n)));
+    if(assigned.size>1)return null;
+    if(assigned.size){const dest=[...assigned][0];if(dest<0||dest>=slots.length)return null;anchored.push({dest,block});}
+    else floating.push(block);
+  }
+  for(const {dest,block} of anchored){
+    const slot=slots[dest];slot.students.push(...block);
+    if(slot.students.length>slot.size||separationViolations([slot.students],c))return null;
+  }
+  const order=floating.slice().sort((a,b)=>b.length-a.length||Math.random()-.5);
+  let nodes=0;
+  function place(i){
+    if(++nodes>16000)return false;
+    if(i===order.length)return slots.every(slot=>slot.students.length===slot.size);
+    const block=order[i];
+    const options=slots.map((slot,k)=>k).filter(k=>slots[k].students.length+block.length<=slots[k].size);
+    for(let j=options.length-1;j>0;j--){const k=Math.floor(Math.random()*(j+1));[options[j],options[k]]=[options[k],options[j]];}
+    for(const index of options){
+      const slot=slots[index];slot.students.push(...block);
+      if(!separationViolations([slot.students],c)&&place(i+1))return true;
+      slot.students.length-=block.length;
+    }
+    return false;
+  }
+  return place(0)?slots.map(x=>x.students):null;
+}
+function groupRoleRows(rows,c){
+  const roles=c.roles||defaultRoles;
+  return rows.map(row=>row.map((s,i)=>({...s,role:row.length===2?(i===0?roles[0]:`${roles[1]} + ${roles[2]}`):roles[i]||roles[2]})));
+}
+function saveGroupSnapshot(){
+  const c=current();if(!c||!groups.length)return;
+  c.savedGroups=groups.map(g=>g.map(s=>s.id));
+  save();
+}
+function restoreGroupSnapshot(){
+  const c=current();groups=[];absentIds.clear();absentOrigins.clear();
+  if(!c||!Array.isArray(c.savedGroups))return;
+  const byId=new Map(c.students.map(s=>[s.id,s]));
+  const viewed=c.savedGroups.map(ids=>Array.isArray(ids)?ids.map(id=>byId.get(id)).filter(Boolean):[]).filter(g=>g.length);
+  if(!viewed.length||viewed.some(g=>g.length<2||g.length>3))return;
+  if(new Set(viewed.flat().map(s=>s.id)).size!==viewed.flat().length)return;
+  if(viewed.flat().length!==c.students.length)return;
+  if(separationViolations(viewed,c)||togetherViolations(viewed,c))return;
+  if(Object.entries(c.groupLocks||{}).some(([id,index])=>byId.has(id)&&(!Number.isInteger(index)||!viewed[index]?.some(s=>s.id===id))))return;
+  groups=groupRoleRows(viewed,c);
+}
+let groupSwapId=null,groupActionMenu=null;
+function closeGroupActionMenu(){if(groupActionMenu)groupActionMenu.remove();groupActionMenu=null;}
+function switchGroupStudent(studentId){
+  const c=current();if(!c)return;
+  if(isPresentation($('groupsPage')))return; // teacher actions never appear in student presentation
+  const found=groups.flat().find(s=>s.id===studentId);
+  if(!found)return;
+  if(groupSwapId){
+    const sourceId=groupSwapId;groupSwapId=null;closeGroupActionMenu();
+    if(sourceId===studentId){toast('Swap cancelled.');return;}
+    const leftIndex=groups.findIndex(g=>g.some(s=>s.id===sourceId));
+    const rightIndex=groups.findIndex(g=>g.some(s=>s.id===studentId));
+    if(leftIndex<0||rightIndex<0){toast('Student not found in the current groups.');return;}
+    const sameGroup=leftIndex===rightIndex;
+    if(!sameGroup && (c.groupLocks?.[sourceId]!==undefined || c.groupLocks?.[studentId]!==undefined)){toast('Unlock the student before swapping groups.');return;}
+    const trial=groups.map(g=>g.map(s=>({...s})));
+    const a=trial[leftIndex].findIndex(s=>s.id===sourceId),b=trial[rightIndex].findIndex(s=>s.id===studentId);
+    // Swap positions, not role labels: groupRoleRows assigns roles by slot order.
+    [trial[leftIndex][a],trial[rightIndex][b]]=[trial[rightIndex][b],trial[leftIndex][a]];
+    if(separationViolations(trial,c)||togetherViolations(trial,c)){toast('Swap blocked by grouping rules.');return;}
+    groups=groupRoleRows(trial,c);saveGroupSnapshot();renderGroups();toast(sameGroup?'Roles swapped within the group.':'Students swapped between groups.');return;
+  }
+  closeGroupActionMenu();
+  const m=document.createElement('div');m.className='group-action-menu';m.setAttribute('role','group');m.setAttribute('aria-label','Actions for '+found.name);
+  const label=document.createElement('strong');label.textContent=found.name;m.append(label);
+  function action(text,fn){const b=document.createElement('button');b.type='button';b.className='secondary';b.textContent=text;b.addEventListener('click',e=>{e.stopPropagation();fn();});m.append(b);}
+  action('Swap',()=>{groupSwapId=studentId;closeGroupActionMenu();toast('Click any other student, including one in the same group, to swap positions and roles.');});
+  const idx=groups.findIndex(g=>g.some(s=>s.id===studentId));
+  const locked=c.groupLocks?.[studentId]!==undefined;
+  action(locked?'Unlock':'Lock',()=>{
+    if(!c.groupLocks)c.groupLocks={};
+    if(locked)delete c.groupLocks[studentId];else c.groupLocks[studentId]=idx;
+    closeGroupActionMenu();save();renderGroups();toast(locked?'Student unlocked.':'Student locked in Group '+(idx+1)+'.');
+  });
+  action('Absent',()=>{closeGroupActionMenu();markStudentAbsent(studentId);});
+  action('Close',closeGroupActionMenu);
+  groupActionMenu=m;document.body.append(m);
+  const target=document.querySelector('.member[data-student-id="'+CSS.escape(studentId)+'"]');
+  const r=target?.getBoundingClientRect();
+  m.style.position='fixed';m.style.zIndex='9999';m.style.left=Math.max(8,Math.min(innerWidth-230,(r?.left||20)))+'px';
+  m.style.top=Math.max(8,Math.min(innerHeight-210,(r?.bottom||50)+5))+'px';
+}
+
+function generate() {
+  closeGroupActionMenu();groupSwapId=null;
+  const c = current();
+  if (!c || c.students.length < 2) return;
+  const issue=validateTogetherRules(c);if(issue){toast(issue);return;}
+  const sizes = createGroupSizes(c.students.length);
+  let best = null, bestScore = -Infinity;
+  let bestInvalid=null,bestInvalidCount=Infinity;
+  const attempts = Math.min(5000,Math.max(800,c.students.length*120));
+
+  for (let trial=0;trial<attempts;trial++) {
+    const arr=arrangeWithGroupLocks(c.students,sizes,c);
+    if(!arr)continue;
+    const violations=separationViolations(arr,c);
+    if(violations){if(violations<bestInvalidCount){bestInvalid=arr;bestInvalidCount=violations;}continue;}
+    const score = strategyScore(arr,c) + Math.random()*0.06;
+    if (score > bestScore) {
+      bestScore = score;
+      best = arr;
+    }
+  }
+
+  if(!best){
+    $('balanceNote').textContent='No valid arrangement found within the search limit. No groups were changed. Check conflicting separation rules or retry.';
+    toast('Could not satisfy all separation rules.');return;
+  }
+  absentIds.clear();absentOrigins.clear();
+  recordGroupHistory(c,best);
+  const roles = c.roles || defaultRoles;
+  groups = best.map(g => g.map((s,i) => ({
+    ...s,
+    role:g.length === 2
+      ? (i === 0 ? roles[0] : `${roles[1]} + ${roles[2]}`)
+      : roles[i]
+  })));
+
+  saveGroupSnapshot();
+  renderGroups();
+
+  const violations = togetherViolations(groups,c) + [...c.avoidPairs].filter(pair =>
+    groups.some(g => g.some(s => s.id === pair[0]) && g.some(s => s.id === pair[1]))
+  ).length + [...c.avoidGroups].filter(rule =>
+    groups.some(g => rule.filter(id => g.some(s => s.id === id)).length > 1)
+  ).length;
+
+  const triples = groups.filter(g => g.length === 3).length;
+  const pairs = groups.filter(g => g.length === 2).length;
+  $('balanceNote').textContent =
+    `${triples} group${triples===1?'':'s'} of 3 · ${pairs} pair${pairs===1?'':'s'}. ` +
+    (violations ? 'Some separation rules could not be satisfied with this roster.' : 'All separation rules were followed.');
+  toast(violations ? 'Warning: some separation rules could not be satisfied.' : 'New groups generated.');
+}
+
+
+function rebalancePresentStudents(){
+  const c=current();if(!c)return;
+  closeGroupActionMenu();groupSwapId=null;
+  const present=c.students.filter(s=>!absentIds.has(s.id));
+  if(present.length<2){toast('Not enough present students to rebalance.');return;}
+  const active={...c,students:present};
+  const issue=validateTogetherRules(active);
+  if(issue){toast(issue);return;}
+  const sizes=createGroupSizes(present.length);
+  let best=null,bestScore=-Infinity;
+  const attempts=Math.min(5000,Math.max(800,present.length*120));
+  for(let i=0;i<attempts;i++){
+    const candidate=arrangeWithGroupLocks(present,sizes,active);
+    if(!candidate||separationViolations(candidate,active)||togetherViolations(candidate,active))continue;
+    const score=strategyScore(candidate,active)+Math.random()*.06;
+    if(score>bestScore){best=candidate;bestScore=score;}
+  }
+  if(!best){toast('Cannot form groups with the current separation and together rules.');return;}
+  const roles=c.roles||defaultRoles;
+  groups=best.map(g=>g.map((s,i)=>({...s,role:g.length===2?(i===0?roles[0]:`${roles[1]} + ${roles[2]}`):roles[i]})));
+  absentOrigins.clear();
+  if(!absentIds.size)saveGroupSnapshot();
+  renderGroups();
+  const threes=groups.filter(g=>g.length===3).length,pairs=groups.filter(g=>g.length===2).length;
+  $('balanceNote').textContent=`${present.length} present · ${threes} groups of 3 · ${pairs} pairs. All separation rules were followed.`;
+  toast('Present students rebalanced.');
+}
+$('rebalancePresentBtn').addEventListener('click',rebalancePresentStudents);
+
+function markStudentAbsent(studentId) {
+  if (absentIds.has(studentId)) return;
+
+  const c = current();
+  const student = c?.students.find(s => s.id === studentId);
+  if (!student) return;
+
+  const roles = c.roles || defaultRoles;
+
+  // Find the exact group containing the absent student.
+  const affectedGroup = groups.find(g =>
+    g.some(s => s.id === studentId)
+  );
+
+  if (!affectedGroup) return;
+
+  // Mark absent and remove only this student from their group.
+  absentOrigins.set(studentId,groups.indexOf(affectedGroup));
+  absentIds.add(studentId);
+
+  const remainingMembers = affectedGroup.filter(s =>
+    s.id !== studentId
+  );
+
+  // Helper: assign roles to a group of two.
+  function assignPairRoles(group) {
+    return group.map((s, i) => ({
+      ...s,
+      role: i === 0
+        ? roles[0]
+        : `${roles[1]} + ${roles[2]}`
+    }));
+  }
+
+  // Helper: assign roles to a group of three.
+  function assignTripleRoles(group) {
+    return group.map((s, i) => ({
+      ...s,
+      role: roles[i]
+    }));
+  }
+
+  // CASE 1:
+  // A group of three becomes a pair.
+  // Leave every other group untouched.
+  if (remainingMembers.length === 2) {
+    const updatedPair = assignPairRoles(remainingMembers);
+
+    const groupIndex = groups.indexOf(affectedGroup);
+    groups[groupIndex] = updatedPair;
+
+    renderGroups();
+    toast(`${student.name} marked absent. Only their group was adjusted.`);
+    return;
+  }
+
+  // CASE 2:
+  // A group of two becomes a group of one.
+  const survivor = remainingMembers[0];
+
+  if (!survivor) {
+    groups = groups.filter(g => g.length > 0);
+    renderGroups();
+    toast(`${student.name} marked absent.`);
+    return;
+  }
+
+  // First, look for another existing pair to absorb the survivor.
+  const otherPair = groups.find(g =>
+    g !== affectedGroup && g.length === 2
+  );
+
+  if (otherPair) {
+    // Survivor becomes facilitator in the new group of three.
+    const mergedGroup = assignTripleRoles([
+      survivor,
+      ...otherPair
+    ]);
+
+    const survivorGroupIndex = groups.indexOf(affectedGroup);
+    const pairGroupIndex = groups.indexOf(otherPair);
+
+    groups[survivorGroupIndex] = mergedGroup;
+    groups[pairGroupIndex] = [];
+
+    // Remove the now-empty group.
+    groups = groups.filter(g => g.length > 0);
+
+    renderGroups();
+    toast(`${student.name} marked absent. The remaining student joined another pair as facilitator.`);
+    return;
+  }
+
+  // CASE 3:
+  // No other pair exists.
+  // Take one student from a group of three to create two pairs.
+  const donorGroup = groups.find(g =>
+    g !== affectedGroup && g.length === 3
+  );
+
+  if (donorGroup) {
+    // Move the third student from the donor group.
+    const donor = donorGroup[2];
+
+    const donorPair = assignPairRoles([
+      donorGroup[0],
+      donorGroup[1]
+    ]);
+
+    // Survivor becomes facilitator in the new pair.
+    const survivorPair = assignPairRoles([
+      survivor,
+      donor
+    ]);
+
+    const survivorGroupIndex = groups.indexOf(affectedGroup);
+    const donorGroupIndex = groups.indexOf(donorGroup);
+
+    groups[survivorGroupIndex] = survivorPair;
+    groups[donorGroupIndex] = donorPair;
+
+    groups = groups.filter(g => g.length > 0);
+
+    renderGroups();
+    toast(`${student.name} marked absent. One student moved to repair the groups.`);
+    return;
+  }
+
+  // Fallback: retain the survivor in their own group if no
+  // other group can be repaired without a broader reshuffle.
+  groups = groups.filter(g => g.length > 0);
+
+  renderGroups();
+  toast(`${student.name} marked absent. Groups updated.`);
+}
+
+function restoreAbsentStudent(studentId){
+  if(!absentIds.has(studentId))return;
+  const c=current(),student=c?.students.find(s=>s.id===studentId);
+  if(!student)return;
+  const preferred=absentOrigins.get(studentId);
+  const order=[...groups.keys()].sort((a,b)=>{
+    if(a===preferred)return -1;if(b===preferred)return 1;
+    return groups[a].length-groups[b].length;
+  });
+  const roles=c.roles||defaultRoles;
+  for(const index of order){
+    const group=groups[index];if(group.length>=3)continue;
+    const trial=group.concat(student);
+    if(separationViolations([trial],c))continue;
+    const trialGroups=groups.map((g,i)=>i===index?trial:g);
+    if(togetherViolations(trialGroups,c))continue;
+    groups[index]=trial.map((s,i)=>({...s,role:trial.length===2?(i===0?roles[0]:`${roles[1]} + ${roles[2]}`):roles[i]}));
+    absentIds.delete(studentId);absentOrigins.delete(studentId);
+    renderGroups();toast(`${student.name} returned to Group ${index+1}.`);return;
+  }
+  // If a group was removed during absence repairs, recreate a valid group of two
+  // by taking a student from a triple only when that keeps all rules satisfied.
+  for(let i=0;i<groups.length;i++){
+    if(groups[i].length!==3)continue;
+    for(let j=0;j<3;j++){
+      const moved=groups[i][j];const left=groups[i].filter(s=>s.id!==moved.id);
+      const pair=[moved,student];
+      if(separationViolations([left,pair],c))continue;
+      const candidate=groups.map((g,k)=>k===i?left:g).concat([pair]);
+      if(togetherViolations(candidate,c))continue;
+      groups[i]=left.map((s,k)=>({...s,role:k===0?roles[0]:`${roles[1]} + ${roles[2]}`}));
+      groups.push(pair.map((s,k)=>({...s,role:k===0?roles[0]:`${roles[1]} + ${roles[2]}`})));
+      absentIds.delete(studentId);absentOrigins.delete(studentId);renderGroups();toast(`${student.name} returned.`);return;
+    }
+  }
+  toast(`No valid group has room for ${student.name}. Adjust groups or randomize again.`);
+}
+
+function renderGroups() {
+  const area = $('groupsArea');
+  area.innerHTML = '';
+  if (!groups.length) {
+    area.innerHTML = '<div class="empty"><div style="font-size:30px">♧</div><strong>Your groups will appear here</strong><div>Add a roster and click Randomize groups.</div></div>';
+    return;
+  }
+
+  const wrap = document.createElement('div');
+  wrap.className = 'groups';
+  groups.forEach((g,i) => {
+    const card = document.createElement('section');
+    card.className = 'group-card';
+    const title = document.createElement('div');
+    title.className = 'group-title';
+    const strong = document.createElement('span');
+    strong.textContent = `Group ${i+1}`;
+    const small = document.createElement('small');
+    small.textContent = `${g.length} students`;
+    title.append(strong,small);
+
+    const members = document.createElement('div');
+    members.className = 'members';
+    g.forEach(s => {
+      if (absentIds.has(s.id)) return;
+      const m = document.createElement('div');
+      m.className = 'member';
+      m.title = `Click to swap positions or roles, lock, or mark ${s.name} absent`;
+      m.setAttribute('role','button');
+      m.setAttribute('tabindex','0');
+      m.dataset.studentId=s.id;
+      if(current()?.groupLocks?.[s.id]!==undefined) m.classList.add('group-locked');
+      const openGroupActions=()=>switchGroupStudent(s.id);
+      m.addEventListener('click',openGroupActions);
+      m.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openGroupActions();}});
+      const avatar = document.createElement('div');
+      avatar.className = 'avatar';
+      avatar.textContent = s.role || 'Role';
+      avatar.title = s.role || 'Role';
+      const info = document.createElement('div');
+      info.style.minWidth = '0';
+      const name = document.createElement('div');
+      name.className = 'member-name';
+      name.textContent = s.name;
+      const nameRow = document.createElement('div');
+      nameRow.className = 'member-name-row';
+      nameRow.append(name,makeTierLetter(s.tier,'member-tier'));
+      if(current()?.groupLocks?.[s.id]!==undefined){const lockMark=document.createElement('span');lockMark.className='group-locked-mark';lockMark.textContent='🔒';lockMark.title='Locked to this group';nameRow.append(lockMark);}
+      info.append(nameRow);
+      m.append(avatar,info);
+      members.append(m);
+    });
+    card.append(title,members);
+    wrap.append(card);
+  });
+  const shell=document.createElement('div');shell.className='groups-shell';
+  shell.append(wrap);
+  const absent=document.createElement('aside');absent.className='absent-sidebar';
+  const heading=document.createElement('h3');heading.textContent=`Absent (${absentIds.size})`;absent.append(heading);
+  const hint=document.createElement('p');hint.className='help';hint.textContent='Click a student to return them to a group.';absent.append(hint);
+  if(!absentIds.size){const empty=document.createElement('p');empty.className='help';empty.textContent='No absent students';absent.append(empty);}
+  for(const id of absentIds){const student=current()?.students.find(s=>s.id===id);if(!student)continue;
+    const btn=document.createElement('button');btn.type='button';btn.className='absent-student secondary';btn.textContent=student.name;
+    btn.title=`Return ${student.name} to a group`;btn.addEventListener('click',()=>restoreAbsentStudent(id));absent.append(btn);
+  }
+  shell.append(absent);area.append(shell);
+  if (document.fullscreenElement === $('groupsPage')) fitGroupFullscreen();
+}
+
+function showPage(which) {
+  const home = which === 'home';
+  const teacher = which === 'teacher';
+  const groupDisplay = which === 'groups';
+  const randomStudent = which === 'randomStudent';
+  const seating = which === 'seating';
+  $('homePage').classList.toggle('active',home);
+  $('homeTab').classList.toggle('active',home);
+  document.body.classList.toggle('bgr-home-active',home);
+  $('teacherPage').classList.toggle('active',teacher);
+  $('groupsPage').classList.toggle('active',groupDisplay);
+  $('randomStudentPage').classList.toggle('active',randomStudent);
+  $('seatingPage').classList.toggle('active',seating);
+  $('teacherTab').classList.toggle('active',teacher);
+  $('groupsTab').classList.toggle('active',groupDisplay);
+  $('randomStudentTab').classList.toggle('active',randomStudent);
+  $('seatingTab').classList.toggle('active',seating);
+  [['homeTab',home],['teacherTab',teacher],['groupsTab',groupDisplay],['randomStudentTab',randomStudent],['seatingTab',seating]].forEach(([id,selected])=>{
+    $(id).setAttribute('aria-current',selected?'page':'false');
+  });
+}
+
+$('homeTab').addEventListener('click',() => {showPage('home');window.scrollTo(0,0);});
+$('teacherTab').addEventListener('click',() => showPage('teacher'));
+$('groupsTab').addEventListener('click',() => showPage('groups'));
+$('randomStudentTab').addEventListener('click',() => showPage('randomStudent'));
+$('seatingTab').addEventListener('click',() => showPage('seating'));
+function openWorkspaceFromHome() {
+  const hasRoster = db.classes.some(c => c.students && c.students.length > 0);
+  showPage('teacher');
+  window.scrollTo(0,0);
+  if (!hasRoster && window.__bgrHadPriorData === false) {
+    const dialog = $('welcomeDialog');
+    if (dialog && !dialog.open) dialog.showModal();
+  }
+}
+$('homeOpenWorkspace').addEventListener('click',openWorkspaceFromHome);
+$('homeOpenWorkspaceBottom').addEventListener('click',openWorkspaceFromHome);
+
+
+
+
+$('renameClassBtn').addEventListener('click',() => {
+  const c = current();
+  if (!c) { toast('Choose a class first.'); return; }
+  const answer = prompt('Rename class:',c.name);
+  if (answer === null) return;
+  const name = answer.trim();
+  if (!name) { toast('Class name cannot be blank.'); return; }
+  if (db.classes.some(other => other.id !== c.id && normalizeName(other.name) === normalizeName(name))) {
+    toast('A class with that name already exists.');
+    return;
+  }
+  c.name = name;
+  save();
+  render();
+  toast('Class renamed.');
+});
+$('deleteClassBtn').addEventListener('click',() => {
+  const c = current();
+  if (!c) { toast('Choose a class first.'); return; }
+  if (!confirm(`Permanently delete "${c.name}" and its roster, rules, and seating assignments? The shared desk layout will remain.`)) return;
+  db.classes = db.classes.filter(other => other.id !== c.id);
+  db.activeId = db.classes[0]?.id || null;
+  groups = [];
+  absentIds = new Set();
+  if (!db.classes.length) {
+    makeClass('My Class');
+  } else {
+    save();
+    render();
+  }
+  toast('Class deleted. Shared desk layout preserved.');
+});
+$('createClassBtn').addEventListener('click',() => {
+  const name = $('newClassName').value.trim();
+  if (!name) {
+    $('newClassName').focus();
+    toast('Enter a class name first.');
+    return;
+  }
+  if (db.classes.some(c => normalizeName(c.name) === normalizeName(name))) {
+    toast('A class with that name already exists.');
+    return;
+  }
+  makeClass(name);
+  $('newClassName').value = '';
+  toast('Class created.');
+});
+$('newClassName').addEventListener('keydown',e => {
+  if (e.key === 'Enter') $('createClassBtn').click();
+});
+
+function switchClass(id) {
+  db.activeId = id;
+  groups = [];
+  absentIds = new Set();
+  restoreGroupSnapshot();
+  $('randomStudentResult').textContent = 'Click “Pick a random student” to choose a name.';
+  save();
+  render();
+}
+$('workspaceClassSelect').addEventListener('change',e => switchClass(e.target.value));
+$('classSelect').addEventListener('change',e => switchClass(e.target.value));
+$('displayClassSelect').addEventListener('change',e => switchClass(e.target.value));
+$('randomClassSelect').addEventListener('change',e => switchClass(e.target.value));
+$('seatingClassSelect').addEventListener('change',e => switchClass(e.target.value));
+
+$('addNamesBtn').addEventListener('click',() => {
+  const c = current();
+  if (!c) { toast('Create a class first.'); return; }
+  const names = $('bulkNames').value.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+  if (!names.length) { toast('Paste at least one student name.'); return; }
+  const existing = new Set(c.students.map(s => normalizeName(s.name)));
+  let added = 0;
+  names.forEach(name => {
+    if (!existing.has(normalizeName(name))) {
+      c.students.push({id:uid(),name,tier:'Middle'});
+      existing.add(normalizeName(name));
+      added++;
+    }
+  });
+  $('bulkNames').value = '';
+  groups = [];
+  save();
+  render();
+  toast(`Added ${added} student${added===1?'':'s'}.`);
+});
+$('clearTextBtn').addEventListener('click',() => $('bulkNames').value = '');
+
+// PDF imports are reviewed before they modify local classes. PDF data never leaves the browser.
+function parseGradeLine(line) {
+  const cleaned=line.replace(/\s+/g,' ').trim();
+  // Ignore summary rows, headers, and report metadata.
+  if (!cleaned || /^(student|name|grade|average|total|page |teacher|period|course|school|report|attendance|assignment|percent)/i.test(cleaned)) return null;
+  const match=cleaned.match(/^(.+?)\s+(?:\|\s*)?(100(?:\.0+)?|\d{1,2}(?:\.\d+)?)\s*%?\s*$/);
+  if (!match) return null;
+  let name=match[1].replace(/^\d+[.)]?\s+/,'').replace(/\s*[,|:-]\s*$/,'').trim();
+  if (!/[a-zA-Z]/.test(name) || name.length<3 || name.length>100 || /\b(class|section|period|overall|average|total)\b/i.test(name)) return null;
+  const grade=Number(match[2]);
+  if (grade<0 || grade>200) return null;
+  return {name,grade};
+}
+function classHeading(line) {
+  const t=line.trim().replace(/\s+/g,' ');
+  let m=t.match(/^(?:class|course|section|period)\s*[:#-]\s*(.{1,70})$/i);
+  if (m) return m[1].trim();
+  m=t.match(/^(.{2,70}?)\s*[-–|]\s*(?:period|section)\s*\d+[A-Za-z]?$/i);
+  if (m) return t;
+  // Common class heading formats: "Geometry - 3(A)", "3A Geometry", "Geometry Honors"
+  if (/^(?:(?:\d+[A-Za-z]?\s+)?(?:geometry|algebra|math|calculus|statistics|precalculus|trigonometry)\b.{0,55})$/i.test(t)) return t;
+  return null;
+}
+function extractPdfRoster(lines) {
+  const records=[]; let className=null;
+  for(const raw of lines) {
+    const line=raw.trim();
+    const heading=classHeading(line);
+    if(heading) { className=heading; continue; }
+    const student=parseGradeLine(line);
+    if(student && className) records.push({className,...student});
+  }
+  return records;
+}
+$('classPdfUpload').addEventListener('change',async e=>{
+  const file=e.target.files?.[0];
+  if(!file) return;
+  const panel=$('pdfImportPanel'), review=$('pdfImportReview'), status=$('pdfImportStatus');
+  panel.style.display='block'; review.value=''; status.textContent='Reading PDF…'; $('pdfSyncMappings').style.display='none';
+  try {
+    if(!window.pdfjsLib) throw new Error('The local PDF reader could not be loaded. Check that pdf.min.js is installed alongside index.html.');
+    pdfjsLib.GlobalWorkerOptions.workerSrc='./pdf.worker.min.js';
+    const pdf=await pdfjsLib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;
+    const found=[];
+    for(let pageNum=1;pageNum<=pdf.numPages;pageNum++) {
+      const page=await pdf.getPage(pageNum), content=await page.getTextContent();
+      const rows=[];
+      for(const item of content.items) {
+        if(!item.str?.trim()) continue;
+        const y=item.transform[5], x=item.transform[4];
+        let row=rows.find(r=>Math.abs(r.y-y)<2.5);
+        if(!row) {row={y,parts:[]};rows.push(row);}
+        row.parts.push({x,str:item.str.trim()});
+      }
+      rows.sort((a,b)=>b.y-a.y);
+      rows.forEach(r=>r.parts.sort((a,b)=>a.x-b.x));
+      // PowerSchool exports vary by selected columns. Identify the class by
+      // its page heading, not by an exact "2(A)" pattern ("2(A-B)" is valid).
+      const headingParts=rows.slice(0,8).flatMap(r=>r.parts.map(p=>p.str));
+      const reportClass=headingParts.find(t=>/^\d+\s*\([A-Za-z0-9\s-]+\)\s+\S/.test(t))
+        || headingParts.find(t=>/^\d+[A-Za-z]?\s+.+(?:Geometry|Algebra|Science|English|History|Math|Art|Music|Biology|Chemistry|Physics)/i.test(t));
+      if(reportClass) {
+        let inTable=false;
+        for(const row of rows) {
+          const joined=row.parts.map(p=>p.str).join(' ');
+          if(/Student Name/i.test(joined)) {inTable=true;continue;}
+          if(!inTable) continue;
+          // Accept any PDF column selection that includes a percentage.
+          // Grade cells can be separate text items or split by PDF.js.
+          const percentages=[];
+          for(let i=0;i<row.parts.length;i++) {
+            const part=row.parts[i];
+            const match=part.str.match(/^(\d{1,3}(?:\.\d+)?)\s*%$/);
+            if(match) percentages.push({x:part.x,grade:Number(match[1])});
+            else if(/^\d{1,3}(?:\.\d+)?$/.test(part.str) && row.parts[i+1]?.str==='%')
+              percentages.push({x:part.x,grade:Number(part.str)});
+          }
+          if(!percentages.length) continue;
+          const gradePart=percentages[percentages.length-1];
+          if(gradePart.grade<0 || gradePart.grade>200) continue;
+          // Name is the leftmost student cell. Avoid collecting slash, letter
+          // grade, or other optional columns between name and percentage.
+          const left=row.parts.filter(p=>p.x<gradePart.x-12).sort((a,b)=>a.x-b.x);
+          let name='';
+          for(const part of left) {
+            const value=part.str.trim();
+            if(value==='/' || /^[A-F][+-]?$/.test(value) || /^\d+(?:\.\d+)?$/.test(value)) break;
+            if(!name && !value.includes(',')) continue;
+            if(name && part.x>left[0].x+260) break;
+            name+=(name?' ':'')+value;
+          }
+          name=name.replace(/\s+/g,' ').trim();
+          if(name.includes(',') && name.length<=100 && !/^(Student|Teacher)/i.test(name))
+            found.push({className:reportClass.trim(),name,grade:gradePart.grade});
+        }
+      } else {
+        // Retain support for other text-based roster PDFs.
+        const lines=rows.map(r=>r.parts.map(p=>p.str).join(' ').replace(/\s+/g,' ').trim());
+        found.push(...extractPdfRoster(lines));
+      }
+    }
+    review.value=found.map(r=>`${r.className} | ${r.name} | ${r.grade}`).join('\n');
+    status.textContent=found.length ? `Found ${found.length} student records in ${new Set(found.map(r=>r.className)).size} classes. Check every line before importing.` : 'No student percentages detected. This report may omit the Final Grade percentage column or be scanned. Export with grade percentages included, or enter records manually.';
+  } catch(err) {status.textContent=`Could not read PDF: ${err.message}`;}
+});
+$('cancelPdfImportBtn').addEventListener('click',()=>{
+  $('pdfImportPanel').style.display='none'; $('pdfImportReview').value=''; $('classPdfUpload').value=''; $('pdfSyncMappings').style.display='none';
+});
+// Make short display names separately for each class, after parsing full names.
+// If two students share a first name, append their last initial. If initials
+// also collide, use progressively more of the surname to keep names distinct.
+function importedDisplayNames(students) {
+  const firstName = full => {
+    const pieces=full.split(',');
+    return (pieces.length>1 ? pieces.slice(1).join(',') : full).trim().split(/\s+/)[0];
+  };
+  const surname = full => {
+    const pieces=full.split(',');
+    return (pieces.length>1 ? pieces[0] : full.trim().split(/\s+/).slice(-1)[0]).trim();
+  };
+  const counts=new Map();
+  students.forEach(s=>{const k=firstName(s.name).toLocaleLowerCase();counts.set(k,(counts.get(k)||0)+1);});
+  const proposed=students.map(s=>{
+    const first=firstName(s.name), last=surname(s.name);
+    return counts.get(first.toLocaleLowerCase())>1 ? `${first} ${last.charAt(0).toUpperCase()}.` : first;
+  });
+  // Rare case: same first name AND same last initial.
+  const duplicates=new Map();
+  proposed.forEach((name,i)=>{const k=name.toLocaleLowerCase();if(!duplicates.has(k))duplicates.set(k,[]);duplicates.get(k).push(i);});
+  for(const indexes of duplicates.values()) {
+    if(indexes.length<2) continue;
+    indexes.forEach(i=>{proposed[i]=`${firstName(students[i].name)} ${surname(students[i].name)}`;});
+  }
+  return proposed;
+}
+// Sync keeps stable student/class IDs. Full PowerSchool names are stored privately
+// in the local browser data and never replace teacher-selected display names.
+let pendingPdfSync=null;
+$('pdfImportReview').addEventListener('input',()=>{pendingPdfSync=null;$('pdfSyncMappings').style.display='none';});
+function pdfSyncPlan(byClass) {
+  const plan=[], unresolved=[];
+  byClass.forEach(entry=>{
+    const c=db.classes.find(c=>normalizeName(c.name)===normalizeName(entry.name)) || null;
+    const sorted=[...entry.students.values()].sort((a,b)=>b.grade-a.grade || a.name.localeCompare(b.name));
+    const proposed=importedDisplayNames(sorted);
+    const claimed=new Set(), actions=[];
+    sorted.forEach((record,i)=>{
+      const full=normalizeName(record.name);
+      let match=c?.students.find(s=>!claimed.has(s.id) && s.sourceFullName && normalizeName(s.sourceFullName)===full);
+      if(!match && c) {
+        // One-time migration for previously imported short/full names.
+        const candidates=c.students.filter(s=>!claimed.has(s.id) && !s.sourceFullName &&
+          (normalizeName(s.name)===full || normalizeName(s.name)===normalizeName(proposed[i])));
+        if(candidates.length===1) match=candidates[0];
+      }
+      if(match) claimed.add(match.id);
+      else if(c?.students.length) unresolved.push({className:entry.name,record,index:i,c,claimed});
+      actions.push({record,tier:tiers[Math.min(2,Math.floor(i*3/sorted.length))],proposed:proposed[i],match});
+    });
+    plan.push({c,name:entry.name,actions});
+  });
+  return {plan,unresolved};
+}
+function showPdfSyncMappings(sync) {
+  const container=$('pdfSyncMappings'); container.replaceChildren();
+  const title=document.createElement('p');
+  title.textContent='Review unmatched students. For renamed students, choose their existing preferred name. Leave “New student” for new enrollments. Unmatched old students will be dropped from classes in this report.';
+  container.append(title);
+  sync.unresolved.forEach(item=>{
+    const row=document.createElement('div'); row.style.cssText='display:flex;gap:10px;align-items:center;margin:6px 0;flex-wrap:wrap';
+    const label=document.createElement('label');label.textContent=`${item.className}: ${item.record.name}`;label.style.flex='1 1 220px';
+    const select=document.createElement('select');select.style.flex='1 1 170px';
+    const opt=document.createElement('option');opt.value='';opt.textContent='New student';select.append(opt);
+    item.c.students.filter(s=>!s.sourceFullName && !item.claimed.has(s.id)).forEach(s=>{
+      const o=document.createElement('option');o.value=s.id;o.textContent=s.name;select.append(o);
+    });
+    item.select=select;row.append(label,select);container.append(row);
+  });
+  container.style.display='block';
+}
+$('confirmPdfImportBtn').addEventListener('click',()=>{
+  const status=$('pdfImportStatus'), button=$('confirmPdfImportBtn');
+  const lines=$('pdfImportReview').value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+  const byClass=new Map(),errors=[];
+  lines.forEach((line,i)=>{
+    const parts=line.split('|').map(s=>s.trim()), grade=Number(parts[2]);
+    if(parts.length!==3 || !parts[0] || !parts[1] || parts[1].length>100 || parts[0].length>100 || parts[2]==='' || !Number.isFinite(grade) || grade<0 || grade>200) {errors.push(i+1);return;}
+    const key=normalizeName(parts[0]);
+    if(!byClass.has(key))byClass.set(key,{name:parts[0],students:new Map()});
+    const skey=normalizeName(parts[1]);
+    if(byClass.get(key).students.has(skey))errors.push(i+1);
+    else byClass.get(key).students.set(skey,{name:parts[1],grade});
+  });
+  if(errors.length){status.textContent=`Invalid or duplicate student on line(s): ${errors.slice(0,15).join(', ')}. Nothing saved.`;return;}
+  if(!byClass.size){status.textContent='No valid student records.';return;}
+  const signature=lines.join('\n');
+  if(!pendingPdfSync || pendingPdfSync.signature!==signature){
+    const sync=pdfSyncPlan(byClass);
+    pendingPdfSync={signature,...sync};
+    showPdfSyncMappings(sync);
+    status.textContent=`Ready to synchronize ${[...byClass.values()].reduce((n,c)=>n+c.students.size,0)} students across ${byClass.size} classes. Review any unmatched students above, then click Create / Update Classes again to apply.`;
+    return;
+  }
+  button.disabled=true;
+  try{
+    const sync=pendingPdfSync;
+    const selected=new Map();
+    for(const item of sync.unresolved){
+      const id=item.select.value;
+      if(id){
+        const key=item.c.id+':'+id;
+        if(selected.has(key))throw new Error('An existing student was selected for multiple PDF records. Correct the mappings.');
+        selected.set(key,true);
+        const action=sync.plan.find(p=>p.name===item.className).actions[item.index];
+        action.match=item.c.students.find(s=>s.id===id);
+      }
+    }
+    // Validate all matches before modifying any class.
+    for(const entry of sync.plan){
+      const ids=entry.actions.filter(a=>a.match).map(a=>a.match.id);
+      if(new Set(ids).size!==ids.length)throw new Error(`Duplicate student matching in ${entry.name}.`);
+      const names=new Set();
+      for(const a of entry.actions){
+        const name=a.match?.name || a.proposed;
+        if(names.has(normalizeName(name)))throw new Error(`Duplicate display name “${name}” in ${entry.name}. Edit preferred names or mappings first.`);
+        names.add(normalizeName(name));
+      }
+    }
+    let added=0,removed=0,updated=0,firstId=null;
+    for(const entry of sync.plan){
+      let c=entry.c;
+      if(!c){c={id:uid(),name:entry.name,students:[],avoidPairs:[],avoidGroups:[],togetherGroups:[],roles:sharedRoles().slice(),seating:[],groupingStrategy:"balanced",groupHistory:[]};db.classes.push(c);}
+      if(!firstId)firstId=c.id;
+      const next=[],kept=new Set();
+      for(const a of entry.actions){
+        if(a.match){a.match.tier=a.tier;a.match.sourceFullName=a.record.name;next.push(a.match);kept.add(a.match.id);updated++;}
+        else {const student={id:uid(),name:a.proposed,tier:a.tier,sourceFullName:a.record.name};next.push(student);kept.add(student.id);added++;}
+      }
+      const dropped=new Set(c.students.filter(s=>!kept.has(s.id)).map(s=>s.id));
+      removed+=dropped.size;
+      c.students=next;
+      c.avoidPairs=(c.avoidPairs||[]).filter(pair=>pair.every(id=>!dropped.has(id)));
+      c.avoidGroups=(c.avoidGroups||[]).map(rule=>rule.filter(id=>!dropped.has(id))).filter(rule=>rule.length>=3);
+      c.togetherGroups=(c.togetherGroups||[]).map(rule=>rule.filter(id=>!dropped.has(id))).filter(rule=>rule.length>=2);
+      const cleanAssignments = assignments => {
+        if(!assignments || typeof assignments!=='object')return;
+        for(const [desk,ids] of Object.entries(assignments))
+          if(Array.isArray(ids))assignments[desk]=ids.map(id=>dropped.has(id)?null:id);
+      };
+      cleanAssignments(c.seatingAssignments);
+      if(c.seatingAssignmentsByTemplate)
+        Object.values(c.seatingAssignmentsByTemplate).forEach(cleanAssignments);
+      if(Array.isArray(c.seating))c.seating.forEach(g=>{
+        if(Array.isArray(g.students))g.students=g.students.map(id=>dropped.has(id)?null:id);
+      });
+    }
+    db.activeId=firstId;groups=[];absentIds=new Set();save();render();
+    pendingPdfSync=null;$('pdfSyncMappings').style.display='none';
+    status.textContent=`Synced ${byClass.size} classes: ${updated} returning students updated, ${added} added, ${removed} dropped. Class IDs, layouts, remaining seating assignments, preferred names and valid separation rules preserved.`;
+    toast('Roster synchronized successfully.');
+  }catch(err){console.error(err);status.textContent=`Sync not completed: ${err.message}`;}
+  finally{button.disabled=false;}
+});
+
+$('avoidRuleType').addEventListener('change',() => {
+  renderAvoidControls(current());
+});
+
+$('addAvoidGroupBtn').addEventListener('click',()=>{
+  const c=current();if(!c)return;
+  const ids=[...$('avoidGroupStudents').querySelectorAll('input:checked')].map(input=>input.value);
+  if(ids.length<2){toast('Select at least two students to separate.');return;}
+  if(ids.length===2){
+    if(c.avoidPairs.some(pair=>pair.length===2&&pair.every(id=>ids.includes(id)))){toast('That separation rule already exists.');return;}
+    const proposed={...c,avoidPairs:[...c.avoidPairs,ids]};
+    if(validateTogetherRules(proposed)){toast('This rule conflicts with a Keep Together rule.');return;}
+    c.avoidPairs.push(ids);
+  }else{
+    if(c.avoidGroups.some(rule=>rule.length===ids.length&&rule.every(id=>ids.includes(id)))){toast('That separation rule already exists.');return;}
+    const proposed={...c,avoidGroups:[...c.avoidGroups,ids]};
+    if(validateTogetherRules(proposed)){toast('This rule conflicts with a Keep Together rule.');return;}
+    c.avoidGroups.push(ids);
+  }
+  groups=[];c.savedGroups=[];save();render();toast('Separation rule saved.');
+});
+
+$('addTogetherBtn').addEventListener('click',()=>{
+  const c=current();if(!c)return;
+  const ids=[...$('togetherStudents').querySelectorAll('input[data-together-student]:checked')].map(el=>el.value);
+  if(ids.length<2||ids.length>3){toast('Select two or three students to keep together.');return;}
+  if((c.togetherGroups||[]).some(r=>r.length===ids.length&&r.every(id=>ids.includes(id)))){toast('That rule already exists.');return;}
+  const proposed=[...(c.togetherGroups||[]),ids];
+  const issue=validateTogetherRules(c,proposed);
+  if(issue){toast(issue);return;}
+  c.togetherGroups=proposed;groups=[];absentIds.clear();absentOrigins.clear();save();render();toast('Keep-together rule saved.');
+});
+
+$('generateBtn').addEventListener('click',generate);
+const fullscreenBtn = $('fullscreenBtn');
+let ipadPresentationTarget = null;
+const isPresentation = target => document.fullscreenElement === target || (ipadPresentationTarget === target && target.classList.contains('ipad-fullscreen'));
+function exitIpadPresentation() {
+  if (!ipadPresentationTarget) return;
+  const target = ipadPresentationTarget;
+  target.classList.remove('ipad-fullscreen');
+  ipadPresentationTarget = null;
+  document.body.classList.remove('ipad-presentation');
+  if (target.id === 'groupsPage') {
+    syncFullscreenButton();
+    target.querySelectorAll('.member-name,.avatar').forEach(el => el.style.removeProperty('font-size'));
+  } else {
+    $('seatingRoom').style.removeProperty('--seating-fullscreen-zoom');
+  }
+}
+function enterIpadPresentation(target) {
+  exitIpadPresentation();
+  ipadPresentationTarget = target;
+  document.body.classList.add('ipad-presentation');
+  target.classList.add('ipad-fullscreen');
+  requestAnimationFrame(() => {
+    if (target.id === 'groupsPage') fitGroupFullscreen();
+    else fitSeatingFullscreen();
+  });
+}
+document.getElementById('ipadExitPresentation').addEventListener('click', exitIpadPresentation);
+document.addEventListener('keydown', event => { if (event.key === 'Escape' && ipadPresentationTarget) exitIpadPresentation(); });
+window.addEventListener('resize', () => { if (ipadPresentationTarget === $('groupsPage')) fitGroupFullscreen(); });
+// Fit every group on one screen, then independently shrink long names and role labels.
+function fitGroupFullscreen() {
+  if (!isPresentation($('groupsPage'))) return;
+  const page=$('groupsPage'), grid=page.querySelector('.groups');
+  if (!grid) return;
+  const cards=[...grid.querySelectorAll('.group-card')];
+  if (!cards.length) return;
+  const shell=page.querySelector('.groups-shell');
+  const n=cards.length, W=page.clientWidth, H=page.clientHeight;
+  const outer=Math.max(5,Math.min(14,Math.round(Math.min(W,H)*.012)));
+  const gap=Math.max(3,Math.min(10,Math.round(Math.min(W,H)*.008)));
+  const availableW=W-2*outer, availableH=H-2*outer;
+  const maxMembers=Math.max(1,...cards.map(c=>c.querySelectorAll('.member').length));
+  // Student presentation uses exactly four columns, with as many rows as needed.
+  const cols=4, rows=Math.ceil(n/cols);
+  const cw=(availableW-gap*(cols-1))/cols;
+  const ch=(availableH-gap*(rows-1))/rows;
+  const titleH=Math.max(13,Math.min(30,ch*.17));
+  const padding=Math.max(2,Math.min(10,cw*.025,ch*.035));
+  const memberGap=Math.max(2,Math.min(7,ch*.015));
+  const memberH=Math.max(8,(ch-titleH-padding*2-memberGap*(maxMembers-1))/maxMembers);
+  const nameSize=Math.max(7,Math.min(34,memberH*.48,cw*.085));
+  const roleSize=Math.max(15,Math.min(22,nameSize*.72));
+  const roleWidth=Math.max(90,Math.min(cw*.34,132));
+  const roleHeight=Math.max(27,Math.min(54,memberH*.56));
+  const vars={
+    '--fg-outer':outer+'px','--fg-gap':gap+'px','--fg-cols':cols,'--fg-rows':rows,
+    '--fg-members':maxMembers,'--fg-title':Math.max(9,Math.min(24,titleH*.57))+'px',
+    '--fg-small':Math.max(7,Math.min(14,titleH*.42))+'px',
+    '--fg-title-pad':Math.max(2,Math.min(8,titleH*.17))+'px',
+    '--fg-pad':padding+'px','--fg-member-gap':memberGap+'px',
+    '--fg-member-pad':Math.max(1,Math.min(8,memberH*.1))+'px',
+    '--fg-name':nameSize+'px','--fg-role':roleSize+'px','--fg-role-width':roleWidth+'px','--fg-role-height':roleHeight+'px'
+  };
+  Object.entries(vars).forEach(([k,v])=>page.style.setProperty(k,String(v)));
+  // Measure rendered strings and shrink their own font size rather than clipping.
+  requestAnimationFrame(()=>{
+    if(!isPresentation(page)) return;
+    grid.querySelectorAll('.member').forEach(member=>{
+      const name=member.querySelector('.member-name');
+      const role=member.querySelector('.avatar');
+      if(!name||!role) return;
+      name.style.fontSize=''; role.style.fontSize='';
+      const nameBox=name.parentElement;
+      const fit=(el,maxW,maxH,base,min)=>{
+        let lo=min,hi=base;
+        const fits=(v)=>{el.style.fontSize=v+'px';return el.scrollWidth<=maxW+1 && el.scrollHeight<=maxH+1;};
+        if(fits(hi)) return;
+        for(let i=0;i<13;i++){const mid=(lo+hi)/2;if(fits(mid))lo=mid;else hi=mid;}
+        el.style.fontSize=lo+'px';
+      };
+      // Role badges have a dedicated readable height. Fit to width, not the
+      // badge's intrinsic text height (which previously shrank every role to ~8px).
+      // The badge's scrollWidth includes padding. Comparing it against
+      // clientWidth minus padding made EVERY badge fail, shrinking labels to 11px.
+      // Measure the actual text instead, so short roles retain the full font size.
+      const label=role.textContent.trim();
+      const canvas=fitGroupFullscreen.measureCanvas||(fitGroupFullscreen.measureCanvas=document.createElement('canvas'));
+      const ctx=canvas.getContext('2d');
+      const cs=getComputedStyle(role);
+      const room=Math.max(8,role.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight)-2);
+      let size=roleSize;
+      const weight=cs.fontWeight||'800';
+      const family=cs.fontFamily||'system-ui';
+      while(size>11){
+        ctx.font=`${weight} ${size}px ${family}`;
+        if(ctx.measureText(label).width<=room)break;
+        size-=.5;
+      }
+      role.style.fontSize=size+'px';
+      fit(name,Math.max(8,name.parentElement.clientWidth),Math.max(8,member.clientHeight-4),nameSize,Math.min(7,nameSize));
+    });
+  });
+}
+window.addEventListener('resize',()=>{ if(document.fullscreenElement===$('groupsPage')) fitGroupFullscreen(); });
+async function toggleGroupFullscreen() {
+  const target = $('groupsPage');
+  if (ipadPresentationTarget === target) { exitIpadPresentation(); return; }
+  if (document.fullscreenElement === target) { await document.exitFullscreen(); return; }
+  if (typeof target.requestFullscreen === 'function') {
+    try { await target.requestFullscreen(); return; } catch (_) { /* iPadOS fallback */ }
+  }
+  enterIpadPresentation(target);
+  syncFullscreenButton();
+}
+function syncFullscreenButton() {
+  const active = isPresentation($('groupsPage'));
+  fullscreenBtn.textContent = active ? '⤢ Exit full screen' : '⛶ Full screen';
+  fullscreenBtn.setAttribute('aria-label',active ? 'Exit full screen' : 'Make group display fullscreen');
+}
+fullscreenBtn.addEventListener('click', toggleGroupFullscreen);
+document.addEventListener('fullscreenchange', () => { syncFullscreenButton(); if(isPresentation($('groupsPage'))) requestAnimationFrame(fitGroupFullscreen); });
+$('printBtn').addEventListener('click',() => {
+  if (!groups.length) { toast('Generate groups before printing.'); return; }
+  window.print();
+});
+
+$('pickRandomStudentBtn').addEventListener('click',() => {
+  const c = current();
+  const result = $('randomStudentResult');
+  if (!c || !c.students.length) {
+    result.textContent = 'Add students to this class roster first.';
+    toast('This class has no students.');
+    return;
+  }
+  const picked = c.students[Math.floor(Math.random() * c.students.length)];
+  result.innerHTML = '';
+  const label = document.createElement('div');
+  label.textContent = 'Randomly selected student:';
+  const name = document.createElement('strong');
+  name.textContent = picked.name;
+  result.append(label,name);
+});
+
+$('exportBtn').addEventListener('click', () => {
+  downloadBackup(db);
+  const meta = readBackupMeta();
+  meta.lastExport = Date.now();
+  writeBackupMeta(meta);
+  updateBackupStatus();
+  toast('Backup download started. Save the file somewhere secure.');
+});
+$('importBtn').addEventListener('click', () => $('importFile').click());
+function closeRestorePreview() {
+  pendingRestore = null;
+  $('restorePreview').classList.add('hidden');
+}
+$('restoreCancelBtn').addEventListener('click',closeRestorePreview);
+$('importFile').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  try {
+    if (file.size > 10*1024*1024) throw new Error('Backup is too large');
+    pendingRestore = validateBackup(JSON.parse(await file.text()));
+    const count = pendingRestore.classes.reduce((sum,c) => sum+c.students.length,0);
+    $('restoreSummary').textContent = `${pendingRestore.classes.length} classes and ${count} student records. Choose whether to add these classes or replace everything currently saved.`;
+    $('restorePreview').classList.remove('hidden');
+  } catch(err) {
+    closeRestorePreview();
+    toast('Invalid backup file. No data was changed.');
+  }
+});
+$('restoreMergeBtn').addEventListener('click', () => {
+  if (!pendingRestore) return;
+  const imported = pendingRestore;
+  const ids = new Set(db.classes.map(c => c.id));
+  imported.classes.forEach(original => {
+    let c = structuredClone(original);
+    if (ids.has(c.id)) {
+      c.id = uid();
+      c.name += ' (imported)';
+    }
+    ids.add(c.id);
+    db.classes.push(c);
+  });
+  syncRolesAcrossClasses();
+  save(); render();
+  closeRestorePreview();
+  toast('Classes added. Existing classes preserved.');
+});
+$('restoreReplaceBtn').addEventListener('click', () => {
+  if (!pendingRestore) return;
+  if (!confirm('Replace ALL current classes, seating charts, settings and grouping history with this backup? A safety copy of your current data will download first.')) return;
+  downloadBackup(db,'balanced-group-randomizer-before-restore');
+  db = pendingRestore;
+  if (!db.classes.some(c => c.id === db.activeId)) db.activeId = db.classes[0]?.id || null;
+  syncRolesAcrossClasses();
+  restoreGroupSnapshot();
+  save(); render();
+  closeRestorePreview();
+  toast('Backup restored. A safety copy of previous data was downloaded.');
+});
+
+// Templates are shared between classes; student assignments belong to each class and template.
+function ensureSeatingTemplates() {
+  if (!Array.isArray(db.seatingTemplates) || !db.seatingTemplates.length) {
+    // Migrate the existing shared layout, preserving positions, priorities and student assignments.
+    if (!Array.isArray(db.sharedSeating)) {
+      const source = current()?.seating || db.classes.find(c => Array.isArray(c.seating) && c.seating.length)?.seating || [];
+      db.sharedSeating = source.map(g => ({
+        id:g.id,size:g.size,orientation:g.orientation,priority:g.priority,x:g.x,y:g.y
+      }));
+      db.classes.forEach(c => {
+        if (!c.seatingAssignments || typeof c.seatingAssignments !== 'object') c.seatingAssignments = {};
+        (c.seating || []).forEach(g => {
+          if (db.sharedSeating.some(shared => shared.id === g.id))
+            c.seatingAssignments[g.id] = Array.isArray(g.students) ? g.students.slice() : [];
+        });
+      });
+    }
+    if (!db.seatingCompactV1) {
+      db.sharedSeating.forEach(g => {
+        g.x = Math.max(0,Math.min(1100-seatingDimensions(g).w,Math.round((g.x||0)*0.68)));
+        g.y = Math.max(52,Math.min(660-seatingDimensions(g).h,Math.round((g.y||0)*0.62)+18));
+      });
+      db.seatingCompactV1 = true;
+    }
+    const id = uid();
+    db.seatingTemplates = [{id,name:'Default Layout',layout:db.sharedSeating}];
+    db.activeSeatingTemplateId = id;
+    db.classes.forEach(c => {
+      c.seatingAssignmentsByTemplate = {[id]: c.seatingAssignments || {}};
+    });
+    save();
+  }
+  if (!db.seatingTemplates.some(t => t.id === db.activeSeatingTemplateId))
+    db.activeSeatingTemplateId = db.seatingTemplates[0].id;
+  db.seatingTemplates.forEach(t => { if (!Array.isArray(t.layout)) t.layout = []; });
+}
+function activeSeatingTemplate() {
+  ensureSeatingTemplates();
+  return db.seatingTemplates.find(t => t.id === db.activeSeatingTemplateId);
+}
+function seatingLayout() { return activeSeatingTemplate().layout; }
+function seatingAssignments(c=current()) {
+  if (!c) return {};
+  ensureSeatingTemplates();
+  if (!c.seatingAssignmentsByTemplate || typeof c.seatingAssignmentsByTemplate !== 'object')
+    c.seatingAssignmentsByTemplate = {};
+  const id = db.activeSeatingTemplateId;
+  if (!c.seatingAssignmentsByTemplate[id]) c.seatingAssignmentsByTemplate[id] = {};
+  return c.seatingAssignmentsByTemplate[id];
+}
+function renderSeatingTemplates() {
+  ensureSeatingTemplates();
+  const select = $('seatingTemplateSelect');
+  select.innerHTML = '';
+  db.seatingTemplates.forEach(t => {
+    const option = document.createElement('option');
+    option.value = t.id;
+    option.textContent = t.name;
+    select.append(option);
+  });
+  select.value = db.activeSeatingTemplateId;
+  $('deleteSeatingTemplateBtn').disabled = db.seatingTemplates.length <= 1;
+}
+$('seatingTemplateSelect').addEventListener('change',e => {
+  pendingSeatSwap = null;
+  clearDeskGroupSelection();
+  db.activeSeatingTemplateId = e.target.value;
+  save(); renderSeating();
+});
+$('addSeatingTemplateBtn').addEventListener('click',() => {
+  const name = prompt('Name the new seating chart template:',`Layout ${db.seatingTemplates.length+1}`);
+  if (name === null) return;
+  const trimmed = name.trim();
+  if (!trimmed) { toast('Enter a template name.'); return; }
+  if (db.seatingTemplates.some(t => normalizeName(t.name) === normalizeName(trimmed))) {
+    toast('A template with that name already exists.'); return;
+  }
+  rememberSeatingEdit();
+  const clone = confirm('Copy the current desk layout into the new template?\\nOK = Copy layout; Cancel = Start with an empty layout.');
+  const source = seatingLayout();
+  const layout = clone ? source.map(g => ({...g,id:uid()})) : [];
+  const id = uid();
+  db.seatingTemplates.push({id,name:trimmed,layout});
+  db.activeSeatingTemplateId = id;
+  // New template begins with empty student assignments, even if the layout was copied.
+  save(); renderSeating(); toast('Template created.');
+});
+$('renameSeatingTemplateBtn').addEventListener('click',() => {
+  const template = activeSeatingTemplate();
+  const answer = prompt('Rename seating chart template:',template.name);
+  if (answer === null) return;
+  const name = answer.trim();
+  if (!name) { toast('Template name cannot be blank.'); return; }
+  if (db.seatingTemplates.some(t => t.id !== template.id && normalizeName(t.name) === normalizeName(name))) {
+    toast('A template with that name already exists.'); return;
+  }
+  rememberSeatingEdit();
+  template.name = name;
+  save(); renderSeating(); toast('Template renamed.');
+});
+$('deleteSeatingTemplateBtn').addEventListener('click',() => {
+  const template = activeSeatingTemplate();
+  if (db.seatingTemplates.length <= 1) { toast('Keep at least one template.'); return; }
+  if (!confirm(`Delete template "${template.name}" and its student assignments for all classes?`)) return;
+  rememberSeatingEdit();
+  db.seatingTemplates = db.seatingTemplates.filter(t => t.id !== template.id);
+  db.classes.forEach(c => {
+    if (c.seatingAssignmentsByTemplate) delete c.seatingAssignmentsByTemplate[template.id];
+  });
+  db.activeSeatingTemplateId = db.seatingTemplates[0].id;
+  save(); renderSeating(); toast('Template deleted.');
+});
+function normalizeSeatingPriorities(layout) {
+  // Existing layouts are numbered in their original creation order.
+  const ranked = layout.map((g,i) => ({g,i})).sort((a,b) => {
+    const ap = Number.isInteger(a.g.priority) && a.g.priority > 0 ? a.g.priority : a.i+1;
+    const bp = Number.isInteger(b.g.priority) && b.g.priority > 0 ? b.g.priority : b.i+1;
+    return ap-bp || a.i-b.i;
+  });
+  ranked.forEach(({g},i) => { g.priority = i+1; });
+}
+function changeSeatingPriority(groupId,newPriority) {
+  const layout = seatingLayout();
+  normalizeSeatingPriorities(layout);
+  const ranked = [...layout].sort((a,b)=>a.priority-b.priority);
+  const from = ranked.findIndex(g=>g.id===groupId);
+  if (from<0) return;
+  rememberSeatingEdit();
+  const [moving] = ranked.splice(from,1);
+  ranked.splice(Math.max(0,Math.min(ranked.length,newPriority-1)),0,moving);
+  ranked.forEach((g,i)=>{ g.priority=i+1; });
+  save();
+  renderSeating();
+}
+function seatingDimensions(g) {
+  if(g.size===3 && String(g.orientation||'').startsWith('stagger-'))
+    return {w:160,h:106,cols:2}; // Two desks plus a tightly offset third, all text stays upright.
+  const cols = g.size === 4 ? 2 : g.orientation === 'column' ? 1 : g.size;
+  const rows = Math.ceil(g.size / cols);
+  return {w:cols*70+(cols-1)*4+16,h:rows*43+(rows-1)*4+16,cols};
+}
+const nameMeasureCanvas = document.createElement('canvas');
+let pendingSeatSwap = null;
+let seatActionMenu = null;
+function seatingLocks(c=current()) {
+  if (!c) return {};
+  if (!c.seatingLocksByTemplate || typeof c.seatingLocksByTemplate !== 'object') c.seatingLocksByTemplate={};
+  const id=db.activeSeatingTemplateId;
+  if (!c.seatingLocksByTemplate[id]) c.seatingLocksByTemplate[id]={};
+  return c.seatingLocksByTemplate[id];
+}
+function closeSeatActionMenu() { if(seatActionMenu)seatActionMenu.remove(); seatActionMenu=null; }
+function showSeatActionMenu(desk,groupId,seatIndex,student) {
+  closeSeatActionMenu();
+  const menu=document.createElement('div'); menu.className='seat-action-menu';
+  menu.setAttribute('role','group'); menu.setAttribute('aria-label','Actions for '+student.name);
+  const swap=document.createElement('button');swap.type='button';swap.textContent='⇄ Swap';
+  swap.addEventListener('click',()=>{closeSeatActionMenu();swapSeatingSeats(groupId,seatIndex);toast('Select another seat to swap.');});
+  const locks=seatingLocks();const isLocked=locks[student.id]?.groupId===groupId&&locks[student.id]?.seatIndex===seatIndex;
+  const lock=document.createElement('button');lock.type='button';lock.textContent=isLocked?'🔓 Unlock':'🔒 Lock';
+  lock.addEventListener('click',()=>{
+    rememberSeatingEdit();
+    if(isLocked)delete locks[student.id];
+    else locks[student.id]={groupId,seatIndex};
+    closeSeatActionMenu();save();renderSeating();toast(isLocked?'Seat unlocked.':'Student locked in this seat.');
+  });
+  menu.append(swap,lock);document.body.append(menu);seatActionMenu=menu;
+  const rect=desk.getBoundingClientRect();
+  const width=menu.offsetWidth,height=menu.offsetHeight;
+  menu.style.left=Math.max(8,Math.min(window.innerWidth-width-8,rect.left+rect.width/2-width/2))+'px';
+  menu.style.top=(rect.bottom+height+8<window.innerHeight?rect.bottom+5:Math.max(8,rect.top-height-5))+'px';
+}
+document.addEventListener('pointerdown',e=>{if(seatActionMenu&&!seatActionMenu.contains(e.target)&&!e.target.closest('.desk'))closeSeatActionMenu();});
+const selectedDeskGroups = new Set();
+// Bounded undo history for seating edits. Each entry includes the template layout
+// and assignments for every class, so deleting desks can be undone completely.
+const seatingUndoHistory = [];
+function rememberSeatingEdit() {
+  ensureSeatingTemplates();
+  seatingUndoHistory.push(JSON.stringify({
+    templates:db.seatingTemplates,
+    activeTemplateId:db.activeSeatingTemplateId,
+    assignments:db.classes.map(c=>({id:c.id,byTemplate:c.seatingAssignmentsByTemplate || {},locks:c.seatingLocksByTemplate || {}}))
+  }));
+  if (seatingUndoHistory.length>60) seatingUndoHistory.shift();
+}
+function undoSeatingEdit() {
+  if (!seatingEditable() || !seatingUndoHistory.length) return false;
+  const snapshot=JSON.parse(seatingUndoHistory.pop());
+  db.seatingTemplates=snapshot.templates;
+  db.activeSeatingTemplateId=snapshot.activeTemplateId;
+  snapshot.assignments.forEach(a=>{
+    const c=db.classes.find(c=>c.id===a.id);
+    if(c) { c.seatingAssignmentsByTemplate=a.byTemplate; c.seatingLocksByTemplate=a.locks || {}; }
+  });
+  pendingSeatSwap=null;closeSeatActionMenu();
+  clearDeskGroupSelection();
+  save(); renderSeating(); toast('Seating chart change undone.');
+  return true;
+}
+
+// Internal clipboard: desk geometry only, not student assignments.
+let copiedDeskGroups = [];
+let pasteSequence = 0;
+function copySelectedDeskGroups() {
+  if (!seatingEditable() || !selectedDeskGroups.size) return false;
+  const groups = seatingLayout().filter(g => selectedDeskGroups.has(g.id));
+  if (!groups.length) return false;
+  const minX = Math.min(...groups.map(g => g.x));
+  const minY = Math.min(...groups.map(g => g.y));
+  copiedDeskGroups = groups.map(g => ({
+    size:g.size, orientation:g.orientation,
+    dx:g.x-minX, dy:g.y-minY
+  }));
+  pasteSequence = 0;
+  toast(`${groups.length} desk group${groups.length===1?'':'s'} copied. Press ${navigator.platform?.includes('Mac')?'⌘':'Ctrl'}+V to paste.`);
+  return true;
+}
+function pasteSelectedDeskGroups() {
+  if (!seatingEditable() || !copiedDeskGroups.length || !current()) return false;
+  const room = $('seatingRoom');
+  const layout = seatingLayout();
+  const maxX = Math.max(...copiedDeskGroups.map(g => g.dx+seatingDimensions(g).w));
+  const maxY = Math.max(...copiedDeskGroups.map(g => g.dy+seatingDimensions(g).h));
+  // Keep the whole arrangement inside the room, preserving all relative spacing.
+  if (maxX > room.clientWidth || maxY > room.clientHeight) {
+    toast('The copied arrangement is too large for the seating chart.');
+    return false;
+  }
+  pasteSequence++;
+  const offset = 25 * ((pasteSequence-1)%8+1);
+  const first = seatingLayout().filter(g=>selectedDeskGroups.has(g.id));
+  const originalMinX = first.length ? Math.min(...first.map(g=>g.x)) : 30;
+  const originalMinY = first.length ? Math.min(...first.map(g=>g.y)) : 80;
+  const baseX = Math.max(0,Math.min(room.clientWidth-maxX,originalMinX+offset));
+  const baseY = Math.max(55,Math.min(room.clientHeight-maxY,originalMinY+offset));
+  rememberSeatingEdit();
+  clearDeskGroupSelection();
+  copiedDeskGroups.forEach(g => {
+    const newGroup = {id:uid(),size:g.size,orientation:g.orientation,
+      priority:layout.length+1,x:baseX+g.dx,y:baseY+g.dy};
+    layout.push(newGroup);
+    selectedDeskGroups.add(newGroup.id);
+  });
+  pendingSeatSwap = null;
+  save(); renderSeating();
+  toast(`${copiedDeskGroups.length} desk groups pasted and selected. Drag any highlighted group to move them together.`);
+  return true;
+}
+function deleteSelectedDeskGroups() {
+  if (!seatingEditable() || !selectedDeskGroups.size) return false;
+  const ids = new Set(selectedDeskGroups);
+  const template = activeSeatingTemplate();
+  const removed = template.layout.filter(g => ids.has(g.id)).length;
+  if (!removed) return false;
+  rememberSeatingEdit();
+  template.layout = template.layout.filter(g => !ids.has(g.id));
+  db.classes.forEach(c => {
+    const assignments = c.seatingAssignmentsByTemplate?.[db.activeSeatingTemplateId];
+    if (assignments) ids.forEach(id => delete assignments[id]);
+  });
+  normalizeSeatingPriorities(template.layout);
+  pendingSeatSwap = null;
+  clearDeskGroupSelection();
+  save();
+  renderSeating();
+  toast(`${removed} desk group${removed === 1 ? '' : 's'} deleted.`);
+  return true;
+}
+document.addEventListener('keydown', e => {
+  if (!seatingEditable() || !e.target || !document.getElementById('seatingPage')) return;
+  const page = $('seatingPage');
+  if (page.classList.contains('hidden') || getComputedStyle(page).display==='none') return;
+  if (e.target.closest('input,textarea,select,[contenteditable="true"]')) return;
+  if ((e.metaKey || e.ctrlKey) && !e.altKey && e.key.toLowerCase()==='z') {
+    if (undoSeatingEdit()) e.preventDefault();
+    return;
+  }
+  if ((e.key === 'Delete' || e.key === 'Backspace') && !e.metaKey && !e.ctrlKey && !e.altKey) {
+    if (deleteSelectedDeskGroups()) e.preventDefault();
+    return;
+  }
+  if (!(e.metaKey || e.ctrlKey) || e.altKey) return;
+  const key = e.key.toLowerCase();
+  if (key==='c' && selectedDeskGroups.size) {
+    if (copySelectedDeskGroups()) e.preventDefault();
+  } else if (key==='v' && copiedDeskGroups.length) {
+    if (pasteSelectedDeskGroups()) e.preventDefault();
+  }
+});
+function seatingEditable() {
+  return !document.fullscreenElement;
+}
+function clearDeskGroupSelection() {
+  selectedDeskGroups.clear();
+  document.querySelectorAll('#seatingRoom .desk-group.multi-selected').forEach(el => el.classList.remove('multi-selected'));
+}
+function refreshDeskGroupSelection() {
+  document.querySelectorAll('#seatingRoom .desk-group').forEach(el =>
+    el.classList.toggle('multi-selected', selectedDeskGroups.has(el.dataset.groupId)));
+}
+function roomPointerPoint(e,room) {
+  const rect=room.getBoundingClientRect();
+  return {x:(e.clientX-rect.left)*(room.clientWidth/rect.width),
+          y:(e.clientY-rect.top)*(room.clientHeight/rect.height)};
+}
+// Drag a selection rectangle across the empty classroom to select whole desk groups.
+$('seatingRoom').addEventListener('pointerdown',e => {
+  const room=$('seatingRoom');
+  if (!seatingEditable() || e.button !== 0 || e.target !== room) return;
+  e.preventDefault();
+  const origin=roomPointerPoint(e,room);
+  const additive=e.shiftKey || e.metaKey || e.ctrlKey;
+  if (!additive) clearDeskGroupSelection();
+  const original=new Set(selectedDeskGroups);
+  const marquee=document.createElement('div');
+  marquee.className='seating-marquee';
+  room.append(marquee);
+  room.setPointerCapture(e.pointerId);
+  let moved=false;
+  const move=ev => {
+    const pt=roomPointerPoint(ev,room);
+    const left=Math.max(0,Math.min(origin.x,pt.x)),top=Math.max(0,Math.min(origin.y,pt.y));
+    const right=Math.min(room.clientWidth,Math.max(origin.x,pt.x));
+    const bottom=Math.min(room.clientHeight,Math.max(origin.y,pt.y));
+    moved=moved || Math.abs(pt.x-origin.x)>4 || Math.abs(pt.y-origin.y)>4;
+    Object.assign(marquee.style,{left:left+'px',top:top+'px',width:Math.max(0,right-left)+'px',height:Math.max(0,bottom-top)+'px'});
+    selectedDeskGroups.clear();
+    original.forEach(id => selectedDeskGroups.add(id));
+    if (moved) seatingLayout().forEach(g => {
+      const {w,h}=seatingDimensions(g);
+      if (g.x<right && g.x+w>left && g.y<bottom && g.y+h>top) selectedDeskGroups.add(g.id);
+    });
+    refreshDeskGroupSelection();
+  };
+  const end=() => {
+    room.removeEventListener('pointermove',move);
+    room.removeEventListener('pointerup',end);
+    room.removeEventListener('pointercancel',end);
+    marquee.remove();
+    if (!moved && !additive) clearDeskGroupSelection();
+  };
+  room.addEventListener('pointermove',move);
+  room.addEventListener('pointerup',end);
+  room.addEventListener('pointercancel',end);
+});
+function swapSeatingSeats(groupId,seatIndex) {
+  if (document.fullscreenElement) return;
+  const locks=seatingLocks(),assignments=seatingAssignments();
+  const targetId=(assignments[groupId]||[])[seatIndex];
+  if(targetId && locks[targetId]?.groupId===groupId && locks[targetId]?.seatIndex===seatIndex) {
+    toast('Unlock this student before swapping.');return;
+  }
+  const chosen = {groupId,seatIndex,classId:current()?.id,templateId:db.activeSeatingTemplateId};
+  if (pendingSeatSwap && (pendingSeatSwap.classId !== chosen.classId || pendingSeatSwap.templateId !== chosen.templateId))
+    pendingSeatSwap = null;
+  if (!pendingSeatSwap) {
+    pendingSeatSwap = chosen;
+    renderSeating();
+    return;
+  }
+  const first = pendingSeatSwap;
+  pendingSeatSwap = null;
+  if (first.groupId === groupId && first.seatIndex === seatIndex) {
+    renderSeating(); // Clicking the selected seat again cancels the swap.
+    return;
+  }
+  const firstId=(assignments[first.groupId]||[])[first.seatIndex];
+  if(firstId && locks[firstId]?.groupId===first.groupId && locks[firstId]?.seatIndex===first.seatIndex){toast('Unlock this student before swapping.');renderSeating();return;}
+  rememberSeatingEdit();
+  const firstSeats = assignments[first.groupId] || (assignments[first.groupId] = []);
+  const secondSeats = assignments[groupId] || (assignments[groupId] = []);
+  const a = firstSeats[first.seatIndex] || null;
+  const b = secondSeats[seatIndex] || null;
+  if (b) firstSeats[first.seatIndex] = b;
+  else delete firstSeats[first.seatIndex];
+  if (a) secondSeats[seatIndex] = a;
+  else delete secondSeats[seatIndex];
+  save(); renderSeating();
+}
+
+function renderSeating() {
+  closeSeatActionMenu();
+  renderSeatingTemplates();
+  if (pendingSeatSwap && (pendingSeatSwap.classId !== current()?.id ||
+      pendingSeatSwap.templateId !== db.activeSeatingTemplateId ||
+      !seatingLayout().some(g => g.id === pendingSeatSwap.groupId))) pendingSeatSwap = null;
+  const room = $('seatingRoom');
+  room.innerHTML = '<div class="front-of-class">FRONT OF CLASS</div>';
+  const layout = seatingLayout();
+  for (const id of [...selectedDeskGroups]) if (!layout.some(g => g.id===id)) selectedDeskGroups.delete(id);
+  normalizeSeatingPriorities(layout);
+  let seats = 0, occupied = 0;
+  layout.forEach(g => {
+    const {w,h,cols} = seatingDimensions(g);
+    const el = document.createElement('div');
+    el.className = 'desk-group';
+    if(g.size===3 && String(g.orientation||'').startsWith('stagger-')) el.classList.add('compact-stagger',g.orientation);
+    el.style.left = `${g.x}px`;
+    el.style.top = `${g.y}px`;
+    el.style.gridTemplateColumns = `repeat(${cols},70px)`;
+    el.dataset.groupId = g.id;
+    if (selectedDeskGroups.has(g.id)) el.classList.add('multi-selected');
+    const priority = document.createElement('label');
+    priority.className = 'desk-priority';
+    priority.textContent = 'Priority ';
+    const prioritySelect = document.createElement('select');
+    prioritySelect.setAttribute('aria-label', `Populate priority for desk group ${g.priority}`);
+    for (let n=1;n<=layout.length;n++) {
+      const option = document.createElement('option');
+      option.value = String(n);
+      option.textContent = String(n);
+      option.selected = n === g.priority;
+      prioritySelect.append(option);
+    }
+    prioritySelect.addEventListener('pointerdown',e => e.stopPropagation());
+    prioritySelect.addEventListener('click',e => e.stopPropagation());
+    prioritySelect.addEventListener('change',e => {
+      e.stopPropagation();
+      changeSeatingPriority(g.id,Number(e.target.value));
+    });
+    priority.append(prioritySelect);
+    el.append(priority);
+    const del = document.createElement('button');
+    del.className = 'desk-delete';
+    del.textContent = '×';
+    del.title = 'Remove this desk group';
+    del.addEventListener('pointerdown',e => e.stopPropagation());
+    del.addEventListener('click',e => {
+      e.stopPropagation();
+      rememberSeatingEdit();
+      activeSeatingTemplate().layout = seatingLayout().filter(item => item.id !== g.id);
+      db.classes.forEach(c => {
+        const assignments = c.seatingAssignmentsByTemplate?.[db.activeSeatingTemplateId];
+        if (assignments) delete assignments[g.id];
+      });
+      normalizeSeatingPriorities(activeSeatingTemplate().layout);
+      db.classes.forEach(cl=>{
+        const locks=cl.seatingLocksByTemplate?.[db.activeSeatingTemplateId];
+        if(locks)for(const [studentId,place] of Object.entries(locks))if(place.groupId===g.id)delete locks[studentId];
+      });
+      save(); renderSeating();
+    });
+    el.append(del);
+    for (let i=0;i<g.size;i++) {
+      const desk = document.createElement('div');
+      const student = current()?.students.find(s => s.id === (seatingAssignments()[g.id]||[])[i]);
+      desk.className = 'desk' + (student ? '' : ' empty-seat');
+      desk.dataset.seatIndex = String(i);
+      desk.textContent = student ? student.name : 'Empty';
+      if (student) {
+        // Measure the full name and shrink its font until it fits on one line.
+        const ctx = nameMeasureCanvas.getContext('2d');
+        let fontSize = 10;
+        const availableWidth = 60; // 70px desk minus padding and border
+        while (fontSize > 3 && ctx) {
+          ctx.font = `700 ${fontSize}px system-ui, sans-serif`;
+          if (ctx.measureText(student.name).width <= availableWidth) break;
+          fontSize -= 0.25;
+        }
+        desk.style.fontSize = `${fontSize}px`;
+      }
+      desk.title = student ? student.name+' — '+(student.tier||'Middle')+' tier' : 'Empty seat';
+      if(student)desk.append(makeTierLetter(student.tier));
+      const lockInfo=student&&seatingLocks()[student.id];
+      if(lockInfo?.groupId===g.id && lockInfo?.seatIndex===i){
+        desk.classList.add('seat-locked');
+        const lockIcon=document.createElement('span');lockIcon.className='seat-lock-icon';lockIcon.textContent='🔒';
+        desk.append(lockIcon);
+      }
+      if (pendingSeatSwap?.groupId === g.id && pendingSeatSwap.seatIndex === i)
+        desk.classList.add('swap-selected');
+      desk.addEventListener('pointerdown', e => e.stopPropagation());
+      desk.addEventListener('click', e => {
+        e.stopPropagation();
+        if(pendingSeatSwap) swapSeatingSeats(g.id,i);
+        else if(student)showSeatActionMenu(desk,g.id,i,student);
+        else toast('Select an occupied seat and choose Swap first.');
+      });
+      el.append(desk);
+      seats++;
+      if (student) occupied++;
+    }
+    el.addEventListener('pointerdown',e => {
+      if (!seatingEditable() || e.button !== 0 || e.target.closest('button,select,.desk')) return;
+      e.preventDefault();
+      if (e.shiftKey || e.metaKey || e.ctrlKey) {
+        if (selectedDeskGroups.has(g.id)) selectedDeskGroups.delete(g.id);
+        else selectedDeskGroups.add(g.id);
+        refreshDeskGroupSelection();
+        return;
+      }
+      if (!selectedDeskGroups.has(g.id)) {
+        clearDeskGroupSelection();
+        selectedDeskGroups.add(g.id);
+        refreshDeskGroupSelection();
+      }
+      const moving=seatingLayout().filter(item=>selectedDeskGroups.has(item.id));
+      const originals=moving.map(item=>({item,x:item.x,y:item.y,dimensions:seatingDimensions(item)}));
+      const origin=roomPointerPoint(e,room);
+      let didMove=false;
+      el.classList.add('dragging');
+      el.setPointerCapture(e.pointerId);
+      const move=ev => {
+        const point=roomPointerPoint(ev,room);
+        let dx=point.x-origin.x,dy=point.y-origin.y;
+        if (Math.abs(dx)>2 || Math.abs(dy)>2) didMove=true;
+        dx=Math.max(...originals.map(o=>-o.x),Math.min(dx,...originals.map(o=>room.clientWidth-o.dimensions.w-o.x)));
+        dy=Math.max(...originals.map(o=>55-o.y),Math.min(dy,...originals.map(o=>room.clientHeight-o.dimensions.h-o.y)));
+        originals.forEach(o=>{
+          o.item.x=o.x+dx; o.item.y=o.y+dy;
+          const node=[...room.querySelectorAll('.desk-group')].find(n=>n.dataset.groupId===o.item.id);
+          if(node) {node.style.left=o.item.x+'px';node.style.top=o.item.y+'px';}
+        });
+      };
+      const end=() => {
+        el.classList.remove('dragging');
+        el.removeEventListener('pointermove',move);
+        el.removeEventListener('pointerup',end);
+        el.removeEventListener('pointercancel',end);
+        if(didMove) {
+          // Store pre-drag coordinates rather than the already moved positions.
+          const currentPositions=originals.map(o=>({item:o.item,x:o.item.x,y:o.item.y}));
+          originals.forEach(o=>{o.item.x=o.x;o.item.y=o.y;});
+          rememberSeatingEdit();
+          currentPositions.forEach(o=>{o.item.x=o.x;o.item.y=o.y;});
+          save();
+        }
+      };
+      el.addEventListener('pointermove',move);
+      el.addEventListener('pointerup',end);
+      el.addEventListener('pointercancel',end);
+    });
+    room.append(el);
+  });
+  const count = current()?.students.length || 0;
+  $('seatingStatus').textContent = `${layout.length} desk groups · ${seats} seats · ${occupied} assigned · ${count} students in roster. Populate fills priority 1 first; changing a priority shifts the others automatically.`;
+}
+function updateDeskOrientation() {
+  const selected=$('deskSize').value;
+  const orientation=$('deskOrientation');
+  orientation.disabled = selected==='1' || selected==='4';
+  [...orientation.options].forEach(o=>{o.hidden=o.value==='triangle' && selected!=='3';});
+  if(selected!=='3' && orientation.value==='triangle') orientation.value='row';
+  updateTriangleVariant();
+}
+function updateTriangleVariant() {
+  $('triangleVariantField').hidden = !($('deskSize').value==='3' && $('deskOrientation').value==='triangle');
+}
+$('deskSize').addEventListener('change',updateDeskOrientation);
+$('deskOrientation').addEventListener('change',updateTriangleVariant);
+document.querySelectorAll('[data-triangle]').forEach(button=>{
+  button.addEventListener('click',()=>{
+    $('triangleVariant').value=button.dataset.triangle;
+    document.querySelectorAll('[data-triangle]').forEach(choice=>{
+      const selected=choice===button;
+      choice.classList.toggle('selected',selected);
+      choice.setAttribute('aria-pressed',String(selected));
+    });
+  });
+});
+updateDeskOrientation();
+$('addDeskBtn').addEventListener('click',() => {
+  const c = current();
+  if (!c) { toast('Create a class first.'); return; }
+  const size = Number($('deskSize').value);
+  const orientation = size === 4 ? 'square' : size === 3 && $('deskOrientation').value==='triangle' ? $('triangleVariant').value : $('deskOrientation').value;
+  const layout = seatingLayout();
+  const g = {id:uid(),size,orientation,priority:layout.length+1,x:20+(layout.length%10)*105,y:65+(Math.floor(layout.length/10)%6)*96};
+  const {w,h} = seatingDimensions(g);
+  g.x = Math.min(g.x,1100-w);
+  g.y = Math.min(g.y,660-h);
+  rememberSeatingEdit();
+  layout.push(g);
+  save(); renderSeating();
+});
+const seatingFullscreenCanvas = document.querySelector('#seatingPage .seating-scroll');
+function fitSeatingFullscreen() {
+  if (!isPresentation(seatingFullscreenCanvas)) return;
+  const room = $('seatingRoom');
+  const zoom = Math.min(
+    seatingFullscreenCanvas.clientWidth / 1100,
+    seatingFullscreenCanvas.clientHeight / 660
+  );
+  room.style.setProperty('--seating-fullscreen-zoom', String(zoom));
+}
+$('seatingFullscreenBtn').addEventListener('click',async () => {
+  if (ipadPresentationTarget === seatingFullscreenCanvas) { exitIpadPresentation(); return; }
+  if (document.fullscreenElement === seatingFullscreenCanvas) { await document.exitFullscreen(); return; }
+  if (typeof seatingFullscreenCanvas.requestFullscreen === 'function') {
+    try { await seatingFullscreenCanvas.requestFullscreen(); return; } catch (_) { /* iPadOS fallback */ }
+  }
+  enterIpadPresentation(seatingFullscreenCanvas);
+});
+document.addEventListener('fullscreenchange',() => {
+  if (document.fullscreenElement === seatingFullscreenCanvas) {
+    fitSeatingFullscreen();
+  } else {
+    $('seatingRoom').style.removeProperty('--seating-fullscreen-zoom');
+  }
+});
+window.addEventListener('resize',fitSeatingFullscreen);
+$('printSeatingBtn').addEventListener('click',() => {
+  if (!seatingLayout().length) { toast('Add desks before printing.'); return; }
+  document.body.classList.add('print-seating');
+  window.print();
+});
+window.addEventListener('afterprint',() => document.body.classList.remove('print-seating'));
+$('clearDesksBtn').addEventListener('click',() => {
+  const c = current();
+  if (!c || !seatingLayout().length) return;
+  if (!confirm('Clear all desks in this template and its seating assignments for every class?')) return;
+  rememberSeatingEdit();
+  activeSeatingTemplate().layout = [];
+  db.classes.forEach(cl => {
+    if (cl.seatingAssignmentsByTemplate) cl.seatingAssignmentsByTemplate[db.activeSeatingTemplateId] = {};
+  });
+  db.classes.forEach(cl=>{if(cl.seatingLocksByTemplate)cl.seatingLocksByTemplate[db.activeSeatingTemplateId]={};});
+  save(); renderSeating();
+  toast('All desks cleared.');
+});
+$('clearStudentsBtn').addEventListener('click',() => {
+  rememberSeatingEdit();
+  current().seatingAssignmentsByTemplate[db.activeSeatingTemplateId] = {};
+  current().seatingLocksByTemplate && (current().seatingLocksByTemplate[db.activeSeatingTemplateId]={});
+  save(); renderSeating(); toast('Seating assignments cleared.');
+});
+function seatingScore(layout,c,strategy=c.groupingStrategy||'balanced') {
+  const groups=layout.map(g=>(g.students||[]).map(id=>c.students.find(s=>s.id===id)).filter(Boolean));
+  if(strategy==='random') return 0;
+  if(strategy==='similar') return groups.reduce((score,g)=>{
+    const counts=tiers.map(t=>g.filter(s=>s.tier===t).length);
+    return score+counts.reduce((sum,n)=>sum+n*n,0)*15;
+  },0);
+  let score=0;
+  for(const group of groups){
+    const counts={High:0,Middle:0,Low:0};
+    group.forEach(s=>counts[s.tier]++);
+    if(group.length===4){
+      if(counts.High===1&&counts.Middle===2&&counts.Low===1)score+=90;
+      else score+=(counts.High>0?12:0)+(counts.Low>0?12:0)+(counts.Middle>0?12:0);
+    } else if(group.length===3){
+      if(counts.High&&counts.Middle&&counts.Low)score+=55;
+      else if(Object.values(counts).filter(n=>n>0).length===2)score+=15;
+    } else if(group.length===2&&Object.values(counts).filter(n=>n>0).length===2)score+=18;
+  }
+  if(strategy==='variety'){
+    const history=(c.groupHistory||[]).slice(-20),counts=new Map();
+    for(const session of history)for(const pair of session)counts.set(pair,(counts.get(pair)||0)+1);
+    let repeatPenalty=0;
+    for(const g of groups)for(let i=0;i<g.length;i++)for(let j=i+1;j<g.length;j++){
+      repeatPenalty+=(counts.get([g[i].id,g[j].id].sort().join(':'))||0)*40;
+    }
+    return score*.4-repeatPenalty;
+  }
+  return score;
+}
+
+// Never create a one-person group while populating the seating chart.
+// Exhaustive bounded dynamic programming respects seat locks and desk priorities.
+function planSeatingOccupancies(ordered, studentCount, lockedByGroup) {
+  const memo=new Map(), MAX_PLANS=12;
+  function solve(index,remaining){
+    if(index===ordered.length)return remaining===0?[{targets:[],score:0}]:[];
+    const key=index+'|'+remaining;
+    if(memo.has(key))return memo.get(key);
+    const g=ordered[index];
+    const locked=(lockedByGroup.get(g.id)||[]).filter(Boolean).length;
+    const choices=[];
+    if(locked===0)choices.push(0);
+    for(let count=Math.max(2,locked);count<=Math.min(g.size,remaining);count++)choices.push(count);
+    const all=[];
+    for(const count of choices){
+      if(count>remaining)continue;
+      const reward=count===4?116:count===3?120:count===2?70:0;
+      for(const suffix of solve(index+1,remaining-count)){
+        const priority=count*(ordered.length-index)*0.075;
+        all.push({targets:[count,...suffix.targets],score:reward+priority+suffix.score});
+      }
+    }
+    all.sort((a,b)=>b.score-a.score || b.targets[0]-a.targets[0]);
+    const top=all.slice(0,MAX_PLANS);
+    memo.set(key,top);return top;
+  }
+  return solve(0,studentCount);
+}
+$('populateDesksBtn').addEventListener('click',() => {
+  const c=current(),layout=seatingLayout();
+  if(!c||c.students.length<2){toast('Add at least two students first.');return;}
+  if(!layout.length){toast('Add desk groups first.');return;}
+  const capacity=layout.reduce((sum,g)=>sum+g.size,0);
+  if(capacity<c.students.length){toast('Not enough seats for this class.');return;}
+  const issue=validateTogetherRules(c);if(issue){toast(issue);return;}
+  normalizeSeatingPriorities(layout);
+  const ordered=[...layout].sort((a,b)=>a.priority-b.priority);
+  const locks=seatingLocks(c),assignments=seatingAssignments(c);
+  const ids=new Set(c.students.map(s=>s.id));
+  const lockedByGroup=new Map(ordered.map(g=>[g.id,Array(g.size).fill(null)]));
+  const lockedIds=new Set();
+  for(const [id,place] of Object.entries(locks)){
+    const slots=lockedByGroup.get(place.groupId);
+    if(!ids.has(id)||!slots||!Number.isInteger(place.seatIndex)||place.seatIndex<0||place.seatIndex>=slots.length)continue;
+    if((assignments[place.groupId]||[])[place.seatIndex]!==id||slots[place.seatIndex])continue;
+    slots[place.seatIndex]=id;lockedIds.add(id);
+  }
+  const plans=planSeatingOccupancies(ordered,c.students.length,lockedByGroup);
+  if(!plans.length){toast('No way to seat everyone in groups of 2 or more with this layout and its locks. Add or resize desks.');return;}
+  const blocks=togetherComponents(c,c.togetherGroups||[],c.students),fixedGroup=new Map();
+  for(const g of ordered)for(const id of lockedByGroup.get(g.id))if(id)fixedGroup.set(id,g.id);
+  const anchored=[],floating=[];
+  for(const block of blocks){
+    const dests=new Set(block.map(st=>fixedGroup.get(st.id)).filter(Boolean));
+    if(dests.size>1){toast('Seat locks conflict with Keep Together. Unlock a student.');return;}
+    if(dests.size)anchored.push({groupId:[...dests][0],students:block.filter(st=>!lockedIds.has(st.id))});
+    else floating.push(block);
+  }
+  let best=null,bestScore=-Infinity;
+  // Explore several valid occupancy layouts. An unfilled group is preferable to a singleton.
+  for(const plan of plans.slice(0,8)){
+    for(let trial=0;trial<Math.min(35,Math.max(12,c.students.length));trial++){
+      const candidate=layout.map(g=>({...g,students:lockedByGroup.get(g.id).slice()}));
+      const byId=new Map(candidate.map(g=>[g.id,g]));
+      const targetById=new Map(ordered.map((g,i)=>[g.id,plan.targets[i]]));
+      let valid=true;
+      for(const item of anchored){
+        const slots=byId.get(item.groupId).students;
+        const free=slots.map((id,i)=>id?null:i).filter(i=>i!==null);
+        if(slots.filter(Boolean).length+item.students.length>targetById.get(item.groupId)||free.length<item.students.length){valid=false;break;}
+        item.students.forEach((s,i)=>{slots[free[i]]=s.id;});
+      }
+      if(!valid)continue;
+      if(candidate.some(g=>separationViolations([g.students.filter(Boolean).map(id=>c.students.find(s=>s.id===id))],c)))continue;
+      const orderedBlocks=floating.slice().sort((a,b)=>b.length-a.length||(Math.random()-.5));
+      let nodes=0;
+      function place(i){
+        if(++nodes>16000)return false;
+        if(i===orderedBlocks.length)return ordered.every(g=>byId.get(g.id).students.filter(Boolean).length===targetById.get(g.id));
+        const block=orderedBlocks[i];
+        const choices=ordered.slice().filter(g=>{
+          const occupied=byId.get(g.id).students.filter(Boolean).length;
+          return occupied+block.length<=targetById.get(g.id);
+        });
+        for(let j=choices.length-1;j>0;j--){const k=Math.floor(Math.random()*(j+1));[choices[k],choices[j]]=[choices[j],choices[k]];}
+        for(const g of choices){
+          const slots=byId.get(g.id).students;
+          const free=slots.map((id,k)=>id?null:k).filter(k=>k!==null).slice(0,block.length);
+          if(free.length<block.length)continue;
+          block.forEach((st,k)=>{slots[free[k]]=st.id;});
+          const people=slots.filter(Boolean).map(id=>c.students.find(s=>s.id===id));
+          if(!separationViolations([people],c)&&place(i+1))return true;
+          free.forEach(k=>{slots[k]=null;});
+        }
+        return false;
+      }
+      if(!place(0))continue;
+      const populated=candidate.map(g=>g.students.filter(Boolean).map(id=>c.students.find(s=>s.id===id)));
+      if(separationViolations(populated,c)||togetherViolations(populated,c))continue;
+      if(populated.some(g=>g.length===1)){throw Error('Singleton seating invariant violated');}
+      const score=plan.score*10+seatingScore(candidate,c,$('seatingStrategy').value)+Math.random()*0.01;
+      if(score>bestScore){best=candidate;bestScore=score;}
+    }
+  }
+  if(!best){toast('Cannot meet all grouping rules without a one-person group. Adjust the layout, locks or separation rules.');return;}
+  rememberSeatingEdit();
+  const dest=seatingAssignments(c);
+  best.forEach(g=>{dest[g.id]=g.students.map(id=>id||null);});
+  recordGroupHistory(c,best.map(g=>g.students.filter(Boolean).map(id=>c.students.find(st=>st.id===id))));
+  save();renderSeating();
+  const pairs=best.filter(g=>g.students.filter(Boolean).length===2).length;
+  const triples=best.filter(g=>g.students.filter(Boolean).length===3).length;
+  toast(`Students seated: ${triples} groups of 3, ${pairs} pairs; no singletons.`);
+});
+
+const guideSteps = [
+  {title:'Welcome', body:'This interactive tour will take you directly to each part of the website. The highlighted controls remain usable, so you can follow along as you set up a class.', page:'teacher', target:'welcomeHelpBtn'},
+  {title:'Create or select a class', body:'Choose a class from the shared selector above the tabs, or enter a new class name below and select Create.', page:'teacher', target:'workspaceClassSelect'},
+  {title:'Add students', body:'Paste student names here, one per line, then select Add students. You can also use the PowerSchool PDF importer in the next step.', page:'teacher', target:'bulkNames'},
+  {title:'Import and rank automatically', body:'Upload a PowerSchool Final Grades PDF here. Review the extracted records before confirming; existing classes can be updated.', page:'teacher', target:'classPdfUpload'},
+  {title:'Review performance tiers', body:'Review High, Middle, and Low rankings and adjust any student individually. These tiers appear as H, M, and L in teacher views, but are hidden in student fullscreen views.', page:'teacher', target:'studentList'},
+  {title:'Set grouping rules', body:'Keep selected students apart, or choose Keep Together for students who must share a group.', page:'teacher', target:'avoidRuleType'},
+  {title:'Customize group roles', body:'Change the three role titles here. They are shared across all classes; in pairs, the second student covers roles 2 and 3.', page:'teacher', target:'roleList'},
+  {title:'Generate groups', body:'Select a grouping strategy, then click Randomize groups. The New partners option uses locally saved grouping history.', page:'groups', target:'groupStrategy'},
+  {title:'Build your seating chart', body:'Choose or create a template, add desks, select a grouping strategy, and click Populate desks to assign students.', page:'seating', target:'seatingSetupControls'},
+  {title:'Back up and protect your data', body:'Return to Teacher Setup to export a backup. Backups contain student information, so store them securely. Privacy & data controls explains local storage and deletion.', page:'teacher', target:'exportBtn'}
+];
+let guideIndex=0;
+let guidePreviousFocus=null;
+function closeGuide(){
+  $('guideOverlay').hidden=true;
+  document.querySelectorAll('.guide-target').forEach(el=>el.classList.remove('guide-target'));
+  if(guidePreviousFocus && guidePreviousFocus.isConnected) guidePreviousFocus.focus({preventScroll:true});
+}
+function renderGuide(){
+  const step=guideSteps[guideIndex];
+  document.querySelectorAll('.guide-target').forEach(el=>el.classList.remove('guide-target'));
+  showPage(step.page);
+  $('guideProgress').textContent=`Step ${guideIndex+1} of ${guideSteps.length}`;
+  $('guideTitle').textContent=step.title;
+  $('guideText').textContent=step.body;
+  $('guidePrev').disabled=guideIndex===0;
+  $('guideNext').textContent=guideIndex===guideSteps.length-1?'Finish':'Next';
+  const target=$(step.target);
+  if(target){
+    target.classList.add('guide-target');
+    requestAnimationFrame(()=>{
+      const dialog=$('guideOverlay').querySelector('.guide-dialog');
+      const rect=target.getBoundingClientRect();
+      const dialogHeight=dialog.getBoundingClientRect().height;
+      const visibleBottom=window.innerHeight-dialogHeight-32;
+      const desiredTop=Math.max(80,visibleBottom/2);
+      window.scrollBy({top:rect.top-desiredTop,behavior:'smooth'});
+    });
+  }
+}
+function startSetupGuide(){guidePreviousFocus=document.activeElement;guideIndex=0;$('guideOverlay').hidden=false;renderGuide();$('guideNext').focus({preventScroll:true});}
+// Allow the separately scoped welcome screen to start the existing walkthrough.
+document.addEventListener('bgr:start-setup-guide', startSetupGuide);
+$('guideClose').addEventListener('click',closeGuide);
+$('guidePrev').addEventListener('click',()=>{guideIndex=Math.max(0,guideIndex-1);renderGuide();});
+$('guideNext').addEventListener('click',()=>{if(guideIndex===guideSteps.length-1){closeGuide();return;}guideIndex++;renderGuide();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('guideOverlay').hidden)closeGuide();});
+$('privacyBtn').addEventListener('click',()=>{$('privacyPanel').classList.toggle('hidden');});
+$('clearAllDataBtn').addEventListener('click',()=>{
+ if(!confirm('Delete ALL locally saved classes, rankings, rules, history, and seating charts? Export a backup first if needed. This cannot be undone.'))return;
+ if(!confirm('Final confirmation: permanently erase all data saved by this app in this browser?'))return;
+ localStorage.removeItem(KEY);localStorage.removeItem(BACKUP_META_KEY);db={classes:[],activeId:null,sharedRoles:null};groups=[];absentIds=new Set();makeClass('My Class');toast('All previous local app data deleted.');
+});
+try {
+  if(localStorage.getItem('bgr.cloud.boundAccount')){
+    const block=document.createElement('div');block.style.cssText='position:fixed;inset:0;z-index:2147483647;background:#f5f7fb;display:grid;place-items:center;padding:24px';block.innerHTML='<main style="max-width:660px;padding:30px;font:16px/1.6 system-ui;background:white;border-radius:16px"><h1>Manual migration required</h1><p>This browser contains data previously linked to a Google cloud account. To avoid exposing another teacher’s cached roster, this manual-only edition will not open that cache automatically.</p><p>Use your prior verified version to export a backup, then import it in a clean browser profile. Do not erase this browser until the backup has been verified. Existing Firebase cloud data is not automatically deleted.</p></main>';document.body.append(block);
+    return;
+  }
+  const raw = localStorage.getItem(KEY);
+  if (raw) {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed.classes)) {
+      db = parsed;
+      db.classes.forEach(c => {
+        if (!Array.isArray(c.students)) c.students = [];
+        if (!Array.isArray(c.avoidPairs)) c.avoidPairs = [];
+        if (!Array.isArray(c.avoidGroups)) c.avoidGroups = [];
+      if (!Array.isArray(c.togetherGroups)) c.togetherGroups = [];
+        if (!Array.isArray(c.roles)) c.roles = defaultRoles.slice();
+        if(!strategyDescriptions[c.groupingStrategy])c.groupingStrategy='balanced';
+        if(!Array.isArray(c.groupHistory))c.groupHistory=[];
+        if(!c.groupLocks||typeof c.groupLocks!=='object'||Array.isArray(c.groupLocks))c.groupLocks={};
+        if(!Array.isArray(c.savedGroups))c.savedGroups=[];
+        c.roles = c.roles.slice(0,3);
+        while (c.roles.length < 3) c.roles.push(defaultRoles[c.roles.length]);
+        c.students.forEach(s => {
+          if (!tiers.includes(s.tier)) s.tier = 'Middle';
+        });
+      });
+      if (!db.classes.some(c => c.id === db.activeId)) db.activeId = db.classes[0]?.id || null;
+      syncRolesAcrossClasses();
+    }
+  }
+} catch(e) {
+  console.warn('Saved data could not be loaded.',e);
+}
+if (!db.classes.length) makeClass('My Class');
+else {restoreGroupSnapshot();render();}
+// Groups is the everyday home screen; initial setup remains obvious for empty rosters.
+showPage(db.classes.some(c => c.students.length > 0) ? 'groups' : (window.__bgrHadPriorData === false ? 'home' : 'teacher'));
+updateBackupStatus();
+
+})();
+</script>
+<!-- BGR LOCAL EDITION: no Firebase, Google authentication, cloud database or background sync. -->
+<script>
+// Retire any service worker installed by previous cloud/PWA releases. This does
+// not delete local classroom data or remove a previously uploaded Firebase copy.
+if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(list=>{
+  list.filter(reg=>reg.scope.startsWith(new URL('./',location.href).href)).forEach(reg=>reg.unregister());
+}).catch(()=>{});}
+if('caches' in window){caches.keys().then(keys=>keys.filter(k=>k.startsWith('bgr-pwa-')).forEach(k=>caches.delete(k))).catch(()=>{});}
+</script>
+<script>
+(() => {
+  const dialog = document.getElementById('feedbackDialog');
+  const message = document.getElementById('feedbackMessage');
+  const status = document.getElementById('feedbackStatus');
+  const content = () => {
+    const kind = document.getElementById('feedbackType').value;
+    const body = message.value.trim();
+    return body ? `Balanced Group Randomizer — ${kind}\n\n${body}\n\nApp version: 25\nDevice: ${navigator.userAgent}\n` : '';
+  };
+  document.getElementById('feedbackBtn').addEventListener('click', () => {
+    status.textContent = '';
+    dialog.showModal();
+  });
+  document.getElementById('closeFeedbackBtn').addEventListener('click', () => dialog.close());
+  document.getElementById('emailFeedbackBtn').addEventListener('click', () => {
+    const body = message.value.trim();
+    if (!body) { status.textContent = 'Please describe your feedback first.'; return; }
+    const kind = document.getElementById('feedbackType').value;
+    const subject = `Balanced Group Randomizer — ${kind}`;
+    const url = 'mailto:egallaher@clevelandschools.org?subject=' +
+      encodeURIComponent(subject) + '&body=' + encodeURIComponent(content());
+    if (url.length > 2000) {
+      status.textContent = 'This report is too long for a reliable email link. Use Copy Feedback and paste it into an email to egallaher@clevelandschools.org.';
+      return;
+    }
+    status.textContent = 'Opening your email application. Review the message and press Send there.';
+    window.location.href = url;
+  });
+  document.getElementById('copyFeedbackBtn').addEventListener('click', async () => {
+    const text = content();
+    if (!text) { status.textContent = 'Please describe your feedback first.'; return; }
+    try {
+      await navigator.clipboard.writeText(text);
+      status.textContent = 'Copied. Paste it into a message to the app owner.';
+    } catch (_) { status.textContent = 'Copy was blocked. Use Save as Text instead.'; }
+  });
+  document.getElementById('downloadFeedbackBtn').addEventListener('click', () => {
+    const text = content();
+    if (!text) { status.textContent = 'Please describe your feedback first.'; return; }
+    const url = URL.createObjectURL(new Blob([text],{type:'text/plain'}));
+    const a = document.createElement('a');
+    a.href = url; a.download = 'balanced-group-randomizer-feedback.txt';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    status.textContent = 'Feedback saved. Send the text file to the app owner.';
+  });
+})();
+</script>
+<script>
+// First-launch onboarding: stay open until the visitor selects X or a setup action.
+(() => {
+  const SEEN_KEY = 'balancedGroupRandomizer.welcomeSeen.v1';
+  const PENDING_KEY = 'balancedGroupRandomizer.welcomePending.v1';
+  const dialog = document.getElementById('welcomeDialog');
+  const $ = id => document.getElementById(id);
+  let explicitlyClosed = false;
+  function dismiss() {
+    explicitlyClosed = true;
+    try {
+      localStorage.setItem(SEEN_KEY, '1');
+      localStorage.removeItem(PENDING_KEY);
+    } catch (_) {}
+    if (dialog.open) dialog.close();
+  }
+  function focusSetup(targetId) {
+    dismiss();
+    $('teacherTab').click();
+    const target = $(targetId);
+    if (target) {
+      target.scrollIntoView({behavior:'smooth',block:'center'});
+      setTimeout(() => { try { target.focus({preventScroll:true}); } catch (_) { target.focus(); } }, 250);
+    }
+  }
+  $('welcomeClose').addEventListener('click', dismiss);
+  $('welcomeHelpBtn').addEventListener('click', () => { if (!dialog.open) dialog.showModal(); });
+  $('welcomePdf').addEventListener('click', () => focusSetup('classPdfUpload'));
+  $('welcomePaste').addEventListener('click', () => focusSetup('bulkNames'));
+  $('welcomeManual').addEventListener('click', () => focusSetup('newClassName'));
+  $('welcomeTutorial').addEventListener('click', () => { dismiss(); document.dispatchEvent(new Event('bgr:start-setup-guide')); });
+  // Esc and browser-generated dismissal are NOT a visitor's selection.
+  dialog.addEventListener('cancel', event => event.preventDefault());
+  dialog.addEventListener('close', () => {
+    // Do not mark onboarding complete because of an unexpected programmatic close.
+    if (!explicitlyClosed) queueMicrotask(() => { if (!dialog.open) dialog.showModal(); });
+  });
+  const existing = window.__bgrHadPriorData !== false;
+  let seen = false, pending = false;
+  try {
+    seen = localStorage.getItem(SEEN_KEY) === '1';
+    pending = localStorage.getItem(PENDING_KEY) === '1';
+  } catch (_) {}
+  if (!seen && (pending || !existing)) {
+    // New visitors now see the introduction first; onboarding opens on their click.
+  } else if (!seen && existing) {
+    // Long-time users with an existing classroom should not see first-run onboarding.
+    try { localStorage.setItem(SEEN_KEY, '1'); } catch (_) {}
+  }
+})();
+</script>
+
+</body>
+</html>
