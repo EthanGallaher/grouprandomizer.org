@@ -510,6 +510,22 @@ body.print-seating .workspace-bar{display:none!important}
 #groupsPage:is(:fullscreen,.ipad-fullscreen) .group-locked-mark{display:none!important;}
 @media print {.group-locked-mark{display:none!important}.group-action-menu{display:none!important}}
 
+
+
+/* Presentation privacy: group locks are teacher-only.
+   Hide the entire red inset stripe, not just the lock emoji. */
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .member.group-locked {
+  box-shadow: none !important;
+}
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .group-locked-mark,
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .group-action-menu {
+  display: none !important;
+}
+@media print {
+  #groupsPage .member.group-locked { box-shadow: none !important; }
+  #groupsPage .group-locked-mark, #groupsPage .group-action-menu { display:none!important; }
+}
+
 </style>
 <style>
 .seating-tool-row #triangleVariantField{flex:0 0 100%;width:100%;min-width:0;max-width:100%;align-self:stretch}
@@ -590,7 +606,7 @@ body.bgr-home-active .workspace-class-bar{display:none!important}
 
 </style>
 <style>.welcome-tutorial-top{margin:10px 0 14px}.welcome-tutorial-top button{max-width:100%}</style>
-<meta name="bgr-build" content="P05.6-manual-only">
+<meta name="bgr-build" content="P05.7-manual-only">
 </head>
 <body>
 <header class="top">
