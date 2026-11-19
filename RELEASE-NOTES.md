@@ -1,12 +1,7 @@
-# Balanced Group Randomizer — Saved Seating Charts + Responsive Navigation
+# BGR P05.20 — Responsive seating chart and navigation
 
-- Groups seating-chart workspace now has a clickable floppy-disk Save icon inside the dark blue FRONT OF CLASS bar. It opens a naming dialog.
-- Saved Seating Charts dropdown sits next to Strategy and lists only charts saved for the selected class, with Random Groups as the default choice.
-- Each saved chart preserves a snapshot of student-to-seat assignments, group labels, and the desk layout. Selection restores the snapshot; Randomize and Rebalance Present return to temporary groups.
-- A selected chart may be deleted using the Delete button. A matching name can be overwritten only with confirmation.
-- Randomize Groups and Rebalance Present now sit side by side in a prominent toolbar above groups.
-- Layout Builder no longer exposes Populate/Clear Students and shows desks without student assignments; existing stored assignments are not erased.
-- Header tabs, class selector and toolbar reflow responsively at narrow effective widths / browser zoom levels.
-- Student View hides the save icon and teacher controls. Saved charts remain local to the class and are included in exported data backups.
-
-Important: Browser screenshots and interactions were tested with fictional roster data. The PowerSchool package remains a SANDBOX-UNVERIFIED fictional-data prototype; no live SIS connection is claimed.
+- Automatically fits the fixed 1100 × 660 classroom canvas proportionally within the normal Groups workspace at common browser zoom levels; fullscreen and print retain their own sizing.
+- Saved Seating Charts selector is blank / No saved seating charts when the class has none. No Random Groups option is presented as a saved chart; Randomize Groups remains the entry point for new random groupings.
+- Navigation tabs share available horizontal width in desktop/tablet layouts and adapt at narrow widths.
+- All saved assignments, layouts, class restrictions, and existing behavior remain unchanged.
+- PowerSchool is a sandbox-only fictional-data prototype; no live SIS verification.

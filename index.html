@@ -740,6 +740,20 @@ body.bgr-student-view:not(.ipad-presentation) .top .install-actions {display:non
 #groupsPage.student-view:not(:fullscreen):not(.ipad-fullscreen) .groups-page-head #studentViewBtn,
 #groupsPage.student-view:not(:fullscreen):not(.ipad-fullscreen) .groups-page-head #fullscreenBtn {display:inline-flex!important}
 
+
+/* P05.20: fill available tab width and fit the classroom within normal view. */
+@media (min-width:1041px){
+ .workspace-bar{grid-template-columns:minmax(0,1fr) minmax(300px,auto)}
+ .workspace-bar .page-nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;width:100%!important}
+ .workspace-bar .page-nav button{width:100%;min-width:0;padding-inline:12px;text-align:center}
+}
+@media (min-width:681px) and (max-width:1040px){
+ .workspace-bar .page-nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%!important}
+ .workspace-bar .page-nav button{width:100%;min-width:0;text-align:center}
+}
+#groupsPage .quick-seating-scroll{width:100%;max-width:100%;overflow:hidden}
+#groupsPage .quick-seating-room{transform:none}
+@media print {#groupsPage .quick-seating-scroll{overflow:visible}}
 </style>
 <style>
 .seating-tool-row #triangleVariantField{flex:0 0 100%;width:100%;min-width:0;max-width:100%;align-self:stretch}
@@ -1198,7 +1212,7 @@ body.bgr-home-active .workspace-class-bar{display:none!important}
     </div>
     <div class="field saved-chart-field" id="savedChartField" hidden>
       <label for="savedChartSelect">Saved Seating Charts</label>
-      <div class="saved-chart-controls"><select id="savedChartSelect" aria-label="Saved seating charts for this class"><option value="">Random Groups</option></select><button type="button" id="deleteSavedChartBtn" class="secondary" title="Delete selected saved chart" aria-label="Delete selected saved chart" hidden>Delete</button></div>
+      <div class="saved-chart-controls"><select id="savedChartSelect" aria-label="Saved seating charts for this class"><option value="">No saved seating charts</option></select><button type="button" id="deleteSavedChartBtn" class="secondary" title="Delete selected saved chart" aria-label="Delete selected saved chart" hidden>Delete</button></div>
     </div>
   </div>
   <div class="daily-controls-footer">
@@ -2298,6 +2312,24 @@ function planQuickSeating(groupRows,layout,config={}){
   return {placements,groupRows:groupRowsOut,changed:before!==after,notices,spans:new Set()};
 }
 
+
+// Fit the fixed classroom-coordinate canvas to both the available width and
+// remaining viewport height. Only the display is scaled; seat positions/data are untouched.
+function fitDailySeatingChart(){
+ const room=$('groupsArea')?.querySelector('.quick-seating-room');
+ if(!room)return;
+ if(isPresentation($('groupsPage'))||document.body.classList.contains('print-seating')||window.matchMedia('print').matches){room.style.zoom='';return;}
+ const scroll=room.closest('.quick-seating-scroll');if(!scroll)return;
+ room.style.zoom='1';
+ const availableWidth=Math.max(1,scroll.clientWidth-3);
+ const viewportRemaining=Math.max(1,window.innerHeight-scroll.getBoundingClientRect().top-18);
+ // The chart remains readable where viewport height is unusually short;
+ // on ordinary laptop/desktop displays the complete canvas fits without scrolling.
+ const factor=Math.min(1,availableWidth/1100,viewportRemaining/660);
+ room.style.zoom=String(Math.max(.25,Math.floor(factor*1000)/1000));
+}
+if(typeof window!=='undefined')window.addEventListener('resize',()=>requestAnimationFrame(fitDailySeatingChart));
+
 function savedChartForClass(c=current()){
  return c?.savedSeatCharts?.find(chart=>chart.id===c.activeSavedSeatChartId)||null;
 }
@@ -2305,7 +2337,8 @@ function populateSavedChartSelect(){
  const c=current(),select=$('savedChartSelect'),charts=c?.savedSeatCharts||[];
  if(!select)return;
  const chosen=savedChartForClass(c)?.id||'';
- select.replaceChildren(new Option('Random Groups',''));
+ select.replaceChildren(new Option(charts.length?'Select saved chart…':'No saved seating charts',''));
+ select.options[0].disabled=charts.length===0;
  charts.forEach(chart=>select.add(new Option(chart.name,chart.id)));
  select.value=chosen;
  $('savedChartField').hidden=db.groupDisplayMode!=='seating';
@@ -2577,6 +2610,7 @@ function renderGroups() {
     btn.title=`Return ${student.name} to a group`;btn.addEventListener('click',()=>restoreAbsentStudent(id));absent.append(btn);
   }
   shell.append(absent);area.append(shell);
+  requestAnimationFrame(fitDailySeatingChart);
   if (isPresentation($('groupsPage'))) fitGroupFullscreen();
 }
 
