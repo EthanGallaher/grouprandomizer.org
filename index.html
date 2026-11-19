@@ -735,7 +735,7 @@ body.bgr-student-view:not(.ipad-presentation) .top .install-actions {display:non
 #groupsPage.student-view:not(:fullscreen):not(.ipad-fullscreen) {padding-top:0}
 #groupsPage.student-view:not(:fullscreen):not(.ipad-fullscreen) .student-view-exit {display:none!important}
 #groupsPage.student-view:not(:fullscreen):not(.ipad-fullscreen) .groups-page-head {display:flex!important}
-#groupsPage.student-view:not(:fullscreen):not(.ipad-fullscreen) .groups-page-head .actions > :not(#studentViewBtn):not(#fullscreenBtn) {display:none!important}
+#groupsPage.student-view:not(:fullscreen):not(.ipad-fullscreen) .groups-page-head .actions > :not(#studentViewBtn):not(#fullscreenBtn):not(#openRandomPickerBtn) {display:none!important}
 #groupsPage.student-view:not(:fullscreen):not(.ipad-fullscreen) .groups-page-head .subline {display:none!important}
 #groupsPage.student-view:not(:fullscreen):not(.ipad-fullscreen) .groups-page-head #studentViewBtn,
 #groupsPage.student-view:not(:fullscreen):not(.ipad-fullscreen) .groups-page-head #fullscreenBtn {display:inline-flex!important}
@@ -822,7 +822,7 @@ body.bgr-home-active .workspace-class-bar{display:none!important}
 
 </style>
 <style>.welcome-tutorial-top{margin:10px 0 14px}.welcome-tutorial-top button{max-width:100%}</style>
-<meta name="bgr-build" content="P05.19-saved-seating-charts">
+<meta name="bgr-build" content="P05.25-student-random">
 <style>
 
 /* P05.14: one compact workspace, no duplicated instructional paragraphs. */
@@ -983,6 +983,12 @@ body:not(.bgr-home-active) .workspace-bar + .wrap { padding-top: 2px !important;
 }
 #groupsPage .daily-controls .group-size-labels{margin:-2px 8px 0;line-height:1.1;font-size:11px;font-weight:600;color:#5f6e85}
 @media(max-width:680px){#groupsPage .daily-controls .daily-action-buttons{width:100%;flex:1 1 100%}#groupsPage .daily-controls #balanceNote{text-align:left;flex-basis:100%}}
+
+/* Random Student is available in the regular student view, never in fullscreen. */
+#groupsPage:is(:fullscreen,.ipad-fullscreen) #openRandomPickerBtn {display:none!important}
+/* Attendance controls stay teacher-only even inside the random-student dialog. */
+body.bgr-student-view #randomPickerDialog .random-picker-option {display:none!important}
+
 </style>
 </head>
 <body>
@@ -3252,9 +3258,9 @@ function pickRandomStudent(){
     result.textContent = 'Add students to this class roster first.';
     return;
   }
-  const eligible = c.students.filter(s => $('pickerIncludeAbsent').checked || !absentIds.has(s.id));
+  const eligible = c.students.filter(s => (!isGroupStudentView() && $('pickerIncludeAbsent').checked) || !absentIds.has(s.id));
   if (!eligible.length) {
-    result.textContent = 'No present students. Check “Include students marked absent” to use the full roster.';
+    result.textContent = isGroupStudentView() ? 'No students are marked present.' : 'No present students. Check “Include students marked absent” to use the full roster.';
     return;
   }
   const picked = eligible[Math.floor(Math.random() * eligible.length)];
