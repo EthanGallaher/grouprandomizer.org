@@ -820,7 +820,7 @@ body.bgr-home-active .workspace-class-bar{display:none!important}
 
 </style>
 <style>.welcome-tutorial-top{margin:10px 0 14px}.welcome-tutorial-top button{max-width:100%}</style>
-<meta name="bgr-build" content="P05.15-manual-only">
+<meta name="bgr-build" content="P05.19-saved-seating-charts">
 <style>
 
 /* P05.14: one compact workspace, no duplicated instructional paragraphs. */
@@ -884,6 +884,37 @@ body.bgr-home-active .workspace-class-bar{display:none!important}
 }
 @media print{#groupsPage .daily-controls{display:none!important}}
 
+
+/* P05.19: class-scoped chart presets and responsive workspace */
+.workspace-bar,.top-inner{width:100%;max-width:1740px;margin-inline:auto;min-width:0}
+.workspace-bar{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px 18px}
+.workspace-bar .page-nav{width:100%!important;max-width:none!important;min-width:0;display:flex;flex-wrap:wrap;justify-content:flex-start;overflow:visible;margin:0!important;padding:0!important}
+.workspace-bar .page-nav button{flex:0 0 auto;max-width:100%}
+.workspace-class-bar{max-width:100%;min-width:0;margin-left:0!important}
+.workspace-class-bar select{min-width:100px;width:clamp(130px,18vw,220px);max-width:100%}
+.top-inner{flex-wrap:wrap;min-width:0}
+.top-inner .site-brand{min-width:0;max-width:100%}
+.top-inner .install-actions{min-width:0;justify-content:flex-end}
+#groupsPage .groups-page-head{align-items:flex-start}
+#groupsPage .groups-page-head>div:first-child{min-width:0;flex:1 1 210px}
+#groupsPage .groups-page-head .actions{flex:1 1 310px;min-width:0;display:flex;justify-content:flex-end;flex-wrap:wrap}
+#groupsPage .daily-controls .saved-chart-field{display:grid;flex:1 1 190px;min-width:175px;max-width:260px;gap:3px;margin:0}
+#groupsPage .daily-controls .saved-chart-field[hidden]{display:none!important}
+#groupsPage .daily-controls .saved-chart-field>label{font-size:11px;letter-spacing:0;text-transform:none}
+#groupsPage .saved-chart-controls{display:flex;gap:5px;min-width:0;align-items:center}
+#groupsPage .saved-chart-controls select{min-width:0;flex:1;width:100%;height:35px;padding:5px 9px;font-size:12px}
+#groupsPage .saved-chart-controls button{min-height:35px;padding:5px 8px;font-size:11px}
+#groupsPage .daily-controls-footer{align-items:center;gap:10px}
+#groupsPage .daily-action-buttons{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-left:auto}
+#groupsPage .daily-action-buttons button{min-height:39px;padding:8px 14px;font-size:13px;font-weight:750}
+#groupsPage .daily-controls #rebalancePresentBtn{min-height:39px;padding:8px 12px;font-size:13px}
+.quick-seating-room .front-of-class{display:flex;align-items:center;justify-content:center;pointer-events:auto}
+.quick-save-chart-btn{position:absolute;right:11px;top:7px;width:35px;height:35px;display:grid;place-items:center;background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.55);padding:0;border-radius:8px;cursor:pointer;z-index:8}
+.quick-save-chart-btn:hover,.quick-save-chart-btn:focus-visible{background:rgba(255,255,255,.30);outline-offset:2px}
+#groupsPage.student-view .quick-save-chart-btn,#groupsPage:is(:fullscreen,.ipad-fullscreen).student-view .quick-save-chart-btn{display:none!important}
+@media(max-width:1040px){.workspace-bar{grid-template-columns:1fr}.workspace-class-bar{justify-self:start;width:min(100%,460px)}#groupsPage .groups-page-head .actions{justify-content:flex-start}}
+@media(max-width:680px){.workspace-bar{padding-inline:12px}.workspace-bar .page-nav{gap:5px}.workspace-bar .page-nav button{padding:9px 10px;font-size:12px}.workspace-class-bar{width:100%;flex-wrap:wrap}.workspace-class-bar select{flex:1 1 130px;max-width:100%;width:auto}#groupsPage .daily-controls .saved-chart-field,#groupsPage .daily-controls .group-strategy-field{max-width:none!important;flex:1 1 170px}#groupsPage .daily-action-buttons{margin-left:0;width:100%}#groupsPage .daily-action-buttons button{flex:1 1 150px}}
+@media print{.quick-save-chart-btn{display:none!important}}
 </style>
 </head>
 <body>
@@ -1130,7 +1161,6 @@ body.bgr-home-active .workspace-class-bar{display:none!important}
     <button type="button" class="secondary" id="openRandomPickerBtn" title="Pick one student without leaving Groups">Random Student</button>
     <button class="secondary" id="studentViewBtn" type="button" aria-pressed="false" title="Hide teacher-only indicators and controls">◉ Student view</button>
     <button class="secondary" id="fullscreenBtn" type="button" title="Expand the current teacher or student view">⛶ Fullscreen</button>
-    <button class="primary" id="generateBtn">⤨ Randomize</button>
   </div>
 </div>
 <div class="daily-controls" aria-label="Daily group controls">
@@ -1166,10 +1196,14 @@ body.bgr-home-active .workspace-class-bar{display:none!important}
       <p class="visually-hidden" id="strategyHelp">Prioritizes mixed-ability groups.</p>
       <div class="strategy-help-popover" id="groupStrategyPopover" role="note" hidden><strong id="groupStrategyHelpTitle"></strong><p id="groupStrategyHelpText"></p></div>
     </div>
+    <div class="field saved-chart-field" id="savedChartField" hidden>
+      <label for="savedChartSelect">Saved Seating Charts</label>
+      <div class="saved-chart-controls"><select id="savedChartSelect" aria-label="Saved seating charts for this class"><option value="">Random Groups</option></select><button type="button" id="deleteSavedChartBtn" class="secondary" title="Delete selected saved chart" aria-label="Delete selected saved chart" hidden>Delete</button></div>
+    </div>
   </div>
   <div class="daily-controls-footer">
     <div class="notice" id="balanceNote" role="status" aria-live="polite">Ready to create groups</div>
-    <button type="button" class="secondary" id="rebalancePresentBtn" title="Regroup only students who are present">Rebalance present</button>
+    <div class="daily-action-buttons"><button class="primary" id="generateBtn" type="button">⤨ Randomize Groups</button><button type="button" class="secondary" id="rebalancePresentBtn" title="Regroup only students who are present">↻ Rebalance Present</button></div>
   </div>
 </div>
 <div id="groupsArea">
@@ -1178,6 +1212,13 @@ body.bgr-home-active .workspace-class-bar{display:none!important}
 </main>
 </section>
 
+<dialog id="saveChartDialog" class="random-picker-dialog" aria-labelledby="saveChartTitle">
+  <h2 id="saveChartTitle">Save Seating Chart</h2>
+  <p class="help">Save the seating arrangement for this class. Randomizing later will not change it.</p>
+  <label for="saveChartName">Chart name</label>
+  <input id="saveChartName" type="text" maxlength="80" placeholder="e.g., Regular Seating" autocomplete="off">
+  <div class="random-picker-actions" style="margin-top:16px"><button type="button" id="confirmSaveChartBtn" class="primary">Save Chart</button><button type="button" id="cancelSaveChartBtn" class="secondary">Cancel</button></div>
+</dialog>
 <dialog class="random-picker-dialog" id="randomPickerDialog" aria-labelledby="randomPickerHeading" aria-describedby="randomPickerHint">
   <div class="random-picker-head">
     <div><div class="random-picker-eyebrow">Classroom tool</div><h2 id="randomPickerHeading">Random student</h2><p id="randomPickerHint">Pick a student from <strong id="randomPickerClass">the current class</strong>.</p></div>
@@ -1191,7 +1232,7 @@ body.bgr-home-active .workspace-class-bar{display:none!important}
 <section class="page" id="seatingPage">
   <main class="panel">
     <div class="groups-page-head">
-      <div><h2>Seating Chart Builder</h2><div class="subline">Build and print permanent classroom seating charts here. Use Groups → Show groups on seating chart for temporary daily groups. Desk positions and priorities are shared across classes; student assignments stay separate. "Populate" fills groups of at least two, favoring triples and preserving locked seats.</div></div>
+      <div><h2>Layout Builder</h2><div class="subline">Design and print classroom desk layouts here. Create, randomize, and save student seating charts from Groups.</div></div>
       <div class="legacy-class-picker"><label for="seatingClassSelect">Class</label><select id="seatingClassSelect"></select></div>
     </div>
     <div class="seating-toolbar" id="seatingSetupControls">
@@ -1224,7 +1265,7 @@ body.bgr-home-active .workspace-class-bar{display:none!important}
           <button class="secondary danger-outline" id="clearDesksBtn">Clear desks</button>
         </div>
       </section>
-      <section class="seating-tool-section" aria-label="Assign students">
+      <section class="seating-tool-section" aria-label="Assign students" hidden>
         <div class="seating-tool-heading"><span class="tool-number">3</span><h3>Assign students</h3></div>
         <div class="seating-tool-row">
           <div class="field strategy-field"><div class="strategy-label-row"><label for="seatingStrategy">Grouping strategy</label><button type="button" class="strategy-help-button" data-help-strategy="seatingStrategy" aria-label="Explain the selected seating strategy" aria-expanded="false" aria-controls="seatingStrategyPopover" title="About the selected strategy">?</button></div><select id="seatingStrategy"><option value="balanced">Balanced Abilities</option><option value="random">Random</option><option value="similar">Similar Abilities</option><option value="variety">New Partners</option></select><div class="strategy-help-popover" id="seatingStrategyPopover" role="note" hidden><strong id="seatingStrategyHelpTitle"></strong><p id="seatingStrategyHelpText"></p></div></div>
@@ -1954,6 +1995,7 @@ function generate() {
     $('balanceNote').textContent='No valid arrangement found within the search limit. No groups were changed. Check conflicting separation rules or retry.';
     toast('Could not satisfy all separation rules.');return;
   }
+  c.activeSavedSeatChartId=null;
   absentIds.clear();absentOrigins.clear();
   recordGroupHistory(c,best);
   groups = groupRoleRows(best,c);
@@ -1992,6 +2034,7 @@ function rebalancePresentStudents(){
     if(score>bestScore){best=candidate;bestScore=score;}
   }
   if(!best){toast('Cannot form groups with the current separation and together rules.');return;}
+  c.activeSavedSeatChartId=null;
   groups=groupRoleRows(best,c);
   absentOrigins.clear();
   if(!absentIds.size)saveGroupSnapshot();
@@ -2255,6 +2298,87 @@ function planQuickSeating(groupRows,layout,config={}){
   return {placements,groupRows:groupRowsOut,changed:before!==after,notices,spans:new Set()};
 }
 
+function savedChartForClass(c=current()){
+ return c?.savedSeatCharts?.find(chart=>chart.id===c.activeSavedSeatChartId)||null;
+}
+function populateSavedChartSelect(){
+ const c=current(),select=$('savedChartSelect'),charts=c?.savedSeatCharts||[];
+ if(!select)return;
+ const chosen=savedChartForClass(c)?.id||'';
+ select.replaceChildren(new Option('Random Groups',''));
+ charts.forEach(chart=>select.add(new Option(chart.name,chart.id)));
+ select.value=chosen;
+ $('savedChartField').hidden=db.groupDisplayMode!=='seating';
+ $('deleteSavedChartBtn').hidden=!chosen;
+ $('deleteSavedChartBtn').disabled=!chosen;
+}
+function addQuickChartSaveButton(room){
+ const header=room.querySelector('.front-of-class');if(!header)return;
+ const button=document.createElement('button');button.type='button';button.id='quickSaveChartBtn';
+ button.className='quick-save-chart-btn';button.title='Save the displayed seating chart';button.setAttribute('aria-label','Save seating chart');
+ button.innerHTML='<svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 3h13l3 3v15H4z"/><path d="M7 3v7h10V3M7 21v-8h10v8M9 4v4h5"/></svg>';
+ button.addEventListener('click',()=>{
+  const c=current();if(!c)return;
+  const dialog=$('saveChartDialog');$('saveChartName').value='';dialog.showModal();$('saveChartName').focus();
+ });
+ header.append(button);
+}
+function renderSavedSeatingGroups(chart){
+ const c=current(),scroller=document.createElement('div');scroller.className='quick-seating-scroll';
+ const room=document.createElement('div');room.className='quick-seating-room seating-room';
+ room.setAttribute('aria-label','Saved seating chart: '+chart.name);
+ room.innerHTML='<div class="front-of-class">FRONT OF CLASS</div>';
+ const byId=new Map((c?.students||[]).map(s=>[s.id,s]));
+ for(const g of (chart.layout||[])){
+  const {cols}=seatingDimensions(g),cluster=document.createElement('div');
+  cluster.className='desk-group quick-desk-group';cluster.dataset.deskId=g.id;
+  if(g.size===3&&String(g.orientation||'').startsWith('stagger-'))cluster.classList.add('compact-stagger',g.orientation);
+  cluster.style.left=`${g.x}px`;cluster.style.top=`${g.y}px`;cluster.style.gridTemplateColumns=`repeat(${cols},70px)`;
+  const ids=chart.assignments?.[g.id]||[];
+  if(ids.some(id=>byId.has(id)))cluster.classList.add('occupied');
+  const label=document.createElement('div');label.className='quick-desk-label';label.textContent=chart.labels?.[g.id]||'Desks';cluster.append(label);
+  for(let i=0;i<g.size;i++){
+   const student=byId.get(ids[i]);const present=student&&!absentIds.has(student.id);
+   const seat=document.createElement('div');seat.className='desk quick-seat'+(present?'':' empty-seat');
+   if(present){
+    seat.dataset.studentId=student.id;
+    const name=document.createElement('span');name.className='quick-seat-name';name.textContent=student.name;
+    const role=document.createElement('span');role.className='quick-seat-role';role.textContent=chart.roles?.[student.id]||'';
+    seat.append(name,role,makeTierLetter(student.tier));
+    const ctx=document.createElement('canvas').getContext('2d');
+    if(ctx){let sz=10;while(sz>5){ctx.font=`800 ${sz}px system-ui`;if(ctx.measureText(student.name).width<=62)break;sz-=.5;}name.style.fontSize=sz+'px';}
+   }else seat.textContent='Empty';
+   cluster.append(seat);
+  }
+  room.append(cluster);
+ }
+ addQuickChartSaveButton(room);scroller.append(room);
+ return {visual:scroller,fallback:false};
+}
+function saveCurrentSeatingChart(){
+ const c=current(),room=$('groupsArea').querySelector('.quick-seating-room');
+ if(!c||!room||db.groupDisplayMode!=='seating'){toast('Show a seating chart before saving.');return;}
+ const name=$('saveChartName').value.trim();if(!name){$('saveChartName').focus();return;}
+ const existing=(c.savedSeatCharts||[]).find(ch=>ch.name.toLowerCase()===name.toLowerCase());
+ if(existing&&!confirm('Replace the existing saved seating chart named "'+existing.name+'"?'))return;
+ const active=savedChartForClass(c),layout=JSON.parse(JSON.stringify(active?.layout||seatingLayout()));
+ const assignments={},labels={},roles={};
+ room.querySelectorAll('.quick-desk-group').forEach(cluster=>{
+  const id=cluster.dataset.deskId;if(!id)return;
+  assignments[id]=[...cluster.querySelectorAll('.quick-seat')].map(seat=>seat.dataset.studentId||null);
+  labels[id]=cluster.querySelector('.quick-desk-label')?.textContent||'Desks';
+  cluster.querySelectorAll('.quick-seat').forEach(seat=>{
+   const studentId=seat.dataset.studentId;if(studentId)roles[studentId]=seat.querySelector('.quick-seat-role')?.textContent||'';
+  });
+ });
+ if(!Object.keys(assignments).length){toast('No seating assignments to save.');return;}
+ if(!c.savedSeatCharts)c.savedSeatCharts=[];
+ const snapshot={id:existing?.id||uid(),name,layout,assignments:active?JSON.parse(JSON.stringify(active.assignments)):assignments,labels:active?{...active.labels}:labels,roles:active?{...active.roles}:roles};
+ if(existing)c.savedSeatCharts[c.savedSeatCharts.indexOf(existing)]=snapshot;
+ else c.savedSeatCharts.push(snapshot);
+ c.activeSavedSeatChartId=snapshot.id;
+ $('saveChartDialog').close();save();renderGroups();toast('Seating chart saved for '+c.name+'.');
+}
 function renderQuickSeatingGroups(){
   const layout=seatingLayout(),c=current(),result=planQuickSeating(groups,layout,c||{});
   if(result.error){
@@ -2294,6 +2418,7 @@ function renderQuickSeatingGroups(){
     const groupNumbers=[...new Set(assignment.filter(Boolean).map(a=>a.index+1))].sort((a,b)=>a-b);
     const cluster=document.createElement('div');
     cluster.className='desk-group quick-desk-group'+(groupNumbers.length?' occupied':'');
+    cluster.dataset.deskId=g.id;
     if(g.size===3 && String(g.orientation||'').startsWith('stagger-')) cluster.classList.add('compact-stagger',g.orientation);
     cluster.style.left=`${g.x}px`;cluster.style.top=`${g.y}px`;
     cluster.style.gridTemplateColumns=`repeat(${cols},70px)`;
@@ -2328,9 +2453,23 @@ function renderQuickSeatingGroups(){
     }
     room.append(cluster);
   }
+  addQuickChartSaveButton(room);
   scroller.append(room);
   return {visual:scroller,fallback:false};
 }
+$('confirmSaveChartBtn').addEventListener('click',saveCurrentSeatingChart);
+$('cancelSaveChartBtn').addEventListener('click',()=>$('saveChartDialog').close());
+$('saveChartName').addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();saveCurrentSeatingChart();}});
+$('savedChartSelect').addEventListener('change',event=>{
+ const c=current();if(!c)return;c.activeSavedSeatChartId=event.target.value||null;
+ save();renderGroups();
+});
+$('deleteSavedChartBtn').addEventListener('click',()=>{
+ const c=current(),chart=savedChartForClass(c);if(!chart)return;
+ if(!confirm('Delete saved seating chart "'+chart.name+'" for '+c.name+'?'))return;
+ c.savedSeatCharts=c.savedSeatCharts.filter(item=>item.id!==chart.id);c.activeSavedSeatChartId=null;
+ save();renderGroups();toast('Saved seating chart deleted.');
+});
 function setQuickView(mode){
   const seating=mode==='seating';
   db.groupDisplayMode=seating?'seating':'cards';
@@ -2350,6 +2489,7 @@ function setQuickView(mode){
 
   $('quickSeatingMode').checked=seating;
   $('quickTemplateField').hidden=!seating;
+  $('savedChartField').hidden=!seating;
   $('quickViewHint').textContent=seating
     ?'Each displayed group stays within one desk cluster. Larger groups may become smaller groups to fit the layout. Permanent seating assignments stay unchanged.'
     :'Seating mode may adjust temporary group sizes to fit each desk cluster. Saved seating assignments and desk positions stay untouched.';
@@ -2360,6 +2500,7 @@ $('quickEditLayoutBtn').addEventListener('click',()=>showPage('seating'));
 $('quickSeatingTemplateSelect').addEventListener('change',e=>{
   if(!db.seatingTemplates?.some(t=>t.id===e.target.value))return;
   db.activeSeatingTemplateId=e.target.value;
+  const c=current();if(c)c.activeSavedSeatChartId=null;
   save();renderSeating();renderGroups();
 });
 
@@ -2368,14 +2509,15 @@ function renderGroups() {
   $('groupsPage').classList.toggle('roles-off',current()?.showGroupRoles===false);
   $('quickSeatingMode').checked=db.groupDisplayMode==='seating';
   $('quickTemplateField').hidden=db.groupDisplayMode!=='seating';
+  populateSavedChartSelect();
   area.innerHTML = '';
-  if (!groups.length) {
+  if (!groups.length && !(db.groupDisplayMode==='seating'&&savedChartForClass())) {
     area.innerHTML = '<div class="empty"><div style="font-size:30px">♧</div><strong>Your groups will appear here</strong><div>Add a roster and click Randomize groups.</div></div>';
     return;
   }
 
   const quickMode=db.groupDisplayMode==='seating';
-  const plan=quickMode?renderQuickSeatingGroups():null;
+  const plan=quickMode?(savedChartForClass()?renderSavedSeatingGroups(savedChartForClass()):renderQuickSeatingGroups()):null;
   const wrap = document.createElement('div');
   wrap.className = 'groups';
   groups.forEach((g,i) => {
@@ -3522,7 +3664,7 @@ function renderSeating() {
     priority.className = 'desk-priority';
     priority.textContent = 'Priority ';
     const prioritySelect = document.createElement('select');
-    prioritySelect.setAttribute('aria-label', `Populate priority for desk group ${g.priority}`);
+    prioritySelect.setAttribute('aria-label', `Desk layout order ${g.priority}`);
     for (let n=1;n<=layout.length;n++) {
       const option = document.createElement('option');
       option.value = String(n);
@@ -3561,7 +3703,7 @@ function renderSeating() {
     el.append(del);
     for (let i=0;i<g.size;i++) {
       const desk = document.createElement('div');
-      const student = current()?.students.find(s => s.id === (seatingAssignments()[g.id]||[])[i]);
+      const student = null; // Layout Builder shows physical desks only; student assignments belong in Groups.
       desk.className = 'desk' + (student ? '' : ' empty-seat');
       desk.dataset.seatIndex = String(i);
       desk.textContent = student ? student.name : 'Empty';
