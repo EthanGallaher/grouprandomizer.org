@@ -3792,7 +3792,7 @@ function renderSeating() {
       const student = null; // Layout Builder shows physical desks only; student assignments belong in Groups.
       desk.className = 'desk' + (student ? '' : ' empty-seat');
       desk.dataset.seatIndex = String(i);
-      desk.textContent = student ? student.name : 'Empty';
+      desk.textContent = ''; // Layout Builder intentionally shows blank physical desks.
       if (student) {
         // Measure the full name and shrink its font until it fits on one line.
         const ctx = nameMeasureCanvas.getContext('2d');
@@ -3805,7 +3805,7 @@ function renderSeating() {
         }
         desk.style.fontSize = `${fontSize}px`;
       }
-      desk.title = student ? student.name+' — '+(student.tier||'Middle')+' tier' : 'Empty seat';
+      desk.title = '';
       if(student)desk.append(makeTierLetter(student.tier));
       const lockInfo=student&&seatingLocks()[student.id];
       if(lockInfo?.groupId===g.id && lockInfo?.seatIndex===i){
