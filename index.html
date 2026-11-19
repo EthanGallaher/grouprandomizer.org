@@ -741,19 +741,7 @@ body.bgr-student-view:not(.ipad-presentation) .top .install-actions {display:non
 #groupsPage.student-view:not(:fullscreen):not(.ipad-fullscreen) .groups-page-head #fullscreenBtn {display:inline-flex!important}
 
 
-/* P05.20: fill available tab width and fit the classroom within normal view. */
-@media (min-width:1041px){
- .workspace-bar{grid-template-columns:minmax(0,1fr) minmax(300px,auto)}
- .workspace-bar .page-nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;width:100%!important}
- .workspace-bar .page-nav button{width:100%;min-width:0;padding-inline:12px;text-align:center}
-}
-@media (min-width:681px) and (max-width:1040px){
- .workspace-bar .page-nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%!important}
- .workspace-bar .page-nav button{width:100%;min-width:0;text-align:center}
-}
-#groupsPage .quick-seating-scroll{width:100%;max-width:100%;overflow:hidden}
-#groupsPage .quick-seating-room{transform:none}
-@media print {#groupsPage .quick-seating-scroll{overflow:visible}}
+
 </style>
 <style>
 .seating-tool-row #triangleVariantField{flex:0 0 100%;width:100%;min-width:0;max-width:100%;align-self:stretch}
@@ -929,6 +917,27 @@ body.bgr-home-active .workspace-class-bar{display:none!important}
 @media(max-width:1040px){.workspace-bar{grid-template-columns:1fr}.workspace-class-bar{justify-self:start;width:min(100%,460px)}#groupsPage .groups-page-head .actions{justify-content:flex-start}}
 @media(max-width:680px){.workspace-bar{padding-inline:12px}.workspace-bar .page-nav{gap:5px}.workspace-bar .page-nav button{padding:9px 10px;font-size:12px}.workspace-class-bar{width:100%;flex-wrap:wrap}.workspace-class-bar select{flex:1 1 130px;max-width:100%;width:auto}#groupsPage .daily-controls .saved-chart-field,#groupsPage .daily-controls .group-strategy-field{max-width:none!important;flex:1 1 170px}#groupsPage .daily-action-buttons{margin-left:0;width:100%}#groupsPage .daily-action-buttons button{flex:1 1 150px}}
 @media print{.quick-save-chart-btn{display:none!important}}
+
+/* P05.21 regression fix: desktop navigation stays on ONE horizontal line.
+   Distribute space between its three tabs; only stack at narrow phone widths. */
+@media (min-width:701px){
+ .workspace-bar{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:18px;row-gap:8px;padding-block:12px}
+ .workspace-bar .page-nav{display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;align-items:stretch;gap:10px;min-width:0;width:100%!important;margin:0!important;padding:0!important;overflow:visible}
+ .workspace-bar .page-nav button{flex:1 1 0!important;width:auto!important;min-width:0;max-width:none;white-space:nowrap;text-align:center}
+ .workspace-bar .workspace-class-bar{margin:0!important;justify-self:end}
+}
+@media (min-width:701px) and (max-width:1040px){
+ .workspace-bar{grid-template-columns:minmax(0,1fr)}
+ .workspace-bar .workspace-class-bar{justify-self:start}
+}
+@media (max-width:700px){
+ .workspace-bar .page-nav{display:flex!important;flex-direction:row!important;flex-wrap:wrap;gap:6px}
+ .workspace-bar .page-nav button{flex:1 1 110px!important;text-align:center;min-width:0}
+}
+/* Readable classroom: preserve the 1100x660 coordinate model and avoid shrinking
+   based on viewport height. Only width fit applies; normal vertical scroll remains. */
+#groupsPage .quick-seating-scroll{max-width:100%;overflow-x:auto;overflow-y:visible}
+#groupsPage .quick-seating-room{transform:none}
 </style>
 </head>
 <body>
@@ -2313,20 +2322,18 @@ function planQuickSeating(groupRows,layout,config={}){
 }
 
 
-// Fit the fixed classroom-coordinate canvas to both the available width and
-// remaining viewport height. Only the display is scaled; seat positions/data are untouched.
+// Fit to usable chart WIDTH, not the remaining viewport HEIGHT. Using height
+// here made the entire classroom unreadably tiny beneath the app controls.
+// Preserve readable student names; vertical page scrolling is preferable to a thumbnail.
 function fitDailySeatingChart(){
  const room=$('groupsArea')?.querySelector('.quick-seating-room');
  if(!room)return;
  if(isPresentation($('groupsPage'))||document.body.classList.contains('print-seating')||window.matchMedia('print').matches){room.style.zoom='';return;}
  const scroll=room.closest('.quick-seating-scroll');if(!scroll)return;
  room.style.zoom='1';
- const availableWidth=Math.max(1,scroll.clientWidth-3);
- const viewportRemaining=Math.max(1,window.innerHeight-scroll.getBoundingClientRect().top-18);
- // The chart remains readable where viewport height is unusually short;
- // on ordinary laptop/desktop displays the complete canvas fits without scrolling.
- const factor=Math.min(1,availableWidth/1100,viewportRemaining/660);
- room.style.zoom=String(Math.max(.25,Math.floor(factor*1000)/1000));
+ const usableWidth=Math.max(1,scroll.clientWidth-4);
+ const factor=Math.min(1,usableWidth/1100);
+ room.style.zoom=String(Math.max(.5,Math.floor(factor*1000)/1000));
 }
 if(typeof window!=='undefined')window.addEventListener('resize',()=>requestAnimationFrame(fitDailySeatingChart));
 
