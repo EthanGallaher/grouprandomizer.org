@@ -1219,8 +1219,8 @@ body:not(.bgr-home-active) .workspace-bar + .wrap { padding-top: 2px !important;
 <main class="panel">
 <div class="groups-page-head">
   <div>
-    <h2 id="displayTitle">Class groups</h2>
-    <div class="subline" id="classSummary">Add students to get started.</div>
+    <h2 id="displayTitle">Select a class</h2>
+    <div class="subline" id="classSummary" style="display:none" aria-hidden="true"></div>
   </div>
   <div class="btnrow actions">
     <div class="legacy-class-picker"><label for="displayClassSelect">Class</label><select id="displayClassSelect"></select></div>
@@ -1740,7 +1740,7 @@ function render() {
   renderRoles(c);
   updateGroupSizeControls(c);
   $('classSummary').textContent = c ? `${c.name} · ${c.students.length} students` : 'Create a class and add students.';
-  $('displayTitle').textContent = c ? `${c.name} — Groups` : 'Class groups';
+  $('displayTitle').textContent = c ? c.name : 'Select a class';
   $('generateBtn').disabled = !c || c.students.length < 2;
   renderGroups();
   const strategy=$('groupStrategy');
