@@ -641,6 +641,7 @@ body.bgr-student-view .top,body.bgr-student-view .workspace-bar,body.bgr-student
 .quick-seat-role {display:block;max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:7px;line-height:1.08;color:#52637b;font-weight:600}
 .quick-seat .tier-letter {position:absolute;bottom:1px;left:1px;transform:scale(.6);transform-origin:bottom left;pointer-events:none}
 .quick-seat .group-locked-mark {position:absolute;top:0;right:0;font-size:9px;line-height:1}
+.quick-seat-group-tag {position:absolute;bottom:1px;right:1px;border-radius:3px;padding:1px 2px;background:#e7f0ff;color:#143a73;font-size:7px;font-weight:900;line-height:1}
 .quick-seat.group-locked {box-shadow:inset 0 0 0 2px #ba344b}
 .quick-seat.empty-seat {cursor:default;background:#f8fafc;color:#a4acb8;font-size:9px}
 .quick-mapping-warning {padding:18px;margin-bottom:12px;border:1px solid #d5a96a;border-radius:11px;background:#fff9e9;color:#714917}
@@ -662,6 +663,36 @@ body.bgr-student-view .top,body.bgr-student-view .workspace-bar,body.bgr-student
  #groupsPage:has(.quick-seating-room) .groups-page-head {margin-bottom:8px}
  #groupsPage:has(.quick-seating-room) #balanceNote {display:none!important}
 }
+
+
+/* P05.11: three work areas, with Home accessible via the brand. */
+.site-brand .brand-home {display:flex;align-items:center;gap:13px;margin:0;padding:3px 5px 3px 0;
+ background:transparent;color:inherit;border:0;border-radius:9px;font:inherit;font-weight:inherit;text-align:left;cursor:pointer;min-width:0}
+.site-brand .brand-home:hover{color:#fff;background:rgba(255,255,255,.08)}
+.site-brand .brand-home:focus-visible{outline:3px solid #c7dcff;outline-offset:4px}
+.site-brand .brand-home img{width:48px;height:48px;flex:none;border-radius:11px}
+.site-brand .brand-home span{font-size:clamp(21px,3vw,29px);line-height:1.17;font-weight:800;letter-spacing:-.012em}
+.site-brand h1{margin:0;font-size:inherit}
+@media(max-width:600px){.site-brand .brand-home img{width:38px;height:38px}.site-brand .brand-home span{font-size:clamp(19px,5vw,24px)}}
+.workspace-bar .page-nav{flex-wrap:wrap;overflow:visible;scrollbar-width:auto}
+.workspace-bar .page-nav button{font-size:14px}
+.random-picker-dialog{border:1px solid #d2dff0;border-radius:18px;padding:20px;width:min(420px,calc(100vw - 26px));
+ max-height:calc(100dvh - 28px);overflow:auto;box-shadow:0 23px 80px rgba(18,37,68,.22);color:var(--ink)}
+.random-picker-dialog::backdrop{background:rgba(15,34,62,.42)}
+.random-picker-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}
+.random-picker-head h2{margin:0;font-size:22px;color:var(--navy)}
+.random-picker-head p{font-size:12px;color:var(--muted);margin:5px 0 0}
+.random-picker-eyebrow{font-size:10px;font-weight:850;letter-spacing:.1em;text-transform:uppercase;color:#2459a9;margin-bottom:5px}
+.random-picker-close{padding:5px 9px;flex:none;min-width:32px;min-height:32px}
+.random-picker-result{margin:16px 0 12px;padding:22px 14px;border:1px solid #c7d8ef;background:#f5f9ff;border-radius:13px}
+.random-picker-result strong{font-size:clamp(23px,6vw,34px);overflow-wrap:anywhere}
+.random-picker-option{display:flex;gap:9px;align-items:center;color:#516179;font-size:13px;margin:11px 0 18px;cursor:pointer}
+.random-picker-option input{width:17px;height:17px;margin:0;flex:none}
+.random-picker-actions{display:flex;gap:9px;flex-wrap:wrap}
+.random-picker-actions button{flex:1 1 auto}
+#openRandomPickerBtn{white-space:nowrap}
+@media(max-width:700px){.workspace-bar .page-nav{overflow:visible}.workspace-bar .page-nav button{font-size:13px}}
+@media print{.random-picker-dialog{display:none!important}}
 
 </style>
 <style>
@@ -743,12 +774,12 @@ body.bgr-home-active .workspace-class-bar{display:none!important}
 
 </style>
 <style>.welcome-tutorial-top{margin:10px 0 14px}.welcome-tutorial-top button{max-width:100%}</style>
-<meta name="bgr-build" content="P05.8-manual-only">
+<meta name="bgr-build" content="P05.11-manual-only">
 </head>
 <body>
 <header class="top">
   <div class="top-inner">
-    <div class="site-brand"><img src="app-icon-192.png" alt="" width="48" height="48"><h1>Balanced Group Randomizer</h1></div>
+    <div class="site-brand"><h1><button type="button" id="brandHomeBtn" class="brand-home" title="Go to Home" aria-label="Balanced Group Randomizer — Home"><img src="app-icon-192.png" alt="" width="48" height="48"><span>Balanced Group Randomizer</span></button></h1></div>
     <div class="install-actions"><button type="button" class="install-app-btn" id="welcomeHelpBtn">Getting Started</button><button type="button" class="install-app-btn" id="feedbackBtn">Feedback</button><a href="./BGR-Manual-Local-Edition.zip" download class="install-app-btn" title="Download the standalone local-only HTML package">Download local edition</a><div class="save-state" id="saveState">Saved locally · manual backups</div></div>
   </div>
 </header>
@@ -784,11 +815,9 @@ body.bgr-home-active .workspace-class-bar{display:none!important}
 </dialog>
 <div class="workspace-bar">
   <nav class="page-nav" aria-label="Classroom tools">
-    <button type="button" class="secondary" id="homeTab" aria-controls="homePage">Home</button>
     <button type="button" class="secondary" id="groupsTab" aria-controls="groupsPage">Groups</button>
-    <button type="button" class="secondary" id="seatingTab" aria-controls="seatingPage">Seating Chart</button>
-    <button type="button" class="secondary" id="randomStudentTab" aria-controls="randomStudentPage">Random Student</button>
-    <button type="button" class="secondary active" id="teacherTab" aria-controls="teacherPage">Teacher Setup</button>
+    <button type="button" class="secondary" id="seatingTab" aria-controls="seatingPage">Layout Builder</button>
+    <button type="button" class="secondary" id="teacherTab" aria-controls="teacherPage">Teacher Setup</button>
   </nav>
   <div class="workspace-class-bar">
     <label for="workspaceClassSelect">Class</label>
@@ -988,6 +1017,7 @@ body.bgr-home-active .workspace-class-bar{display:none!important}
     <div class="legacy-class-picker"><label for="displayClassSelect">Class</label><select id="displayClassSelect"></select></div>
     
     <button class="secondary" id="printBtn">Print groups</button>
+    <button type="button" class="secondary" id="openRandomPickerBtn" title="Pick one student without leaving Groups">🎲 Random student</button>
     <button class="secondary" id="studentViewBtn" type="button" aria-pressed="false" title="Hide teacher-only indicators and controls">◉ Student view</button>
     <button class="secondary" id="fullscreenBtn" type="button" title="Expand the current teacher or student view">⛶ Fullscreen</button>
     <button class="primary" id="generateBtn">⤨ Randomize groups</button>
@@ -1007,25 +1037,15 @@ body.bgr-home-active .workspace-class-bar{display:none!important}
 </main>
 </section>
 
-<section class="page" id="randomStudentPage">
-  <main class="panel">
-    <div class="groups-page-head">
-      <div>
-        <h2>Random Student Picker</h2>
-        <div class="subline">Select a student at random from the selected class roster.</div>
-      </div>
-      <div class="btnrow actions">
-        <div class="legacy-class-picker"><label for="randomClassSelect">Class</label><select id="randomClassSelect"></select></div>
-        
-      </div>
-    </div>
-    <button class="primary" id="pickRandomStudentBtn">Pick a random student</button>
-    <div class="random-result" id="randomStudentResult" aria-live="polite">
-      Click “Pick a random student” to choose a name.
-    </div>
-  </main>
-</section>
-
+<dialog class="random-picker-dialog" id="randomPickerDialog" aria-labelledby="randomPickerHeading" aria-describedby="randomPickerHint">
+  <div class="random-picker-head">
+    <div><div class="random-picker-eyebrow">Classroom tool</div><h2 id="randomPickerHeading">Random student</h2><p id="randomPickerHint">Pick a student from <strong id="randomPickerClass">the current class</strong>.</p></div>
+    <button type="button" class="secondary random-picker-close" id="closeRandomPickerBtn" aria-label="Close random student picker">✕</button>
+  </div>
+  <div class="random-result random-picker-result" id="randomStudentResult" aria-live="polite" aria-atomic="true">Choose Random student to pick a name.</div>
+  <label class="random-picker-option"><input id="pickerIncludeAbsent" type="checkbox"><span>Include students marked absent</span></label>
+  <div class="random-picker-actions"><button class="primary" id="pickRandomStudentBtn" type="button">↻ Pick another</button><button class="secondary" id="randomPickerDoneBtn" type="button">Done</button></div>
+</dialog>
 
 <section class="page" id="seatingPage">
   <main class="panel">
@@ -1213,7 +1233,7 @@ function makeClass(name) {
   return c;
 }
 function syncClassDropdowns() {
-  ['workspaceClassSelect','classSelect','displayClassSelect','randomClassSelect','seatingClassSelect'].forEach(id => {
+  ['workspaceClassSelect','classSelect','displayClassSelect','seatingClassSelect'].forEach(id => {
     const select = $(id);
     const prior = select.value;
     select.innerHTML = '';
@@ -1945,21 +1965,133 @@ function restoreAbsentStudent(studentId){
   toast(`No valid group has room for ${student.name}. Adjust groups or randomize again.`);
 }
 
-// Match each classroom group to a compatible desk cluster in the selected shared template.
-// Priorities break ties; placing larger groups first avoids consuming a triple desk with a pair.
-function planQuickSeating(groupRows,layout){
-  const ranked=layout.map((g,i)=>({...g,order:Number(g.priority)||i+1})).sort((a,b)=>a.order-b.order);
-  const requests=groupRows.map((members,index)=>({members,index})).sort((a,b)=>b.members.length-a.members.length||a.index-b.index);
-  const free=ranked.filter(g=>Number(g.size)>=2),placements=new Map();
-  for(const req of requests){
-    const options=free.filter(g=>g.size>=req.members.length).sort((a,b)=>
-      (a.size-req.members.length)-(b.size-req.members.length)||a.order-b.order);
-    if(!options.length)return {error:`This layout cannot fit all ${groupRows.length} current groups without splitting a group. Add enough 2- or 3-desk clusters in Seating Chart (4-desk clusters also work), or select another saved layout. Your groups and permanent seating are unchanged.`};
-    const chosen=options[0];free.splice(free.findIndex(g=>g.id===chosen.id),1);
-    placements.set(chosen.id,req);
-  }
-  return {placements};
+// Quick Groups placement is intentionally independent of permanent seat assignments.
+// Logical groups (including pairs and locks) are never split or changed in the group data;
+// only their on-screen seat locations may span more than one desk cluster.
+function quickSeatLocation(cluster,seatIndex){
+  const {cols}=seatingDimensions(cluster);
+  const orientation=String(cluster.orientation||'');
+  const stagger={
+    'stagger-down':[[6,6],[80,6],[43,53]],
+    'stagger-up':[[43,6],[6,53],[80,53]],
+    'stagger-right':[[6,6],[6,53],[80,29.5]],
+    'stagger-left':[[80,6],[80,53],[6,29.5]]
+  };
+  const p=Number(cluster.size)===3?stagger[orientation]?.[seatIndex]:null;
+  return {
+    x:(Number(cluster.x)||0)+(p?p[0]:6+(seatIndex%cols)*74)+35,
+    y:(Number(cluster.y)||0)+(p?p[1]:6+Math.floor(seatIndex/cols)*47)+21.5
+  };
 }
+function planQuickSeating(groupRows,layout){
+  const requests=groupRows.map((members,index)=>({members,index})).filter(r=>r.members.length);
+  const ranked=layout.map((g,i)=>({g,order:Number.isFinite(Number(g.priority))&&Number(g.priority)>0?Number(g.priority):i+1,i}))
+    .sort((a,b)=>a.order-b.order||a.i-b.i);
+  const totalStudents=requests.reduce((sum,r)=>sum+r.members.length,0);
+  const totalSeats=ranked.reduce((sum,r)=>sum+Math.max(0,Math.floor(Number(r.g.size)||0)),0);
+  if(totalStudents>totalSeats){
+    const need=totalStudents-totalSeats;
+    return {error:`Not enough seats in this layout: ${totalStudents} students are present, but only ${totalSeats} seats are placed. Add ${need} more seat${need===1?'':'s'} in Layout Builder. Your daily groups and saved seating charts are unchanged.`};
+  }
+  // Every seat is eligible, including individual desks. An occupied desk cluster
+  // may hold portions of two logical groups when that avoids an isolated student.
+  const seats=[];
+  ranked.forEach(({g,order})=>{
+    for(let i=0;i<Math.max(0,Math.floor(Number(g.size)||0));i++){
+      const p=quickSeatLocation(g,i);
+      seats.push({groupId:g.id,seatIndex:i,x:p.x,y:p.y,priority:order,size:Number(g.size)});
+    }
+  });
+  const gap=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+  const sizeOrders=[
+    requests.slice().sort((a,b)=>b.members.length-a.members.length||a.index-b.index),
+    requests.slice().sort((a,b)=>a.members.length-b.members.length||a.index-b.index),
+    requests.slice(),
+    requests.slice().reverse()
+  ];
+  let best=null,bestScore=Infinity;
+  for(const order of sizeOrders){
+    const free=new Set(seats.map((_,i)=>i));
+    const taken=new Map();
+    const seatForStudent=[];
+    for(const request of order){
+      // Try each free seat as the start of a compact bundle. Continue on the
+      // closest free seats, favoring the same cluster but allowing neighbors.
+      let bestChoice=null,bestChoiceScore=Infinity;
+      for(const anchor of free){
+        const chosen=[anchor],available=new Set(free);available.delete(anchor);
+        while(chosen.length<request.members.length){
+          let nearest=-1,nearestScore=Infinity;
+          for(const candidate of available){
+            const s=seats[candidate];
+            const nearestDist=Math.min(...chosen.map(i=>gap(seats[i],s)));
+            const sharesCluster=chosen.some(i=>seats[i].groupId===s.groupId);
+            const score=nearestDist+(sharesCluster?0:95)+s.priority*.12;
+            if(score<nearestScore-1e-6||(Math.abs(score-nearestScore)<1e-6&&candidate<nearest)){
+              nearest=candidate;nearestScore=score;
+            }
+          }
+          if(nearest<0)break;
+          chosen.push(nearest);available.delete(nearest);
+        }
+        if(chosen.length!==request.members.length)continue;
+        const clusters=new Set(chosen.map(i=>seats[i].groupId));
+        const span=[...chosen].reduce((sum,i)=>sum+chosen.reduce((sub,j)=>i<j?sub+gap(seats[i],seats[j]):sub,0),0);
+        // Prefer a whole table, then neighboring clusters. Give exact-fit
+        // pairs/triples a slight advantage; otherwise preserve layout priority.
+        let score=(clusters.size-1)*270+span*.18;
+        const clusterSizes=new Map();
+        chosen.forEach(i=>clusterSizes.set(seats[i].groupId,(clusterSizes.get(seats[i].groupId)||0)+1));
+        for(const [id,count] of clusterSizes){
+          const capacity=seats.find(s=>s.groupId===id).size;
+          const already=taken.get(id)||0;
+          if(already===0&&count===1&&capacity>1)score+=25;
+          if(already+count===capacity)score-=11;
+          else if(already+count===capacity-1)score+=4;
+        }
+        score+=chosen.reduce((sum,i)=>sum+seats[i].priority,0)*.4;
+        if(score<bestChoiceScore-1e-6||(Math.abs(score-bestChoiceScore)<1e-6&&(!bestChoice||chosen[0]<bestChoice[0]))){
+          bestChoiceScore=score;bestChoice=chosen;
+        }
+      }
+      // Capacity was checked up front, so the fallback can always complete.
+      const slots=bestChoice||[...free].slice(0,request.members.length);
+      slots.forEach((seatIndex,k)=>{
+        free.delete(seatIndex);
+        seatForStudent.push({seatIndex,student:request.members[k],index:request.index});
+        const id=seats[seatIndex].groupId;taken.set(id,(taken.get(id)||0)+1);
+      });
+    }
+    const byLogical=new Map(),counts=new Map();
+    for(const placed of seatForStudent){
+      if(!byLogical.has(placed.index))byLogical.set(placed.index,[]);
+      byLogical.get(placed.index).push(seats[placed.seatIndex]);
+      const physical=seats[placed.seatIndex].groupId;
+      counts.set(physical,(counts.get(physical)||0)+1);
+    }
+    let score=0;
+    for(const chosen of byLogical.values()){
+      score+=(new Set(chosen.map(s=>s.groupId)).size-1)*270;
+      for(let i=0;i<chosen.length;i++)for(let j=i+1;j<chosen.length;j++)score+=gap(chosen[i],chosen[j])*.18;
+    }
+    for(const {g} of ranked){
+      const n=counts.get(g.id)||0;
+      if(n===1&&g.size>1&&totalStudents>1)score+=160;
+      if(n>0)score+=Number(g.priority||0)*.35;
+    }
+    if(score<bestScore){bestScore=score;best=seatForStudent;}
+  }
+  const placements=new Map(ranked.map(({g})=>[g.id,Array.from({length:Math.max(0,Math.floor(Number(g.size)||0))},()=>null)]));
+  const groupClusters=new Map();
+  for(const placed of best||[]){
+    const location=seats[placed.seatIndex];
+    placements.get(location.groupId)[location.seatIndex]={student:placed.student,index:placed.index};
+    if(!groupClusters.has(placed.index))groupClusters.set(placed.index,new Set());
+    groupClusters.get(placed.index).add(location.groupId);
+  }
+  return {placements,spans:new Set([...groupClusters].filter(([,ids])=>ids.size>1).map(([index])=>index))};
+}
+
 function renderQuickSeatingGroups(){
   const layout=seatingLayout(),result=planQuickSeating(groups,layout);
   if(result.error){
@@ -1973,26 +2105,28 @@ function renderQuickSeatingGroups(){
   room.innerHTML='<div class="front-of-class">FRONT OF CLASS</div>';
   const ordered=layout.slice().sort((a,b)=>(Number(a.priority)||0)-(Number(b.priority)||0));
   for(const g of ordered){
-    const {cols}=seatingDimensions(g),assignment=result.placements.get(g.id);
+    const {cols}=seatingDimensions(g),assignment=result.placements.get(g.id)||[];
+    const groupNumbers=[...new Set(assignment.filter(Boolean).map(a=>a.index+1))].sort((a,b)=>a-b);
     const cluster=document.createElement('div');
-    cluster.className='desk-group quick-desk-group'+(assignment?' occupied':'');
+    cluster.className='desk-group quick-desk-group'+(groupNumbers.length?' occupied':'');
     if(g.size===3 && String(g.orientation||'').startsWith('stagger-')) cluster.classList.add('compact-stagger',g.orientation);
     cluster.style.left=`${g.x}px`;cluster.style.top=`${g.y}px`;
     cluster.style.gridTemplateColumns=`repeat(${cols},70px)`;
     const label=document.createElement('div');label.className='quick-desk-label';
-    label.textContent=assignment?`Group ${assignment.index+1}`:'Unused desks';
+    label.textContent=!groupNumbers.length?'Unused desks':groupNumbers.length===1?`Group ${groupNumbers[0]}${result.spans.has(groupNumbers[0]-1)?' (part)':''}`:`Groups ${groupNumbers.join(' + ')}`;
     cluster.append(label);
     for(let i=0;i<g.size;i++){
-      const student=assignment?.members[i];
+      const placement=assignment[i],student=placement?.student;
       const seat=document.createElement('div');seat.className='desk quick-seat'+(student?'':' empty-seat');
       seat.dataset.seatIndex=String(i);
       if(student){
         seat.dataset.studentId=student.id;
         seat.setAttribute('role','button');seat.tabIndex=0;
-        seat.title=`${student.name} — ${student.role||'Group member'}. Click to swap, lock, or mark absent.`;
+        seat.title=`Group ${placement.index+1}: ${student.name} — ${student.role||'Group member'}. Click to swap, lock, or mark absent.`;
         const name=document.createElement('span');name.className='quick-seat-name';name.textContent=student.name;
         const role=document.createElement('span');role.className='quick-seat-role';role.textContent=student.role||'';
         seat.append(name,role,makeTierLetter(student.tier));
+        if(groupNumbers.length>1||result.spans.has(placement.index)){const tag=document.createElement('span');tag.className='quick-seat-group-tag';tag.textContent=`G${placement.index+1}`;tag.setAttribute('aria-label',`Group ${placement.index+1}`);seat.append(tag);}
         if(current()?.groupLocks?.[student.id]!==undefined){
           seat.classList.add('group-locked');
           const mark=document.createElement('span');mark.className='group-locked-mark';mark.textContent='🔒';seat.append(mark);
@@ -2018,7 +2152,7 @@ function setQuickView(mode){
   $('quickSeatingMode').checked=seating;
   $('quickTemplateField').hidden=!seating;
   $('quickViewHint').textContent=seating
-    ?'Temporary daily groups: attendance, rules, roles, swaps and group locks stay active. Saved seating assignments are not changed.'
+    ?'Daily groups and pairs stay intact. If tables differ in size, nearby seats are used. Permanent seating assignments are unchanged.'
     :'Switch views without changing the groups. Saved seating assignments and desk positions stay untouched.';
   save();renderGroups();
 }
@@ -2105,31 +2239,27 @@ function renderGroups() {
 }
 
 function showPage(which) {
+  // The picker is a compact Groups tool, never a fourth workspace page.
+  if (which === 'randomStudent') which = 'groups';
   const home = which === 'home';
   const teacher = which === 'teacher';
   const groupDisplay = which === 'groups';
-  const randomStudent = which === 'randomStudent';
   const seating = which === 'seating';
+  if (!groupDisplay && $('randomPickerDialog')?.open) $('randomPickerDialog').close();
   $('homePage').classList.toggle('active',home);
-  $('homeTab').classList.toggle('active',home);
   document.body.classList.toggle('bgr-home-active',home);
   $('teacherPage').classList.toggle('active',teacher);
   $('groupsPage').classList.toggle('active',groupDisplay);
-  $('randomStudentPage').classList.toggle('active',randomStudent);
   $('seatingPage').classList.toggle('active',seating);
-  $('teacherTab').classList.toggle('active',teacher);
-  $('groupsTab').classList.toggle('active',groupDisplay);
-  $('randomStudentTab').classList.toggle('active',randomStudent);
-  $('seatingTab').classList.toggle('active',seating);
-  [['homeTab',home],['teacherTab',teacher],['groupsTab',groupDisplay],['randomStudentTab',randomStudent],['seatingTab',seating]].forEach(([id,selected])=>{
+  [['teacherTab',teacher],['groupsTab',groupDisplay],['seatingTab',seating]].forEach(([id,selected])=>{
+    $(id).classList.toggle('active',selected);
     $(id).setAttribute('aria-current',selected?'page':'false');
   });
 }
 
-$('homeTab').addEventListener('click',() => {showPage('home');window.scrollTo(0,0);});
+$('brandHomeBtn').addEventListener('click',() => {showPage('home');window.scrollTo(0,0);});
 $('teacherTab').addEventListener('click',() => showPage('teacher'));
 $('groupsTab').addEventListener('click',() => showPage('groups'));
-$('randomStudentTab').addEventListener('click',() => showPage('randomStudent'));
 $('seatingTab').addEventListener('click',() => showPage('seating'));
 function openWorkspaceFromHome() {
   const hasRoster = db.classes.some(c => c.students && c.students.length > 0);
@@ -2202,14 +2332,15 @@ function switchClass(id) {
   groups = [];
   absentIds = new Set();
   restoreGroupSnapshot();
-  $('randomStudentResult').textContent = 'Click “Pick a random student” to choose a name.';
+  $('randomStudentResult').textContent = 'Select Random student to choose a name.';
+  $('randomPickerClass').textContent = current()?.name || 'the current class';
+  if ($('randomPickerDialog').open) pickRandomStudent();
   save();
   render();
 }
 $('workspaceClassSelect').addEventListener('change',e => switchClass(e.target.value));
 $('classSelect').addEventListener('change',e => switchClass(e.target.value));
 $('displayClassSelect').addEventListener('change',e => switchClass(e.target.value));
-$('randomClassSelect').addEventListener('change',e => switchClass(e.target.value));
 $('seatingClassSelect').addEventListener('change',e => switchClass(e.target.value));
 
 $('addNamesBtn').addEventListener('click',() => {
@@ -2685,22 +2816,40 @@ $('printBtn').addEventListener('click',() => {
   window.print();
 });
 
-$('pickRandomStudentBtn').addEventListener('click',() => {
+function pickRandomStudent(){
   const c = current();
   const result = $('randomStudentResult');
+  result.replaceChildren();
   if (!c || !c.students.length) {
     result.textContent = 'Add students to this class roster first.';
-    toast('This class has no students.');
     return;
   }
-  const picked = c.students[Math.floor(Math.random() * c.students.length)];
-  result.innerHTML = '';
+  const eligible = c.students.filter(s => $('pickerIncludeAbsent').checked || !absentIds.has(s.id));
+  if (!eligible.length) {
+    result.textContent = 'No present students. Check “Include students marked absent” to use the full roster.';
+    return;
+  }
+  const picked = eligible[Math.floor(Math.random() * eligible.length)];
   const label = document.createElement('div');
   label.textContent = 'Randomly selected student:';
   const name = document.createElement('strong');
   name.textContent = picked.name;
   result.append(label,name);
+}
+$('openRandomPickerBtn').addEventListener('click',()=>{
+  const c=current();
+  if (!c || !c.students.length){toast('Add students to your class before using Random student.');return;}
+  $('randomPickerClass').textContent=c.name;
+  $('pickerIncludeAbsent').checked=false; // A new pick defaults to students marked present.
+  const dialog=$('randomPickerDialog');
+  if (!dialog.open) dialog.showModal();
+  pickRandomStudent();
 });
+$('pickRandomStudentBtn').addEventListener('click',pickRandomStudent);
+$('pickerIncludeAbsent').addEventListener('change',pickRandomStudent);
+$('closeRandomPickerBtn').addEventListener('click',()=>$('randomPickerDialog').close());
+$('randomPickerDoneBtn').addEventListener('click',()=>$('randomPickerDialog').close());
+$('randomPickerDialog').addEventListener('click',e=>{if(e.target===$('randomPickerDialog'))$('randomPickerDialog').close();});
 
 $('exportBtn').addEventListener('click', () => {
   downloadBackup(db);
@@ -3550,11 +3699,11 @@ const guideSteps = [
   {title:'Create or select a class', body:'Choose a class from the shared selector above the tabs, or enter a new class name below and select Create.', page:'teacher', target:'workspaceClassSelect'},
   {title:'Add students', body:'Paste student names here, one per line, then select Add students. You can also use the PowerSchool PDF importer in the next step.', page:'teacher', target:'bulkNames'},
   {title:'Import and rank automatically', body:'Upload a PowerSchool Final Grades PDF here. Review the extracted records before confirming; existing classes can be updated.', page:'teacher', target:'classPdfUpload'},
-  {title:'Review performance tiers', body:'Review High, Middle, and Low rankings and adjust any student individually. These tiers appear as H, M, and L in teacher views, but are hidden in student fullscreen views.', page:'teacher', target:'studentList'},
+  {title:'Review performance tiers', body:'Review High, Middle, and Low rankings and adjust any student individually. These tiers appear as H, M, and L in teacher views, but are hidden in Student View.', page:'teacher', target:'studentList'},
   {title:'Set grouping rules', body:'Keep selected students apart, or choose Keep Together for students who must share a group.', page:'teacher', target:'avoidRuleType'},
   {title:'Customize group roles', body:'Change the three role titles here. They are shared across all classes; in pairs, the second student covers roles 2 and 3.', page:'teacher', target:'roleList'},
   {title:'Generate groups', body:'Select a grouping strategy, then click Randomize groups. The New partners option uses locally saved grouping history.', page:'groups', target:'groupStrategy'},
-  {title:'Build your seating chart', body:'Choose or create a template, add desks, select a grouping strategy, and click Populate desks to assign students.', page:'seating', target:'seatingSetupControls'},
+  {title:'Design your classroom layout', body:'Choose or create a template, add desks, select a grouping strategy, and click Populate desks to assign students.', page:'seating', target:'seatingSetupControls'},
   {title:'Back up and protect your data', body:'Return to Teacher Setup to export a backup. Backups contain student information, so store them securely. Privacy & data controls explains local storage and deletion.', page:'teacher', target:'exportBtn'}
 ];
 let guideIndex=0;

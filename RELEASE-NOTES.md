@@ -1,23 +1,26 @@
-# BGR Website P05.10 — Compact grouping controls / Student View
+# BGR Website P05.12 — Flexible seating for Quick Groups
 
-## Changes
-- Groups > Show groups on seating chart toolbar now keeps toggle, saved-layout selector and Edit Layout on the same compact row at desktop widths. Hint appears in small type below. Small screens wrap naturally.
-- Student View is a separate toggle from Fullscreen. It hides teacher navigation, performance tiers, lock icons/stripes, absence sidebar, teacher actions, notices and teacher-only toasts. Student View is read-only, and has a Return to teacher view control.
-- Fullscreen expands **the current view**. Teacher fullscreen keeps teacher tiers, lock markers, attendance sidebar, main grouping buttons and the layout switch; groups remain interactive. Student fullscreen stays sanitized. Escape exits fullscreen; on iPad use Exit fullscreen.
-- Existing saved seating chart layouts, daily attendance independence, group rules, strategies, and local JSON storage formats remain unchanged.
+## Change
+- **Groups → Show groups on seating chart** now uses all available seats, including single desks.
+- Groups of three and pairs are placed within a single desk cluster where possible. When a matching cluster is unavailable, the same logical group uses nearby open seats, sometimes across neighboring desk clusters. Group membership, roles and group locks do not change.
+- A desk cluster can contain students from two different logical groups; labels identify shared clusters and individual seats receive a `G#` tag when needed to show the student's group.
+- Daily seating mode **only** displays an error when the present student count exceeds the total seats in the chosen layout. The message states the shortage and links the remedy to Layout Builder.
+- Existing grouping logic favors groups of three with pairs instead of isolated students; a single student is unavoidable only if fewer than two remain present. Absence repairs and balancing remain separate from permanent seating.
+- The three-tab navigation, Random student picker, Student View/Fullscreen separation, grouping rules, template selector and permanent seating builder remain unchanged.
+- Quick Groups reads saved desk positions, sizes, priorities and orientations **without editing** permanent seating assignments, class data, or templates.
 
-## Install
-1. Back up current repository, export and verify a JSON backup from the live site.
-2. Extract this ZIP at the GitHub Pages publishing root, replacing `index.html`, icons, and `BGR-Manual-Local-Edition.zip`. Keep any separate trusted PDF.js dependencies already used by your site.
-3. Hard refresh; close/relaunch any installed PWA. Test with a **fictional class** before real use.
+## Safe upgrade
+1. Export and verify a JSON backup of your existing data; back up the current GitHub repository.
+2. Replace the published files with the contents of this ZIP at the repository root. Keep any trusted PDF.js files currently deployed; they are **not** included here.
+3. Hard refresh the website (and relaunch installed shortcuts if applicable). Do **not** clear local browser storage during installation.
+4. Test with a **fictional** roster: 5 students at two 3-seat tables, 9 students at three 4-seat tables, a mixed layout with individual desks, then one fewer seat than students.
 
-## Limitations
-- The website was not deployed here. Student View conceals information visually, but does not secure stored student data from someone with device/browser access.
-- This update does not add new roster/storage integrations, cloud sync or actual PowerSchool access.
-- Quick seating still requires sufficient compatible desk clusters; it warns and falls back to group cards if the layout is undersized.
-- `pdf.min.js` and `pdf.worker.min.js` are not bundled by this release.
+## Local checks performed
+- Planner: 350 randomized layout/capacity checks plus 13 targeted scenarios; no dropped, duplicated or re-grouped students.
+- Chromium UI: website, offline manual version, standalone fictional PowerSchool preview and fictional plugin page; all passed tests covering seat placement, pair priority after an absence, shortage warnings, unchanged saved seating assignments and Student View.
+- Absence sequences from starting class sizes 2–26: no single-person group when two or more students remained present.
+- Fictional PowerSchool shared-engine tests: 17 data service, 10 grouping, 26 roster adapter, 9 seating engine, 109 Quick Groups assertions passed.
+- No authorized live PowerSchool, district SIS, production security assessment or real student data tested.
 
-## Tests (local browser with fictional data)
-- Website, offline manual, inline fictional PowerSchool preview: group card generation, student view toggle and return, same-row layout controls, chart view, teacher-fullscreen tiers and attendance, student-fullscreen sanitization, JS runtime errors: PASS.
-- Lock action visibility, red stripe privacy masking, disabled student actions, fullscreen teacher popup: PASS.
-- PowerSchool engine test suites: data services 17/17; grouping 10/10; roster adapter 26/26; seating 9/9. All work in isolation using mock data.
+## Important boundary
+Only the **temporary Quick Groups seating display** has this flexible capacity-only fallback. **Layout Builder → Populate** remains the existing permanent seating planner and still enforces its own seat locks and Keep Apart / Keep Together constraints. This update deliberately avoids changing that feature.
