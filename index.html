@@ -727,6 +727,19 @@ body.bgr-student-view .top,body.bgr-student-view .workspace-bar,body.bgr-student
 #groupsPage.student-view .strategy-help-popover{display:none!important}
 @media print{.strategy-help-popover,.strategy-help-button{display:none!important}}
 
+
+/* P05.18: Student View sanitizes content without changing page display mode. */
+body.bgr-student-view:not(.ipad-presentation) .top {display:block!important}
+body.bgr-student-view:not(.ipad-presentation) .top .install-actions {display:none!important}
+/* Keep normal page structure; do not simulate fullscreen or float the exit button. */
+#groupsPage.student-view:not(:fullscreen):not(.ipad-fullscreen) {padding-top:0}
+#groupsPage.student-view:not(:fullscreen):not(.ipad-fullscreen) .student-view-exit {display:none!important}
+#groupsPage.student-view:not(:fullscreen):not(.ipad-fullscreen) .groups-page-head {display:flex!important}
+#groupsPage.student-view:not(:fullscreen):not(.ipad-fullscreen) .groups-page-head .actions > :not(#studentViewBtn):not(#fullscreenBtn) {display:none!important}
+#groupsPage.student-view:not(:fullscreen):not(.ipad-fullscreen) .groups-page-head .subline {display:none!important}
+#groupsPage.student-view:not(:fullscreen):not(.ipad-fullscreen) .groups-page-head #studentViewBtn,
+#groupsPage.student-view:not(:fullscreen):not(.ipad-fullscreen) .groups-page-head #fullscreenBtn {display:inline-flex!important}
+
 </style>
 <style>
 .seating-tool-row #triangleVariantField{flex:0 0 100%;width:100%;min-width:0;max-width:100%;align-self:stretch}
