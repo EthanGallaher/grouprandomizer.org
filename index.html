@@ -939,6 +939,16 @@ body.bgr-home-active .workspace-class-bar{display:none!important}
 #groupsPage .quick-seating-scroll{max-width:100%;overflow-x:auto;overflow-y:visible}
 #groupsPage .quick-seating-room{transform:none}
 </style>
+
+<style id="p0522-compact-navigation-gap">
+/* P05.22: Keep the navigation and classroom workspace visually connected. */
+body:not(.bgr-home-active) .workspace-bar { padding-bottom: 2px !important; }
+body:not(.bgr-home-active) .workspace-bar + .wrap { padding-top: 2px !important; }
+@media (max-width: 700px) {
+  body:not(.bgr-home-active) .workspace-bar { padding-bottom: 4px !important; }
+  body:not(.bgr-home-active) .workspace-bar + .wrap { padding-top: 4px !important; }
+}
+</style>
 </head>
 <body>
 <header class="top">
