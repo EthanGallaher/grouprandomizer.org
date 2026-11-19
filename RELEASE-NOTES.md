@@ -1,33 +1,22 @@
-# Balanced Group Randomizer P05.13 — Group Size, Fourth Role & Desk-Aligned Groups
+# BGR P05.14 — Compact Groups & Consistent Roles
 
-## New classroom features
-- **Preferred group-size slider** in Groups, with choices 2, 3, or 4 (per class, default 3).
-  - **2:** groups of two. With an odd number of present students, exactly one trio.
-  - **3:** groups of three first, then pairs. No isolated student for rosters of 2+.
-  - **4:** maximize fours, then threes, then pairs. No isolated student for rosters of 2+.
-- **Fourth shared role** in Teacher Setup, default “Checker”. The other three existing titles are preserved. Four-person groups use all four roles; pair members cover roles 1 and 2+3 respectively.
-- **Roles checkbox** in Groups turns assignment/visible role labels off and back on; preference persists per class. Student View continues to hide teacher-only tiers and locks.
-- **Desk-aligned Quick Groups:** Each displayed group occupies exactly one physical desk cluster; the planner can split a logical four-person group into new smaller groups, merge classmates when needed, or place two small groups in one large cluster. It never scatters one displayed group across two clusters.
-- Switching to cards restores the chosen group-size priorities if desk constraints forced smaller groups. This may change temporary partner assignments; it never modifies permanent seating assignments or desk layouts.
+## Changes
+- Replaced separate wide control panels with one compact, responsive teacher toolbar containing Seating Chart, Group Size (2–4), Roles checkbox, and Grouping Strategy.
+- Shortened classroom button labels and moved long help text into accessible descriptions and tooltips. A short group-count/status line sits next to Rebalance present.
+- Revised role assignment **based on preferred group size and actual group size**. Each student takes their numbered role. When a group is smaller than the preferred size, the final student covers remaining roles. In size-2 mode, however, an odd-roster trio uses distinct Roles 1/2/3 and standard pairs show only Roles 1/2.
+- Group size 4: a trio now assigns Role 3 + Role 4 to the third student; a pair assigns Roles 2 + 3 + 4 to the second student.
+- Customized fourth role labels and the Roles checkbox are honored in group cards, seating display, and after attendance changes.
+- All existing separate logical/physical grouping behavior, seat-cluster restriction, student privacy view, class data format and permanent seating are unchanged.
 
-## Physical trade-offs and rule conflicts
-- A one-seat desk cluster can only hold a group of one. When no valid pairing is possible in the physical layout, the app uses that seat and shows a teacher-facing explanation; **only insufficient total seat count blocks seating display**.
-- The planner attempts to preserve **Keep Together**, **Keep Apart**, and group locks. Where the physical cluster capacities make one or more impossible, it shows a teacher-facing notice; an affected group lock may be released. Those exceptional conflicts cannot all be satisfied simultaneously without changing desk layout or rules.
-- A group-size-2 setting may need more than one trio in seating mode if, for example, two 3-seat clusters are the only tables available for six students. Card mode restores three pairs.
-- Layout Builder’s permanent Populate algorithm is unchanged.
+## Upgrade
+1. Export and verify your current BGR JSON backup; keep a copy of the current GitHub Pages files.
+2. Extract the website ZIP and upload the files at its root to your existing GitHub Pages repository, replacing the old `index.html` and manual-edition ZIP. Do not clear browser storage.
+3. Hard-refresh the website (and reopen installed app shortcuts) before classroom testing.
+4. With a **fictional** class of 11 students, switch sizes 2/3/4, inspect two-person roles and the 4-mode trio role, toggle Roles, and switch seating/card views.
 
-## Upgrade safely
-1. Export and verify a BGR JSON backup and keep a copy of your current GitHub files.
-2. Extract this ZIP and upload the root files to your existing GitHub Pages repository. Replace `index.html`, images where needed, and `BGR-Manual-Local-Edition.zip`.
-3. Preserve any trusted, existing local PDF.js assets as needed; they are not provided in this package.
-4. Hard-refresh the website and re-open installed shortcuts. Do not clear browser storage or overwrite a cloud vault during upgrade.
-5. In a fictional class, try sizes 2/3/4, four role labels, Roles on/off, and 11 students at 4-seat, 3-seat, then 2-seat pods.
-
-## Verified locally
-- Browser tests with fictional classes: website, offline manual, mock PowerSchool plugin page, and standalone mock preview all passed (slider, roles, 11 students, four role inputs, desk-aligned placement, attendance, no-teacher-controls Student View, and return to preferred card sizes).
-- 350 randomized seat-planning cases and 361 PowerSchool-compatibility no-split tests passed without losing or duplicating students.
-- 1,020 browser attendance removal and restoration checks, across group-size preferences 2/3/4 and rosters 2–18, produced no unnecessary singletons.
-- Existing and new reusable mock PowerSchool engine tests passed (data services, grouping, roster, permanent seating, Quick Groups).
-- A browser test using a real hosted origin was blocked by local container browser policy; persistence was evaluated through source and mocked browser execution, not an authorized district deployment.
-
-**Not tested:** live school data, authorized PowerSchool, district security requirements or SIS permissions.
+## Test evidence and limitations
+- Chromium functional tests with fictional data passed in website, offline manual, PowerSchool mock plugin page, and standalone PowerSchool mock preview.
+- Verified group roles for 2, 3, 4 preferences; the 4-mode three-person fallback; custom fourth-role name; Roles checkbox; no-split seating; restored group card sizes; student view privacy; responsive mobile controls.
+- The PowerSchool mock suite passed 18 data-service, 10 grouping-engine, 109 quick-seating, 26 roster, 9 permanent-seating, 186 group-size, and 361 no-split checks (total 719).
+- JavaScript syntax checked in all four editions. Browser tests used a document-injected test harness; localStorage was unavailable in that environment. Direct localhost/file navigation was blocked by administrator policy, so an actual-origin persistence test could not be performed here. Data format and storage-key names were not changed.
+- These checks are not a district authorization, live PowerSchool test, or production security review. No real student data should be used to test an unapproved prototype.

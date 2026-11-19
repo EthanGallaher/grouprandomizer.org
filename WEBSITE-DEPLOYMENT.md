@@ -1,10 +1,14 @@
-# Deploy BGR P05.13 via GitHub Pages
+# Deploy BGR Website P05.14 to GitHub Pages
 
-1. Export a verified JSON backup from BGR and save your existing GitHub `index.html` and assets.
-2. Extract **BGR-Website-P05.13-Group-Sizes-GitHub.zip**. Upload its contents to the repository root. The `index.html` and local ZIP should share a directory with PNG icons.
-3. Keep school-approved PDF.js files already deployed if needed. The browser cannot import PDFs without these optional assets.
-4. Hard-refresh grouprandomizer.org. If a prior installed shortcut appears outdated, close and reopen it. Avoid clearing browser storage.
-5. Verify fictional roster of 11, size 4 → 4+4+3, Roles off/on, a 4-seat layout, a layout of two-seat pods, and card-view return. Verify old class data and permanent seating remain available.
-6. Manual offline edition is inside `BGR-Manual-Local-Edition.zip`. This edition uses local browser storage and JSON backups, not cloud sync.
+Export a verified JSON backup in BGR first. Download and preserve the current
+published `index.html` and assets as a rollback copy. Extract the website ZIP
+and upload its files (not the enclosing folder) to the existing GitHub Pages
+repository. Confirm that `index.html`, the icon PNGs, and the manual edition ZIP
+are beside each other. Retain any separately trusted local PDF.js assets.
+Hard-refresh grouprandomizer.org after GitHub deployment, and reopen any
+installed shortcut/PWA. Do not clear browser storage or delete existing backups.
+In a fictional class, verify the group-size slider, role assignments for pairs
+and trios, the seating switch, student view, and existing saved layouts.
 
-This GitHub ZIP does not delete any existing Firebase cloud data or migrate older browser profiles. Do not use live student information for unfamiliar or unapproved deployments.
+This package does not synchronize devices, migrate a vault, or remove Firebase
+cloud data. Browser storage and backup access remain subject to school policy.
