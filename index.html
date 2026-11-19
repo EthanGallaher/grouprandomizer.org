@@ -539,6 +539,95 @@ body.print-seating .workspace-bar{display:none!important}
 .quick-template-field select {min-width:180px;max-width:280px}
 .quick-view-hint {font-size:12px;color:var(--muted);flex-basis:100%;margin:0}
 .quick-seating-scroll {overflow:auto;max-width:100%;min-width:0;}
+
+/* P05.10: compact daily-view controls and independent student/privacy mode. */
+.quick-view-toolbar {
+  display:flex; flex-direction:column; align-items:stretch; gap:5px;
+  margin:9px 0 12px; padding:9px 12px;
+  background:#f1f5fc; border:1px solid #d7e2f1; border-radius:11px;
+}
+.quick-view-control-row {display:flex;align-items:center;gap:14px;flex-wrap:wrap;min-height:38px}
+.quick-view-switch {display:inline-flex;gap:9px;align-items:center;white-space:nowrap;flex:none;font-size:14px}
+.quick-view-toolbar .quick-template-field[hidden] {display:none!important}
+.quick-template-field {display:inline-flex;align-items:center;gap:7px;flex:0 1 auto;min-width:0;flex-wrap:nowrap}
+.quick-template-field label {font-size:12px;color:#52627b;font-weight:800;white-space:nowrap}
+.quick-template-field select {min-width:155px;max-width:245px;width:clamp(155px,18vw,245px);height:37px;padding:6px 9px}
+.quick-template-field button {min-height:37px;padding:7px 11px;white-space:nowrap}
+.quick-view-hint {font-size:11px;line-height:1.4;flex-basis:auto;margin:0;color:#61738c}
+@media (max-width:650px) {
+ .quick-view-control-row {gap:9px}
+ .quick-view-switch {white-space:normal}
+ .quick-template-field {width:100%;flex-wrap:wrap}
+ .quick-template-field select {width:auto;flex:1;min-width:125px;max-width:none}
+}
+/* Student view is independent of fullscreen; the teacher display is never silently sanitized. */
+.student-view-exit {position:fixed;top:12px;right:14px;z-index:10005;display:flex;align-items:center;gap:10px;
+  border:1px solid #b9cce3;border-radius:12px;padding:7px 9px;background:#fff;
+  box-shadow:0 5px 24px #12294435;color:#173563;font-size:12px;font-weight:800}
+.student-view-exit[hidden]{display:none!important}
+.student-view-exit button {font-size:12px;padding:7px 10px}
+body.bgr-student-view .top,body.bgr-student-view .workspace-bar,body.bgr-student-view .footer,body.bgr-student-view #toast {display:none!important}
+#groupsPage.student-view .groups-page-head,
+#groupsPage.student-view .quick-view-toolbar,
+#groupsPage.student-view #balanceNote,
+#groupsPage.student-view .field,
+#groupsPage.student-view #rebalancePresentBtn,
+#groupsPage.student-view .btnrow:has(#rebalancePresentBtn),
+#groupsPage.student-view main.panel > p.help,
+#groupsPage.student-view .absent-sidebar,
+#groupsPage.student-view .tier-letter,
+#groupsPage.student-view .group-locked-mark,
+#groupsPage.student-view .group-action-menu {display:none!important}
+#groupsPage.student-view .groups-shell {grid-template-columns:minmax(0,1fr);gap:0}
+#groupsPage.student-view .member.group-locked {box-shadow:none!important}
+#groupsPage.student-view .quick-seat.group-locked {box-shadow:none!important;border-color:#9daec4!important}
+#groupsPage.student-view .member,
+#groupsPage.student-view .quick-seat {pointer-events:none!important;cursor:default!important}
+#groupsPage.student-view .member:hover {border-color:var(--line);background:white}
+#groupsPage.student-view .quick-mapping-warning {display:none!important}
+#groupsPage.student-view:not(:fullscreen):not(.ipad-fullscreen) {padding-top:38px}
+#groupsPage.student-view:not(:fullscreen):not(.ipad-fullscreen) .groups {margin-top:0}
+#groupsPage.student-view:not(:fullscreen):not(.ipad-fullscreen) .groups-shell {align-items:stretch}
+#groupsPage:is(:fullscreen,.ipad-fullscreen) .student-view-exit {display:none!important}
+/* Teacher fullscreen retains teacher indicators and usable group controls. */
+#groupsPage:is(:fullscreen,.ipad-fullscreen)>main.panel {display:flex;flex-direction:column}
+#groupsPage:is(:fullscreen,.ipad-fullscreen) #groupsArea {flex:1 1 auto;height:auto;min-height:0}
+#groupsPage:is(:fullscreen,.ipad-fullscreen):not(.student-view) .groups-page-head {
+  display:flex!important;flex:0 0 auto;margin:0 0 4px!important;gap:8px;padding:2px 5px
+}
+#groupsPage:is(:fullscreen,.ipad-fullscreen):not(.student-view) .groups-page-head h2 {font-size:16px;margin:0}
+#groupsPage:is(:fullscreen,.ipad-fullscreen):not(.student-view) .groups-page-head .subline {display:none}
+#groupsPage:is(:fullscreen,.ipad-fullscreen):not(.student-view) .groups-page-head .btnrow {gap:5px}
+#groupsPage:is(:fullscreen,.ipad-fullscreen):not(.student-view) .groups-page-head button {min-height:34px;padding:5px 9px;font-size:12px}
+#groupsPage:is(:fullscreen,.ipad-fullscreen):not(.student-view) .quick-view-toolbar {
+  display:flex!important;flex:0 0 auto;margin:2px 0 6px;padding:5px 9px;gap:2px
+}
+#groupsPage:is(:fullscreen,.ipad-fullscreen):not(.student-view) .quick-view-hint {display:none}
+#groupsPage:is(:fullscreen,.ipad-fullscreen):not(.student-view) .absent-sidebar {display:block!important;max-height:100%;overflow-y:auto;padding:8px}
+#groupsPage:is(:fullscreen,.ipad-fullscreen):not(.student-view) .absent-sidebar h3 {font-size:13px}
+#groupsPage:is(:fullscreen,.ipad-fullscreen):not(.student-view) .absent-sidebar .help {font-size:11px;margin:4px 0}
+#groupsPage:is(:fullscreen,.ipad-fullscreen):not(.student-view) .absent-student {padding:5px;margin-top:4px}
+#groupsPage:is(:fullscreen,.ipad-fullscreen):not(.student-view) .groups-shell {grid-template-columns:minmax(0,1fr) 156px;gap:8px}
+#groupsPage:is(:fullscreen,.ipad-fullscreen):not(.student-view) .tier-letter {display:inline-flex!important}
+#groupsPage:is(:fullscreen,.ipad-fullscreen):not(.student-view) .group-locked-mark {display:inline!important}
+#groupsPage:is(:fullscreen,.ipad-fullscreen):not(.student-view) .member.group-locked {box-shadow:inset 3px 0 #c63b46!important}
+#groupsPage:is(:fullscreen,.ipad-fullscreen):not(.student-view) .quick-seat.group-locked {box-shadow:inset 0 0 0 2px #ba344b!important}
+#groupsPage:is(:fullscreen,.ipad-fullscreen):not(.student-view) .member,
+#groupsPage:is(:fullscreen,.ipad-fullscreen):not(.student-view) .quick-seat:not(.empty-seat) {pointer-events:auto!important;cursor:pointer!important}
+#groupsPage:is(:fullscreen,.ipad-fullscreen):not(.student-view) .group-action-menu {display:flex!important}
+#groupsPage:is(:fullscreen,.ipad-fullscreen):not(.student-view) .quick-mapping-warning {display:block!important;padding:8px;font-size:12px}
+#groupsPage:is(:fullscreen,.ipad-fullscreen):not(.student-view) .quick-seat:not(.group-locked) {box-shadow:none!important}
+/* Teacher fullscreen keeps strategy, status and rebalancing available, rather than turning into student mode. */
+#groupsPage:is(:fullscreen,.ipad-fullscreen):not(.student-view) .field {display:flex!important;align-items:center;gap:9px;max-width:none!important;margin:2px 0!important;flex:0 0 auto}
+#groupsPage:is(:fullscreen,.ipad-fullscreen):not(.student-view) .field > label {font-size:11px;white-space:nowrap}
+#groupsPage:is(:fullscreen,.ipad-fullscreen):not(.student-view) #groupStrategy {display:block!important;max-width:255px;width:255px;min-height:32px;padding:5px 7px;font-size:12px}
+#groupsPage:is(:fullscreen,.ipad-fullscreen):not(.student-view) #strategyHelp {display:block!important;font-size:11px;margin:0}
+#groupsPage:is(:fullscreen,.ipad-fullscreen):not(.student-view) #balanceNote {display:block!important;margin:2px 0;padding:5px 8px;font-size:11px;flex:0 0 auto}
+#groupsPage:is(:fullscreen,.ipad-fullscreen):not(.student-view) main.panel > p.help {display:block!important;margin:2px 0;font-size:11px;flex:0 0 auto}
+#groupsPage:is(:fullscreen,.ipad-fullscreen):not(.student-view) .btnrow:has(#rebalancePresentBtn) {display:flex!important;margin:2px 0 5px!important;flex:0 0 auto}
+#groupsPage:is(:fullscreen,.ipad-fullscreen):not(.student-view) #rebalancePresentBtn {display:inline-block!important;min-height:29px;padding:4px 9px;font-size:11px}
+@media print { .student-view-exit {display:none!important} }
+
 .quick-seating-room {position:relative;flex:none;width:1100px;height:660px;border:2px solid #aabbd3;border-radius:12px;overflow:hidden;background:#f8fafc;
  background-image:linear-gradient(#dce5f055 1px,transparent 1px),linear-gradient(90deg,#dce5f055 1px,transparent 1px);background-size:25px 25px}
 .quick-seating-room .desk-group {cursor:default;touch-action:auto}
@@ -888,6 +977,7 @@ body.bgr-home-active .workspace-class-bar{display:none!important}
 </section>
 
 <section class="page" id="groupsPage">
+<div class="student-view-exit" id="studentViewExit" hidden><span>Student view</span><button class="secondary" id="exitStudentViewBtn" type="button">Return to teacher view</button></div>
 <main class="panel">
 <div class="groups-page-head">
   <div>
@@ -898,13 +988,14 @@ body.bgr-home-active .workspace-class-bar{display:none!important}
     <div class="legacy-class-picker"><label for="displayClassSelect">Class</label><select id="displayClassSelect"></select></div>
     
     <button class="secondary" id="printBtn">Print groups</button>
-    <button class="secondary" id="fullscreenBtn">⛶ Student Fullscreen</button>
+    <button class="secondary" id="studentViewBtn" type="button" aria-pressed="false" title="Hide teacher-only indicators and controls">◉ Student view</button>
+    <button class="secondary" id="fullscreenBtn" type="button" title="Expand the current teacher or student view">⛶ Fullscreen</button>
     <button class="primary" id="generateBtn">⤨ Randomize groups</button>
   </div>
 </div>
 <div class="quick-view-toolbar" id="quickViewToolbar">
-  <label class="quick-view-switch" for="quickSeatingMode"><input type="checkbox" id="quickSeatingMode" role="switch" aria-controls="groupsArea"><span class="quick-switch-track" aria-hidden="true"></span><span>Show groups on seating chart</span></label>
-  <div class="quick-template-field" id="quickTemplateField" hidden><label for="quickSeatingTemplateSelect">Layout</label><select id="quickSeatingTemplateSelect" aria-label="Seating chart template for daily groups"></select><button class="secondary" id="quickEditLayoutBtn" type="button">Edit layout</button></div>
+  <div class="quick-view-control-row"><label class="quick-view-switch" for="quickSeatingMode"><input type="checkbox" id="quickSeatingMode" role="switch" aria-controls="groupsArea"><span class="quick-switch-track" aria-hidden="true"></span><span>Show groups on seating chart</span></label>
+  <div class="quick-template-field" id="quickTemplateField" hidden><label for="quickSeatingTemplateSelect">Layout</label><select id="quickSeatingTemplateSelect" aria-label="Seating chart template for daily groups"></select><button class="secondary" id="quickEditLayoutBtn" type="button">Edit layout</button></div></div>
   <p class="quick-view-hint" id="quickViewHint">Switch views without changing the groups. Saved seating assignments and desk positions stay untouched.</p>
 </div>
 <div class="field" style="max-width:360px;margin:12px 0"><label for="groupStrategy">Grouping strategy</label><select id="groupStrategy"><option value="balanced">Balanced abilities (default)</option><option value="random">Random (respect separation rules)</option><option value="similar">Similar abilities</option><option value="variety">New partners (use group history)</option></select><p class="help" id="strategyHelp">Prioritizes mixed-ability groups.</p></div>
@@ -1558,7 +1649,7 @@ let groupSwapId=null,groupActionMenu=null;
 function closeGroupActionMenu(){if(groupActionMenu)groupActionMenu.remove();groupActionMenu=null;}
 function switchGroupStudent(studentId){
   const c=current();if(!c)return;
-  if(isPresentation($('groupsPage')))return; // teacher actions never appear in student presentation
+  if(isGroupStudentView())return; // student view is read-only, fullscreen alone is not
   const found=groups.flat().find(s=>s.id===studentId);
   if(!found)return;
   if(groupSwapId){
@@ -1590,7 +1681,7 @@ function switchGroupStudent(studentId){
   });
   action('Absent',()=>{closeGroupActionMenu();markStudentAbsent(studentId);});
   action('Close',closeGroupActionMenu);
-  groupActionMenu=m;document.body.append(m);
+  groupActionMenu=m;(document.fullscreenElement===$('groupsPage')?$('groupsPage'):document.body).append(m);
   const target=document.querySelector('.member[data-student-id="'+CSS.escape(studentId)+'"], .quick-seat[data-student-id="'+CSS.escape(studentId)+'"]');
   const r=target?.getBoundingClientRect();
   m.style.position='fixed';m.style.zIndex='9999';m.style.left=Math.max(8,Math.min(innerWidth-230,(r?.left||20)))+'px';
@@ -2442,6 +2533,25 @@ $('addTogetherBtn').addEventListener('click',()=>{
 
 $('generateBtn').addEventListener('click',generate);
 const fullscreenBtn = $('fullscreenBtn');
+const studentViewBtn = $('studentViewBtn');
+function isGroupStudentView() {return $('groupsPage').classList.contains('student-view');}
+function setGroupStudentView(enabled) {
+  const on=!!enabled;
+  $('groupsPage').classList.toggle('student-view',on);
+  document.body.classList.toggle('bgr-student-view',on);
+  studentViewBtn.setAttribute('aria-pressed',String(on));
+  studentViewBtn.textContent=on?'◉ Student view on':'◉ Student view';
+  $('studentViewExit').hidden=!on;
+  if(on){closeGroupActionMenu();groupSwapId=null;}
+  if(isPresentation($('groupsPage')))requestAnimationFrame(fitGroupFullscreen);
+}
+studentViewBtn.addEventListener('click',()=>setGroupStudentView(!isGroupStudentView()));
+$('exitStudentViewBtn').addEventListener('click',()=>setGroupStudentView(false));
+document.addEventListener('keydown',event=>{
+  if(event.key==='Escape' && isGroupStudentView() && !isPresentation($('groupsPage')))
+    setGroupStudentView(false);
+});
+
 let ipadPresentationTarget = null;
 const isPresentation = target => document.fullscreenElement === target || (ipadPresentationTarget === target && target.classList.contains('ipad-fullscreen'));
 function exitIpadPresentation() {
@@ -2476,7 +2586,8 @@ function fitGroupFullscreen() {
   const quickRoom=$('groupsArea').querySelector('.quick-seating-room');
   if(quickRoom){
     const page=$('groupsPage');
-    const zoom=Math.max(.2,Math.min((page.clientWidth-20)/1100,(page.clientHeight-20)/660));
+    const area=$('groupsArea');
+    const zoom=Math.max(.2,Math.min((area.clientWidth-(isGroupStudentView()?20:180))/1100,(area.clientHeight-20)/660));
     quickRoom.style.setProperty('--quick-fullscreen-zoom',String(zoom));
     return;
   }
@@ -2485,10 +2596,10 @@ function fitGroupFullscreen() {
   const cards=[...grid.querySelectorAll('.group-card')];
   if (!cards.length) return;
   const shell=page.querySelector('.groups-shell');
-  const n=cards.length, W=page.clientWidth, H=page.clientHeight;
+  const n=cards.length, W=$('groupsArea').clientWidth, H=$('groupsArea').clientHeight;
   const outer=Math.max(5,Math.min(14,Math.round(Math.min(W,H)*.012)));
   const gap=Math.max(3,Math.min(10,Math.round(Math.min(W,H)*.008)));
-  const availableW=W-2*outer, availableH=H-2*outer;
+  const availableW=W-2*outer-(isGroupStudentView()?0:164), availableH=H-2*outer;
   const maxMembers=Math.max(1,...cards.map(c=>c.querySelectorAll('.member').length));
   // Student presentation uses exactly four columns, with as many rows as needed.
   const cols=4, rows=Math.ceil(n/cols);
@@ -2564,7 +2675,7 @@ async function toggleGroupFullscreen() {
 }
 function syncFullscreenButton() {
   const active = isPresentation($('groupsPage'));
-  fullscreenBtn.textContent = active ? '⤢ Exit full screen' : '⛶ Full screen';
+  fullscreenBtn.textContent = active ? '⤢ Exit fullscreen' : '⛶ Fullscreen';
   fullscreenBtn.setAttribute('aria-label',active ? 'Exit full screen' : 'Make group display fullscreen');
 }
 fullscreenBtn.addEventListener('click', toggleGroupFullscreen);

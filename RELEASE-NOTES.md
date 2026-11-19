@@ -1,30 +1,23 @@
-# BGR Website P05.9 — Quick Groups on Seating Chart
+# BGR Website P05.10 — Compact grouping controls / Student View
 
-The Groups tab is now the everyday presentation hub. Use **Show groups on seating chart** to project the same active groups onto any saved seating template. Choose a layout in the Groups tab or use Edit layout to open the Seating Chart Builder.
+## Changes
+- Groups > Show groups on seating chart toolbar now keeps toggle, saved-layout selector and Edit Layout on the same compact row at desktop widths. Hint appears in small type below. Small screens wrap naturally.
+- Student View is a separate toggle from Fullscreen. It hides teacher navigation, performance tiers, lock icons/stripes, absence sidebar, teacher actions, notices and teacher-only toasts. Student View is read-only, and has a Return to teacher view control.
+- Fullscreen expands **the current view**. Teacher fullscreen keeps teacher tiers, lock markers, attendance sidebar, main grouping buttons and the layout switch; groups remain interactive. Student fullscreen stays sanitized. Escape exits fullscreen; on iPad use Exit fullscreen.
+- Existing saved seating chart layouts, daily attendance independence, group rules, strategies, and local JSON storage formats remain unchanged.
 
-## What stays connected
+## Install
+1. Back up current repository, export and verify a JSON backup from the live site.
+2. Extract this ZIP at the GitHub Pages publishing root, replacing `index.html`, icons, and `BGR-Manual-Local-Edition.zip`. Keep any separate trusted PDF.js dependencies already used by your site.
+3. Hard refresh; close/relaunch any installed PWA. Test with a **fictional class** before real use.
 
-- One active group arrangement drives both cards and quick seating views. Switching views does not randomize students.
-- Randomization strategies, avoid pairs/groups, keep-together, group locks, role order, intra/intergroup swaps, absent/return, and present-student rebalancing are shared by both views.
-- Student fullscreen hides teacher controls, performance tiers, absent sidebar, and lock markers. Print groups prints the active view.
-- The seating template contributes desk geometry and priority/capacity only; current groups are *temporarily* mapped to compatible 2/3/4-seat clusters. Empty clusters and extra seats remain empty. Group members are never split across clusters.
-- If the template cannot fit the current groups, the screen explains the shortage and retains the usable group-card view rather than dropping anyone.
-- Attendance and group swaps do **not** alter saved Seating Chart > Populate assignments. The existing permanent seating Populate operation remains independent of daily absences.
-- Existing class data is migrated in place through the application's unchanged data key. No account or cloud sync is added.
+## Limitations
+- The website was not deployed here. Student View conceals information visually, but does not secure stored student data from someone with device/browser access.
+- This update does not add new roster/storage integrations, cloud sync or actual PowerSchool access.
+- Quick seating still requires sufficient compatible desk clusters; it warns and falls back to group cards if the layout is undersized.
+- `pdf.min.js` and `pdf.worker.min.js` are not bundled by this release.
 
-## Deployment & limitations
-
-1. Export and verify a JSON backup in the currently installed BGR *before* replacing GitHub files.
-2. Extract this ZIP into the GitHub Pages publishing directory, retaining paths. The file `BGR-Manual-Local-Edition.zip` is refreshed to P05.9.
-3. Hard-refresh and check the service worker/PWA state if an old version persists.
-4. A template must have a distinct compatible desk cluster for each current group; a cluster of three or four can host a triple, a cluster of two/three/four can host a pair. Single desks are not combined automatically.
-5. The website and local edition store student names and classroom data in the browser. Exported JSON backups contain readable student data. Follow district rules; no automatic encryption or cross-device synchronization exists.
-6. Optional PDF importing still depends on an existing, matching local `pdf.min.js`/`pdf.worker.min.js` pair, which are not bundled in this ZIP. This release does not fix that dependency.
-
-## Verification
-
-- Local Chromium browser check with 9 fictional students: card/chart switching, three cluster mappings, role rendering, absence/return, insufficient-layout warning, layout re-selection, and randomizing in chart view — PASS.
-- Verified permanent assignments on the original saved seating template were unchanged by all above actions — PASS.
-- Repeated browser check for manual local HTML — PASS.
-- Fullscreen-style privacy check (iPad presentation style): teacher toolbar/guidance and absent sidebar hidden — PASS.
-- Not deployed to live GitHub Pages or tested in a live classroom.
+## Tests (local browser with fictional data)
+- Website, offline manual, inline fictional PowerSchool preview: group card generation, student view toggle and return, same-row layout controls, chart view, teacher-fullscreen tiers and attendance, student-fullscreen sanitization, JS runtime errors: PASS.
+- Lock action visibility, red stripe privacy masking, disabled student actions, fullscreen teacher popup: PASS.
+- PowerSchool engine test suites: data services 17/17; grouping 10/10; roster adapter 26/26; seating 9/9. All work in isolation using mock data.
