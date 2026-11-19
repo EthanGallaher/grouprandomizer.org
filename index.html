@@ -694,6 +694,25 @@ body.bgr-student-view .top,body.bgr-student-view .workspace-bar,body.bgr-student
 @media(max-width:700px){.workspace-bar .page-nav{overflow:visible}.workspace-bar .page-nav button{font-size:13px}}
 @media print{.random-picker-dialog{display:none!important}}
 
+
+/* P05.13: optional role cards and three-choice daily grouping slider */
+.grouping-options{display:flex;align-items:center;flex-wrap:wrap;gap:12px;padding:8px 12px;margin:8px 0 10px;border:1px solid #dce5f1;border-radius:12px;background:#f9fbff}
+.group-size-control{display:flex;flex-direction:column;gap:5px;width:220px;max-width:100%}
+.group-size-control label{display:flex;justify-content:space-between;gap:16px;align-items:center;font-size:13px;font-weight:750;color:var(--navy)}
+#groupSizeValue{font-weight:900;font-size:18px;color:#2459a9}
+#groupSizeSlider{width:100%;accent-color:#2459a9;cursor:pointer}
+.group-size-labels{display:flex;justify-content:space-between;color:#576780;font-size:11px;margin-top:-6px}
+.group-roles-toggle{display:flex;align-items:center;gap:8px;padding:8px 12px;min-height:40px;border-radius:9px;background:white;border:1px solid #dce5f1;font-weight:750;white-space:nowrap;cursor:pointer}
+.group-roles-toggle input{width:19px;height:19px;accent-color:#2459a9}
+.grouping-options-help{font-size:12px;color:#63718a;flex:1 1 230px;line-height:1.4}
+#groupsPage.roles-off .avatar,#groupsPage.roles-off .quick-seat-role{display:none!important}
+#groupsPage.roles-off .member{align-items:center;min-height:54px}
+#groupsPage.roles-off .members{grid-auto-rows:minmax(0,1fr)}
+#groupsPage:is(:fullscreen,.ipad-fullscreen):not(.student-view) .grouping-options{padding:4px 8px;gap:9px;margin:3px 0;flex:0 0 auto}
+#groupsPage:is(:fullscreen,.ipad-fullscreen):not(.student-view) .group-size-control{width:145px}
+#groupsPage:is(:fullscreen,.ipad-fullscreen):not(.student-view) .grouping-options-help{display:none}
+#groupsPage.student-view .grouping-options{display:none!important}
+@media print{.grouping-options{display:none!important}}
 </style>
 <style>
 .seating-tool-row #triangleVariantField{flex:0 0 100%;width:100%;min-width:0;max-width:100%;align-self:stretch}
@@ -840,7 +859,7 @@ body.bgr-home-active .workspace-class-bar{display:none!important}
           <button type="button" class="landing-action primary" id="homeOpenWorkspace">Open teacher workspace <span aria-hidden="true">→</span></button>
           <a href="#landingWhy" class="landing-action secondary">See what makes BGR different ↓</a>
         </div>
-        <div class="landing-note">Designed for groups of three. Flexible enough for your classroom.</div>
+        <div class="landing-note">Built for pairs, trios, and fours. Flexible enough for your classroom.</div>
       </div>
       <div class="landing-showcase" aria-label="Illustration of a three-student classroom group">
         <div class="landing-demo">
@@ -867,7 +886,7 @@ body.bgr-home-active .workspace-class-bar{display:none!important}
         <p>Teachers need a fast way to mix students thoughtfully without losing control of classroom dynamics. BGR starts with randomization, then adds the everyday tools that make the groups usable.</p>
       </div>
       <div class="landing-features">
-        <article class="landing-feature"><div class="landing-feature-icon" aria-hidden="true">≋</div><h4>Balanced by design</h4><p>Prioritize groups of three and mix teacher-assigned High, Middle, and Low performance levels—not just names from a hat.</p></article>
+        <article class="landing-feature"><div class="landing-feature-icon" aria-hidden="true">≋</div><h4>Balanced by design</h4><p>Choose groups of two, three, or four and mix teacher-assigned High, Middle, and Low performance levels—not just names from a hat.</p></article>
         <article class="landing-feature"><div class="landing-feature-icon" aria-hidden="true">↔</div><h4>Your classroom rules matter</h4><p>Keep specific students apart or together while building groups. Teachers remain in control of the constraints.</p></article>
         <article class="landing-feature"><div class="landing-feature-icon" aria-hidden="true">▦</div><h4>Real seating charts</h4><p>Arrange desks into rows, pairs, triangles, or pods. Drag groups around, lock a student in a seat, and populate the room.</p></article>
         <article class="landing-feature"><div class="landing-feature-icon" aria-hidden="true">⇧</div><h4>Less time entering rosters</h4><p>Paste names or import supported grade-report PDFs to build classes and assign initial performance tiers when numeric percentages are available.</p></article>
@@ -973,7 +992,7 @@ body.bgr-home-active .workspace-class-bar{display:none!important}
 </section>
 <div class="teacher-mini-grid">
 <section class="panel teacher-card roles-card"><h2>4. Group roles</h2><p class="help">Role titles are shared automatically across every class.</p>
-<p class="help">Customize the role titles displayed beside each student. In pairs, the second student gets Roles 2 and 3.</p>
+<p class="help">Customize four role titles (the fourth is used in groups of four). In pairs, the second student covers Roles 2 and 3. The Roles checkbox in Groups turns labels on or off.</p>
 <div id="roleList" class="role-list"></div>
 
 </section>
@@ -1026,10 +1045,19 @@ body.bgr-home-active .workspace-class-bar{display:none!important}
 <div class="quick-view-toolbar" id="quickViewToolbar">
   <div class="quick-view-control-row"><label class="quick-view-switch" for="quickSeatingMode"><input type="checkbox" id="quickSeatingMode" role="switch" aria-controls="groupsArea"><span class="quick-switch-track" aria-hidden="true"></span><span>Show groups on seating chart</span></label>
   <div class="quick-template-field" id="quickTemplateField" hidden><label for="quickSeatingTemplateSelect">Layout</label><select id="quickSeatingTemplateSelect" aria-label="Seating chart template for daily groups"></select><button class="secondary" id="quickEditLayoutBtn" type="button">Edit layout</button></div></div>
-  <p class="quick-view-hint" id="quickViewHint">Switch views without changing the groups. Saved seating assignments and desk positions stay untouched.</p>
+  <p class="quick-view-hint" id="quickViewHint">Seating mode may adjust temporary group sizes to fit each desk cluster. Saved seating assignments and desk positions stay untouched.</p>
+</div>
+<div class="grouping-options" aria-label="Daily grouping options">
+  <div class="group-size-control"><label for="groupSizeSlider">Preferred group size <output id="groupSizeValue" for="groupSizeSlider">3</output></label>
+    <input type="range" id="groupSizeSlider" min="2" max="4" step="1" value="3" list="groupSizeTicks" aria-label="Preferred group size: 2, 3, or 4" />
+    <datalist id="groupSizeTicks"><option value="2" label="2"></option><option value="3" label="3"></option><option value="4" label="4"></option></datalist>
+    <div class="group-size-labels"><span>2</span><span>3</span><span>4</span></div>
+  </div>
+  <label class="group-roles-toggle" for="showRolesCheckbox"><input id="showRolesCheckbox" type="checkbox" checked><span>Roles</span></label>
+  <span class="grouping-options-help">4: fours first, then threes and pairs. 3: trios, then pairs. 2: pairs, with one trio for odd rosters. Desk capacity can adjust these priorities.</span>
 </div>
 <div class="field" style="max-width:360px;margin:12px 0"><label for="groupStrategy">Grouping strategy</label><select id="groupStrategy"><option value="balanced">Balanced abilities (default)</option><option value="random">Random (respect separation rules)</option><option value="similar">Similar abilities</option><option value="variety">New partners (use group history)</option></select><p class="help" id="strategyHelp">Prioritizes mixed-ability groups.</p></div>
-<div class="notice" id="balanceNote">Groups of three are used whenever possible; pairs are used when needed.</div><p class="help">Click a student for Swap, Lock, or Absent. Locked students remain in their assigned group when you randomize.</p>
+<div class="notice" id="balanceNote">Groups will follow your selected size preference. Pairs are favored over isolated students.</div><p class="help">Click a student for Swap, Lock, or Absent. Locked students remain in their assigned group when you randomize.</p>
 <div class="btnrow" style="margin:10px 0"><button type="button" class="secondary" id="rebalancePresentBtn">Rebalance present students</button></div>
 <div id="groupsArea">
   <div class="empty">Your groups will appear here.</div>
@@ -1192,7 +1220,7 @@ let absentOrigins = new Map();
 let toastTimer;
 const $ = id => document.getElementById(id);
 const tiers = ['High','Middle','Low'];
-const defaultRoles = ['Facilitator','Recorder','Reporter'];
+const defaultRoles = ['Facilitator','Recorder','Reporter','Checker'];
 const uid = () => Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4);
 const normalizeName = s => s.trim().replace(/\s+/g,' ').toLocaleLowerCase();
 
@@ -1211,8 +1239,8 @@ function current() {
   return db.classes.find(c => c.id === db.activeId) || null;
 }
 function sharedRoles() {
-  if (!Array.isArray(db.sharedRoles)) db.sharedRoles = (current()?.roles || defaultRoles).slice(0,3);
-  while (db.sharedRoles.length < 3) db.sharedRoles.push(defaultRoles[db.sharedRoles.length]);
+  if (!Array.isArray(db.sharedRoles)) db.sharedRoles = (current()?.roles || defaultRoles).slice(0,4);
+  while (db.sharedRoles.length < 4) db.sharedRoles.push(defaultRoles[db.sharedRoles.length]);
   return db.sharedRoles;
 }
 function syncRolesAcrossClasses() {
@@ -1223,7 +1251,7 @@ function makeClass(name) {
   const c = {
     id:uid(), name:name.trim() || `Class ${db.classes.length+1}`,
     students:[], avoidPairs:[], avoidGroups:[], togetherGroups:[],
-    roles:sharedRoles().slice(), seating:[], groupingStrategy:"balanced", groupHistory:[]
+    roles:sharedRoles().slice(), seating:[], groupingStrategy:"balanced", preferredGroupSize:3, showGroupRoles:true, groupHistory:[]
   };
   db.classes.push(c);
   db.activeId = c.id;
@@ -1488,6 +1516,7 @@ function render() {
   renderStudents(c);
   renderAvoidControls(c);
   renderRoles(c);
+  updateGroupSizeControls(c);
   $('classSummary').textContent = c ? `${c.name} · ${c.students.length} students` : 'Create a class and add students.';
   $('displayTitle').textContent = c ? `${c.name} — Groups` : 'Class groups';
   $('generateBtn').disabled = !c || c.students.length < 2;
@@ -1498,20 +1527,24 @@ function render() {
   renderSeating();
 }
 
-function createGroupSizes(n) {
-  const sizes = [];
-  if (n < 2) return sizes;
-  let threes = Math.floor(n/3);
-  const rem = n%3;
-  if (rem === 1) {
-    threes = Math.max(0,threes-1);
-    for (let i=0;i<threes;i++) sizes.push(3);
-    sizes.push(2,2);
-  } else {
-    for (let i=0;i<threes;i++) sizes.push(3);
-    if (rem === 2) sizes.push(2);
+function preferredGroupSize(c=current()) { const n=Number(c?.preferredGroupSize);return [2,3,4].includes(n)?n:3; }
+function createGroupSizes(n,preferred=3) {
+  if(n<=0)return [];
+  if(n===1)return [1];
+  if(preferred===2) return n%2===0?Array(n/2).fill(2):[3,...Array((n-3)/2).fill(2)];
+  if(preferred===3){
+    const q=Math.floor(n/3),rem=n%3;
+    return rem===0?Array(q).fill(3):rem===2?[...Array(q).fill(3),2]:[...Array(Math.max(0,q-1)).fill(3),2,2];
   }
-  return sizes;
+  // Prefer as many fours as possible, then threes, then pairs. Never create a solo when n>1.
+  for(let four=Math.floor(n/4);four>=0;four--){
+    const remaining=n-4*four;
+    for(let three=Math.floor(remaining/3);three>=0;three--){
+      const extra=remaining-3*three;
+      if(extra%2===0)return [...Array(four).fill(4),...Array(three).fill(3),...Array(extra/2).fill(2)];
+    }
+  }
+  return [];
 }
 
 const strategyDescriptions={balanced:'Prioritizes mixed-ability groups.',random:'Shuffles without using ability tiers. Separation rules remain mandatory.',similar:'Prioritizes groups of students with similar performance tiers.',variety:'Prefers partners who have not worked together recently, while retaining some ability balance.'};
@@ -1527,7 +1560,7 @@ function togetherComponents(c,rules=c.togetherGroups||[],students=c.students){
 }
 function validateTogetherRules(c,rules=c.togetherGroups||[]){
   const blocks=togetherComponents(c,rules);
-  if(blocks.some(b=>b.length>3))return 'Combined keep-together rules exceed the three-student group limit.';
+  if(blocks.some(b=>b.length>Math.max(3,preferredGroupSize(c))))return 'Combined keep-together rules exceed the selected group-size limit.';
   if(blocks.some(b=>separationViolations([b],c)>0))return 'Keep-together and separation rules conflict for these students.';
   return '';
 }
@@ -1588,7 +1621,11 @@ function arrangementScore(arr,c) {
     g.forEach(s => totals[s.tier]++);
     const cnt = {High:0,Middle:0,Low:0};
     g.forEach(s => cnt[s.tier]++);
-    if (g.length === 3) {
+    if (g.length === 4) {
+      if(cnt.High===1&&cnt.Middle===2&&cnt.Low===1)score+=85;
+      else if(cnt.High&&cnt.Middle&&cnt.Low)score+=34;
+      else score+=Object.values(cnt).filter(x=>x>0).length*5;
+    } else if (g.length === 3) {
       if (cnt.High && cnt.Middle && cnt.Low) score += 32;
       else if (Object.values(cnt).filter(x => x>0).length === 2) score += 12;
       else score -= 8;
@@ -1645,8 +1682,21 @@ function arrangeWithGroupLocks(students,sizes,c){
   return place(0)?slots.map(x=>x.students):null;
 }
 function groupRoleRows(rows,c){
-  const roles=c.roles||defaultRoles;
-  return rows.map(row=>row.map((s,i)=>({...s,role:row.length===2?(i===0?roles[0]:`${roles[1]} + ${roles[2]}`):roles[i]||roles[2]})));
+  const roles=Array.isArray(c?.roles)?c.roles:defaultRoles;
+  const enabled=c?.showGroupRoles!==false;
+  return rows.map(row=>row.map((s,i)=>({...s,role:!enabled?'':row.length===1?(roles[0]||''):
+    row.length===2?(i===0?(roles[0]||''):`${roles[1]||'Recorder'} + ${roles[2]||'Reporter'}`):
+    (roles[i]||defaultRoles[i]||'')})));
+}
+function groupCounts(rows){
+  const counts={2:0,3:0,4:0,1:0};for(const row of rows)counts[row.length]=(counts[row.length]||0)+1;
+  return [4,3,2,1].filter(n=>counts[n]).map(n=>`${counts[n]} ${n===2?(counts[n]===1?'pair':'pairs'):n===1?(counts[n]===1?'individual':'individuals'):(counts[n]===1?'group of ':'groups of ')+n}`).join(' · ');
+}
+function updateGroupSizeControls(c=current()){
+  const size=preferredGroupSize(c),slider=$('groupSizeSlider'),label=$('groupSizeValue'),roles=$('showRolesCheckbox');
+  if(slider)slider.value=String(size);
+  if(label)label.textContent=String(size);
+  if(roles)roles.checked=c?.showGroupRoles!==false;
 }
 function saveGroupSnapshot(){
   const c=current();if(!c||!groups.length||absentIds.size)return;
@@ -1658,7 +1708,7 @@ function restoreGroupSnapshot(){
   if(!c||!Array.isArray(c.savedGroups))return;
   const byId=new Map(c.students.map(s=>[s.id,s]));
   const viewed=c.savedGroups.map(ids=>Array.isArray(ids)?ids.map(id=>byId.get(id)).filter(Boolean):[]).filter(g=>g.length);
-  if(!viewed.length||viewed.some(g=>g.length<2||g.length>3))return;
+  if(!viewed.length||viewed.some(g=>g.length<2||g.length>4))return;
   if(new Set(viewed.flat().map(s=>s.id)).size!==viewed.flat().length)return;
   if(viewed.flat().length!==c.students.length)return;
   if(separationViolations(viewed,c)||togetherViolations(viewed,c))return;
@@ -1713,7 +1763,7 @@ function generate() {
   const c = current();
   if (!c || c.students.length < 2) return;
   const issue=validateTogetherRules(c);if(issue){toast(issue);return;}
-  const sizes = createGroupSizes(c.students.length);
+  const sizes = createGroupSizes(c.students.length,preferredGroupSize(c));
   let best = null, bestScore = -Infinity;
   let bestInvalid=null,bestInvalidCount=Infinity;
   const attempts = Math.min(5000,Math.max(800,c.students.length*120));
@@ -1736,13 +1786,7 @@ function generate() {
   }
   absentIds.clear();absentOrigins.clear();
   recordGroupHistory(c,best);
-  const roles = c.roles || defaultRoles;
-  groups = best.map(g => g.map((s,i) => ({
-    ...s,
-    role:g.length === 2
-      ? (i === 0 ? roles[0] : `${roles[1]} + ${roles[2]}`)
-      : roles[i]
-  })));
+  groups = groupRoleRows(best,c);
 
   saveGroupSnapshot();
   renderGroups();
@@ -1753,10 +1797,8 @@ function generate() {
     groups.some(g => rule.filter(id => g.some(s => s.id === id)).length > 1)
   ).length;
 
-  const triples = groups.filter(g => g.length === 3).length;
-  const pairs = groups.filter(g => g.length === 2).length;
   $('balanceNote').textContent =
-    `${triples} group${triples===1?'':'s'} of 3 · ${pairs} pair${pairs===1?'':'s'}. ` +
+    `${groupCounts(groups)}. ` +
     (violations ? 'Some separation rules could not be satisfied with this roster.' : 'All separation rules were followed.');
   toast(violations ? 'Warning: some separation rules could not be satisfied.' : 'New groups generated.');
 }
@@ -1770,7 +1812,7 @@ function rebalancePresentStudents(){
   const active={...c,students:present};
   const issue=validateTogetherRules(active);
   if(issue){toast(issue);return;}
-  const sizes=createGroupSizes(present.length);
+  const sizes=createGroupSizes(present.length,preferredGroupSize(c));
   let best=null,bestScore=-Infinity;
   const attempts=Math.min(5000,Math.max(800,present.length*120));
   for(let i=0;i<attempts;i++){
@@ -1780,194 +1822,125 @@ function rebalancePresentStudents(){
     if(score>bestScore){best=candidate;bestScore=score;}
   }
   if(!best){toast('Cannot form groups with the current separation and together rules.');return;}
-  const roles=c.roles||defaultRoles;
-  groups=best.map(g=>g.map((s,i)=>({...s,role:g.length===2?(i===0?roles[0]:`${roles[1]} + ${roles[2]}`):roles[i]})));
+  groups=groupRoleRows(best,c);
   absentOrigins.clear();
   if(!absentIds.size)saveGroupSnapshot();
   renderGroups();
-  const threes=groups.filter(g=>g.length===3).length,pairs=groups.filter(g=>g.length===2).length;
-  $('balanceNote').textContent=`${present.length} present · ${threes} groups of 3 · ${pairs} pairs. All separation rules were followed.`;
+  $('balanceNote').textContent=`${present.length} present · ${groupCounts(groups)}. All separation rules were followed.`;
   toast('Present students rebalanced.');
 }
 $('rebalancePresentBtn').addEventListener('click',rebalancePresentStudents);
+$('groupSizeSlider').addEventListener('input',e=>{ $('groupSizeValue').textContent=e.target.value; });
+$('groupSizeSlider').addEventListener('change',e=>{
+  const c=current();if(!c)return;
+  const next=Number(e.target.value);if(![2,3,4].includes(next))return;
+  c.preferredGroupSize=next;save();
+  if(groups.length && c.students.length>=2){
+    if(absentIds.size)rebalancePresentStudents();else generate();
+  }else renderGroups();
+});
+$('showRolesCheckbox').addEventListener('change',e=>{
+ const c=current();if(!c)return;c.showGroupRoles=!!e.target.checked;
+ groups=groupRoleRows(groups,c);save();renderGroups();
+});
 
-function markStudentAbsent(studentId) {
-  if (absentIds.has(studentId)) return;
-
-  const c = current();
-  const student = c?.students.find(s => s.id === studentId);
-  if (!student) return;
-
-  const roles = c.roles || defaultRoles;
-
-  // Find the exact group containing the absent student.
-  const affectedGroup = groups.find(g =>
-    g.some(s => s.id === studentId)
-  );
-
-  if (!affectedGroup) return;
-
-  // Mark absent and remove only this student from their group.
-  absentOrigins.set(studentId,groups.indexOf(affectedGroup));
-  absentIds.add(studentId);
-
-  const remainingMembers = affectedGroup.filter(s =>
-    s.id !== studentId
-  );
-
-  // Helper: assign roles to a group of two.
-  function assignPairRoles(group) {
-    return group.map((s, i) => ({
-      ...s,
-      role: i === 0
-        ? roles[0]
-        : `${roles[1]} + ${roles[2]}`
-    }));
+// Repair attendance after a pair loses a member, respecting the selected sizes.
+// Unaffected pairs/triples/quads get a strong preference to remain together.
+function findPresentArrangement(present,c,previous=groups){
+  if(!present.length)return [];
+  if(present.length===1)return [[present[0]]];
+  const active={...c,students:present};
+  const sizes=createGroupSizes(present.length,preferredGroupSize(c));
+  const issue=validateTogetherRules(active);
+  if(issue)return {error:issue};
+  const past=new Map();previous.forEach(g=>g.forEach(s=>past.set(s.id,g.map(x=>x.id))));
+  const cohesion=rows=>rows.reduce((sum,g)=>sum+g.reduce((a,s)=>a+g.filter(other=>other.id!==s.id&&past.get(s.id)?.includes(other.id)).length,0),0);
+  let best=null,bestScore=-Infinity,locksPreserved=true;
+  for(const allowLocks of [true,false]){
+    const candidateConfig=allowLocks?active:{...active,groupLocks:{}};
+    const attempts=Math.min(350,Math.max(65,Math.ceil(present.length*7)));
+    for(let i=0;i<attempts;i++){
+      const candidate=arrangeWithGroupLocks(present,sizes,candidateConfig);
+      if(!candidate||separationViolations(candidate,active)||togetherViolations(candidate,active))continue;
+      const score=cohesion(candidate)*100+strategyScore(candidate,active)*.4+Math.random()*.03;
+      if(score>bestScore){best=candidate;bestScore=score;locksPreserved=allowLocks;}
+    }
+    if(best)break;
   }
-
-  // Helper: assign roles to a group of three.
-  function assignTripleRoles(group) {
-    return group.map((s, i) => ({
-      ...s,
-      role: roles[i]
-    }));
-  }
-
-  // CASE 1:
-  // A group of three becomes a pair.
-  // Leave every other group untouched.
-  if (remainingMembers.length === 2) {
-    const updatedPair = assignPairRoles(remainingMembers);
-
-    const groupIndex = groups.indexOf(affectedGroup);
-    groups[groupIndex] = updatedPair;
-
-    renderGroups();
-    toast(`${student.name} marked absent. Only their group was adjusted.`);
-    return;
-  }
-
-  // CASE 2:
-  // A group of two becomes a group of one.
-  const survivor = remainingMembers[0];
-
-  if (!survivor) {
-    groups = groups.filter(g => g.length > 0);
-    renderGroups();
-    toast(`${student.name} marked absent.`);
-    return;
-  }
-
-  // First, look for another existing pair to absorb the survivor.
-  const otherPair = groups.find(g =>
-    g !== affectedGroup && g.length === 2
-  );
-
-  if (otherPair) {
-    // Survivor becomes facilitator in the new group of three.
-    const mergedGroup = assignTripleRoles([
-      survivor,
-      ...otherPair
-    ]);
-
-    const survivorGroupIndex = groups.indexOf(affectedGroup);
-    const pairGroupIndex = groups.indexOf(otherPair);
-
-    groups[survivorGroupIndex] = mergedGroup;
-    groups[pairGroupIndex] = [];
-
-    // Remove the now-empty group.
-    groups = groups.filter(g => g.length > 0);
-
-    renderGroups();
-    toast(`${student.name} marked absent. The remaining student joined another pair as facilitator.`);
-    return;
-  }
-
-  // CASE 3:
-  // No other pair exists.
-  // Take one student from a group of three to create two pairs.
-  const donorGroup = groups.find(g =>
-    g !== affectedGroup && g.length === 3
-  );
-
-  if (donorGroup) {
-    // Move the third student from the donor group.
-    const donor = donorGroup[2];
-
-    const donorPair = assignPairRoles([
-      donorGroup[0],
-      donorGroup[1]
-    ]);
-
-    // Survivor becomes facilitator in the new pair.
-    const survivorPair = assignPairRoles([
-      survivor,
-      donor
-    ]);
-
-    const survivorGroupIndex = groups.indexOf(affectedGroup);
-    const donorGroupIndex = groups.indexOf(donorGroup);
-
-    groups[survivorGroupIndex] = survivorPair;
-    groups[donorGroupIndex] = donorPair;
-
-    groups = groups.filter(g => g.length > 0);
-
-    renderGroups();
-    toast(`${student.name} marked absent. One student moved to repair the groups.`);
-    return;
-  }
-
-  // Fallback: retain the survivor in their own group if no
-  // other group can be repaired without a broader reshuffle.
-  groups = groups.filter(g => g.length > 0);
-
-  renderGroups();
-  toast(`${student.name} marked absent. Groups updated.`);
+  if(!best)return {error:'The current Keep Together, Keep Apart, and group-size rules prevent a valid arrangement.'};
+  return {rows:best,locksPreserved};
 }
-
+function applyPresentArrangement(result,c){
+  if(result.error)return false;
+  groups=groupRoleRows(result.rows||result,c);
+  if(result.locksPreserved===false){
+    let released=0;
+    for(const [id,index] of Object.entries(c.groupLocks||{})){
+      if(groups.findIndex(g=>g.some(s=>s.id===id))!==index){delete c.groupLocks[id];released++;}
+    }
+    if(released)toast(`${released} group lock${released===1?' was':'s were'} released because attendance changed group numbering.`);
+  }
+  save();renderGroups();return true;
+}
+function markStudentAbsent(studentId){
+  if(absentIds.has(studentId))return;
+  const c=current(),student=c?.students.find(s=>s.id===studentId);
+  if(!student)return;
+  const index=groups.findIndex(g=>g.some(s=>s.id===studentId));
+  if(index<0)return;
+  const previous=groups.map(g=>g.slice());
+  const candidate=previous.map(g=>g.filter(s=>s.id!==studentId)).filter(g=>g.length);
+  absentOrigins.set(studentId,index);absentIds.add(studentId);
+  const present=c.students.filter(s=>!absentIds.has(s.id));
+  // Removing a member from a triple/quad leaves a valid group. Keep others where they are.
+  if(previous[index].length>=3){
+    groups=groupRoleRows(candidate,c);renderGroups();
+    toast(`${student.name} marked absent. Their group was adjusted.`);return;
+  }
+  const result=findPresentArrangement(present,c,candidate);
+  if(result.error){
+    // Never discard attendance. Keep a visible warning if the rules are incompatible.
+    groups=groupRoleRows(candidate,c);
+    $('balanceNote').textContent=result.error;
+    renderGroups();toast('Attendance changed; review conflicting group rules.');return;
+  }
+  applyPresentArrangement(result,c);
+  toast(`${student.name} marked absent. Remaining students were regrouped without unnecessary singles.`);
+}
 function restoreAbsentStudent(studentId){
   if(!absentIds.has(studentId))return;
   const c=current(),student=c?.students.find(s=>s.id===studentId);
   if(!student)return;
+  const restored=new Set(absentIds);restored.delete(studentId);
+  const present=c.students.filter(s=>!restored.has(s.id));
+  const previous=groups.map(g=>g.slice());
   const preferred=absentOrigins.get(studentId);
-  const order=[...groups.keys()].sort((a,b)=>{
-    if(a===preferred)return -1;if(b===preferred)return 1;
-    return groups[a].length-groups[b].length;
+  // If an existing group has room for this student, preserve all other groups.
+  const targetIndexes=[...groups.keys()].sort((a,b)=>{
+    if(a===preferred)return -1;if(b===preferred)return 1;return groups[a].length-groups[b].length;
   });
-  const roles=c.roles||defaultRoles;
-  for(const index of order){
-    const group=groups[index];if(group.length>=3)continue;
-    const trial=group.concat(student);
-    if(separationViolations([trial],c))continue;
-    const trialGroups=groups.map((g,i)=>i===index?trial:g);
-    if(togetherViolations(trialGroups,c))continue;
-    groups[index]=trial.map((s,i)=>({...s,role:trial.length===2?(i===0?roles[0]:`${roles[1]} + ${roles[2]}`):roles[i]}));
+  const targetSizes=createGroupSizes(present.length,preferredGroupSize(c));
+  for(const i of targetIndexes){
+    const candidate=groups.map(g=>g.slice());
+    candidate[i].push(student);
+    if(candidate[i].length>Math.max(3,preferredGroupSize(c)))continue;
+    if(candidate.map(g=>g.length).sort((a,b)=>a-b).join(',')!==targetSizes.slice().sort((a,b)=>a-b).join(','))continue;
+    if(separationViolations(candidate,c)||togetherViolations(candidate,c))continue;
     absentIds.delete(studentId);absentOrigins.delete(studentId);
-    renderGroups();toast(`${student.name} returned to Group ${index+1}.`);return;
+    groups=groupRoleRows(candidate,c);saveGroupSnapshot();renderGroups();
+    toast(`${student.name} returned to Group ${i+1}.`);return;
   }
-  // If a group was removed during absence repairs, recreate a valid group of two
-  // by taking a student from a triple only when that keeps all rules satisfied.
-  for(let i=0;i<groups.length;i++){
-    if(groups[i].length!==3)continue;
-    for(let j=0;j<3;j++){
-      const moved=groups[i][j];const left=groups[i].filter(s=>s.id!==moved.id);
-      const pair=[moved,student];
-      if(separationViolations([left,pair],c))continue;
-      const candidate=groups.map((g,k)=>k===i?left:g).concat([pair]);
-      if(togetherViolations(candidate,c))continue;
-      groups[i]=left.map((s,k)=>({...s,role:k===0?roles[0]:`${roles[1]} + ${roles[2]}`}));
-      groups.push(pair.map((s,k)=>({...s,role:k===0?roles[0]:`${roles[1]} + ${roles[2]}`})));
-      absentIds.delete(studentId);absentOrigins.delete(studentId);renderGroups();toast(`${student.name} returned.`);return;
-    }
-  }
-  toast(`No valid group has room for ${student.name}. Adjust groups or randomize again.`);
+  const result=findPresentArrangement(present,c,previous);
+  if(result.error){toast(`Cannot return ${student.name}: ${result.error}`);return;}
+  absentIds.delete(studentId);absentOrigins.delete(studentId);
+  applyPresentArrangement(result,c);saveGroupSnapshot();
+  toast(`${student.name} returned. Groups adjusted to your size preference.`);
 }
 
-// Quick Groups placement is intentionally independent of permanent seat assignments.
-// Logical groups (including pairs and locks) are never split or changed in the group data;
-// only their on-screen seat locations may span more than one desk cluster.
+
+// P05.13: A displayed group occupies ONE desk cluster. If a preferred group
+// cannot fit, form new, smaller logical groups instead of splitting its seats.
+// This planner is pure: it never edits a permanent layout or stored seat assignments.
 function quickSeatLocation(cluster,seatIndex){
   const {cols}=seatingDimensions(cluster);
   const orientation=String(cluster.orientation||'');
@@ -1978,128 +1951,170 @@ function quickSeatLocation(cluster,seatIndex){
     'stagger-left':[[80,6],[80,53],[6,29.5]]
   };
   const p=Number(cluster.size)===3?stagger[orientation]?.[seatIndex]:null;
-  return {
-    x:(Number(cluster.x)||0)+(p?p[0]:6+(seatIndex%cols)*74)+35,
-    y:(Number(cluster.y)||0)+(p?p[1]:6+Math.floor(seatIndex/cols)*47)+21.5
-  };
+  return {x:(Number(cluster.x)||0)+(p?p[0]:6+(seatIndex%cols)*74)+35,
+    y:(Number(cluster.y)||0)+(p?p[1]:6+Math.floor(seatIndex/cols)*47)+21.5};
 }
-function planQuickSeating(groupRows,layout){
-  const requests=groupRows.map((members,index)=>({members,index})).filter(r=>r.members.length);
-  const ranked=layout.map((g,i)=>({g,order:Number.isFinite(Number(g.priority))&&Number(g.priority)>0?Number(g.priority):i+1,i}))
+function planQuickSeating(groupRows,layout,config={}){
+  const preferred=[2,3,4].includes(Number(config.preferredGroupSize))?Number(config.preferredGroupSize):3;
+  const requests=(groupRows||[]).filter(g=>g?.length);
+  const ranked=(layout||[]).map((g,i)=>({g,order:Number(g.priority)>0?Number(g.priority):i+1,i}))
     .sort((a,b)=>a.order-b.order||a.i-b.i);
-  const totalStudents=requests.reduce((sum,r)=>sum+r.members.length,0);
-  const totalSeats=ranked.reduce((sum,r)=>sum+Math.max(0,Math.floor(Number(r.g.size)||0)),0);
-  if(totalStudents>totalSeats){
-    const need=totalStudents-totalSeats;
-    return {error:`Not enough seats in this layout: ${totalStudents} students are present, but only ${totalSeats} seats are placed. Add ${need} more seat${need===1?'':'s'} in Layout Builder. Your daily groups and saved seating charts are unchanged.`};
-  }
-  // Every seat is eligible, including individual desks. An occupied desk cluster
-  // may hold portions of two logical groups when that avoids an isolated student.
-  const seats=[];
-  ranked.forEach(({g,order})=>{
-    for(let i=0;i<Math.max(0,Math.floor(Number(g.size)||0));i++){
-      const p=quickSeatLocation(g,i);
-      seats.push({groupId:g.id,seatIndex:i,x:p.x,y:p.y,priority:order,size:Number(g.size)});
-    }
-  });
-  const gap=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
-  const sizeOrders=[
-    requests.slice().sort((a,b)=>b.members.length-a.members.length||a.index-b.index),
-    requests.slice().sort((a,b)=>a.members.length-b.members.length||a.index-b.index),
-    requests.slice(),
-    requests.slice().reverse()
-  ];
-  let best=null,bestScore=Infinity;
-  for(const order of sizeOrders){
-    const free=new Set(seats.map((_,i)=>i));
-    const taken=new Map();
-    const seatForStudent=[];
-    for(const request of order){
-      // Try each free seat as the start of a compact bundle. Continue on the
-      // closest free seats, favoring the same cluster but allowing neighbors.
-      let bestChoice=null,bestChoiceScore=Infinity;
-      for(const anchor of free){
-        const chosen=[anchor],available=new Set(free);available.delete(anchor);
-        while(chosen.length<request.members.length){
-          let nearest=-1,nearestScore=Infinity;
-          for(const candidate of available){
-            const s=seats[candidate];
-            const nearestDist=Math.min(...chosen.map(i=>gap(seats[i],s)));
-            const sharesCluster=chosen.some(i=>seats[i].groupId===s.groupId);
-            const score=nearestDist+(sharesCluster?0:95)+s.priority*.12;
-            if(score<nearestScore-1e-6||(Math.abs(score-nearestScore)<1e-6&&candidate<nearest)){
-              nearest=candidate;nearestScore=score;
-            }
-          }
-          if(nearest<0)break;
-          chosen.push(nearest);available.delete(nearest);
-        }
-        if(chosen.length!==request.members.length)continue;
-        const clusters=new Set(chosen.map(i=>seats[i].groupId));
-        const span=[...chosen].reduce((sum,i)=>sum+chosen.reduce((sub,j)=>i<j?sub+gap(seats[i],seats[j]):sub,0),0);
-        // Prefer a whole table, then neighboring clusters. Give exact-fit
-        // pairs/triples a slight advantage; otherwise preserve layout priority.
-        let score=(clusters.size-1)*270+span*.18;
-        const clusterSizes=new Map();
-        chosen.forEach(i=>clusterSizes.set(seats[i].groupId,(clusterSizes.get(seats[i].groupId)||0)+1));
-        for(const [id,count] of clusterSizes){
-          const capacity=seats.find(s=>s.groupId===id).size;
-          const already=taken.get(id)||0;
-          if(already===0&&count===1&&capacity>1)score+=25;
-          if(already+count===capacity)score-=11;
-          else if(already+count===capacity-1)score+=4;
-        }
-        score+=chosen.reduce((sum,i)=>sum+seats[i].priority,0)*.4;
-        if(score<bestChoiceScore-1e-6||(Math.abs(score-bestChoiceScore)<1e-6&&(!bestChoice||chosen[0]<bestChoice[0]))){
-          bestChoiceScore=score;bestChoice=chosen;
-        }
+  const students=requests.flat(),total=students.length;
+  const capacity=ranked.reduce((sum,{g})=>sum+Math.max(0,Math.floor(Number(g.size)||0)),0);
+  if(total>capacity){const need=total-capacity;return {error:`Not enough seats: ${total} students are present, but the selected layout has only ${capacity} seats. Add ${need} more seat${need===1?'':'s'} in Layout Builder. No groups were changed.`};}
+  const placements=new Map(ranked.map(({g})=>[g.id,Array(Math.max(0,Math.floor(Number(g.size)||0))).fill(null)]));
+  if(!total)return {placements,groupRows:[],changed:false,notices:[]};
+  const allowed=preferred===4?[4,3,2,1]:preferred===3?[3,2,1]:[2,3,1];
+  const scoreSize=(n)=>n===1?-1000000:preferred===2?(n===2?1000:-10):preferred===3?(n===3?1000:n===2?10:0):(n===4?10000:n===3?1000:n===2?10:0);
+  const optionsMemo=new Map();
+  function options(cap){
+    if(optionsMemo.has(cap))return optionsMemo.get(cap);
+    const out=[[]];
+    function walk(start,arr,used){
+      for(let k=start;k<allowed.length;k++){
+        const v=allowed[k];if(used+v>cap)continue;
+        const next=[...arr,v];out.push(next);walk(k,next,used+v);
       }
-      // Capacity was checked up front, so the fallback can always complete.
-      const slots=bestChoice||[...free].slice(0,request.members.length);
-      slots.forEach((seatIndex,k)=>{
-        free.delete(seatIndex);
-        seatForStudent.push({seatIndex,student:request.members[k],index:request.index});
-        const id=seats[seatIndex].groupId;taken.set(id,(taken.get(id)||0)+1);
+    }
+    walk(0,[],0);optionsMemo.set(cap,out);return out;
+  }
+  const maxCandidates=20,memo=new Map();
+  function schedules(i,remaining){
+    const key=i+':'+remaining;if(memo.has(key))return memo.get(key);
+    if(i===ranked.length)return remaining===0?[{score:0,slots:[]}]:[];
+    const {g}=ranked[i],cap=Math.max(0,Math.floor(Number(g.size)||0)),candidates=[];
+    for(const pattern of options(cap)){
+      const used=pattern.reduce((a,b)=>a+b,0);if(used>remaining)continue;
+      for(const rest of schedules(i+1,remaining-used)){
+        const fill=pattern.map(size=>({groupId:g.id,size}));
+        const score=rest.score+pattern.reduce((a,b)=>a+scoreSize(b),0)
+          +(used?Math.max(0,ranked.length-i)*0.004:0)+(used?0.1:0);
+        candidates.push({score,slots:fill.concat(rest.slots)});
+      }
+    }
+    candidates.sort((a,b)=>b.score-a.score);
+    const seen=new Set(),best=[];
+    for(const p of candidates){
+      const signature=p.slots.map(s=>`${s.groupId}:${s.size}`).join('|');
+      if(seen.has(signature))continue;seen.add(signature);best.push(p);
+      if(best.length===maxCandidates)break;
+    }
+    memo.set(key,best);return best;
+  }
+  const candidates=schedules(0,total);
+  if(!candidates.length)return {error:`Not enough seats: ${total} students cannot be placed in this layout.`};
+  const ids=new Map(students.map(s=>[s.id,s]));
+  const source=new Map();requests.forEach((g,i)=>g.forEach(s=>source.set(s.id,i)));
+  const avoidPairs=config.avoidPairs||[],avoidGroups=config.avoidGroups||[],together=config.togetherGroups||[];
+  const locks=config.groupLocks||{};
+  const parent=new Map(students.map(s=>[s.id,s.id]));
+  const root=id=>{while(parent.get(id)!==id)id=parent.get(id);return id;};
+  for(const rule of together){const members=rule.filter(id=>parent.has(id));for(const id of members.slice(1))parent.set(root(id),root(members[0]));}
+  const connected=new Map();for(const s of students){const p=root(s.id);if(!connected.has(p))connected.set(p,[]);connected.get(p).push(s);}
+  const linked=[...connected.values()];
+  function conflict(group){
+    const set=new Set(group.map(s=>s.id));
+    return avoidPairs.some(p=>p.every(id=>set.has(id)))||avoidGroups.some(rule=>rule.filter(id=>set.has(id)).length>1);
+  }
+  function place(schedule,useTogether,useLocks,useSeparation){
+    const slots=schedule.slots.map(slot=>({...slot,members:[]}));
+    const blocks=useTogether?linked:students.map(s=>[s]);
+    // Sort whole existing group memberships together to preserve existing partnerships.
+    const ordered=blocks.slice().sort((a,b)=>b.length-a.length||(source.get(a[0].id)||0)-(source.get(b[0].id)||0));
+    let steps=0;
+    function fill(i){
+      if(++steps>25000)return false;
+      if(i===ordered.length)return slots.every(s=>s.members.length===s.size);
+      const block=ordered[i];const anchors=new Set(block.map(s=>locks[s.id]).filter(Number.isInteger));
+      if(useLocks && anchors.size>1)return false;
+      const targets=slots.map((s,j)=>j).filter(j=>{
+        const dest=slots[j];if(dest.members.length+block.length>dest.size)return false;
+        if(useLocks&&anchors.size&&![...anchors].includes(j))return false;
+        return !useSeparation||!conflict(dest.members.concat(block));
       });
+      targets.sort((a,b)=>{
+        const metric=j=>{
+          const slot=slots[j],former=source.get(block[0].id);
+          const ties=slot.members.filter(s=>source.get(s.id)===former).length;
+          const already=slot.members.filter(s=>source.get(s.id)!==former).length;
+          return ties*100-already*14+(j===former?5:0)+(slot.members.length?3:0)-j*.004;
+        };return metric(b)-metric(a);
+      });
+      for(const j of targets){const slot=slots[j];slot.members.push(...block);
+        if(fill(i+1))return true;
+        slot.members.splice(slot.members.length-block.length,block.length);
+      }
+      return false;
     }
-    const byLogical=new Map(),counts=new Map();
-    for(const placed of seatForStudent){
-      if(!byLogical.has(placed.index))byLogical.set(placed.index,[]);
-      byLogical.get(placed.index).push(seats[placed.seatIndex]);
-      const physical=seats[placed.seatIndex].groupId;
-      counts.set(physical,(counts.get(physical)||0)+1);
-    }
-    let score=0;
-    for(const chosen of byLogical.values()){
-      score+=(new Set(chosen.map(s=>s.groupId)).size-1)*270;
-      for(let i=0;i<chosen.length;i++)for(let j=i+1;j<chosen.length;j++)score+=gap(chosen[i],chosen[j])*.18;
-    }
-    for(const {g} of ranked){
-      const n=counts.get(g.id)||0;
-      if(n===1&&g.size>1&&totalStudents>1)score+=160;
-      if(n>0)score+=Number(g.priority||0)*.35;
-    }
-    if(score<bestScore){bestScore=score;best=seatForStudent;}
+    return fill(0)?slots:null;
   }
-  const placements=new Map(ranked.map(({g})=>[g.id,Array.from({length:Math.max(0,Math.floor(Number(g.size)||0))},()=>null)]));
-  const groupClusters=new Map();
-  for(const placed of best||[]){
-    const location=seats[placed.seatIndex];
-    placements.get(location.groupId)[location.seatIndex]={student:placed.student,index:placed.index};
-    if(!groupClusters.has(placed.index))groupClusters.set(placed.index,new Set());
-    groupClusters.get(placed.index).add(location.groupId);
+  const modes=[
+    {together:true,locks:true,separate:true},
+    {together:true,locks:false,separate:true},
+    {together:false,locks:false,separate:true},
+    {together:false,locks:false,separate:false}
+  ];
+  let selected=null,mode=null;
+  // Resolve classroom rules before accepting the best-looking table packing.
+  for(const requirements of modes){
+    for(const candidate of candidates){
+      const result=place(candidate,requirements.together,requirements.locks,requirements.separate);
+      if(result){selected=result;mode=requirements;break;}
+    }
+    if(selected)break;
   }
-  return {placements,spans:new Set([...groupClusters].filter(([,ids])=>ids.size>1).map(([index])=>index))};
+  if(!selected)return {error:`Not enough usable seats in the layout.`};
+  const notices=[];
+  if(!mode.together&&together.length)notices.push('Some Keep Together rules cannot fit within the available desk clusters. Review the layout or grouping rules.');
+  if(!mode.separate&&(avoidPairs.length||avoidGroups.length))notices.push('Some Keep Apart rules conflict with the available desk clusters. Review the marked groups.');
+  if(!mode.locks&&Object.keys(locks).length)notices.push('A group lock could not retain its original group number after desk-based regrouping.');
+  const groupRowsOut=selected.map(s=>s.members);
+  for(let index=0;index<selected.length;index++){
+    const slot=selected[index],target=placements.get(slot.groupId);
+    let offset=target.findIndex(x=>x===null);if(offset<0)continue;
+    for(let i=0;i<slot.members.length;i++){
+      const seatIndex=offset+i;target[seatIndex]={student:slot.members[i],index};
+    }
+  }
+  // Every original student is placed exactly once, and no displayed group spans a desk cluster.
+  const seats=[...placements.values()].flat().filter(Boolean);
+  if(seats.length!==total||new Set(seats.map(x=>x.student.id)).size!==total)throw new Error('Quick Groups placement mismatch');
+  const before=requests.map(g=>g.map(s=>s.id).sort().join('/')).join('|');
+  const after=groupRowsOut.map(g=>g.map(s=>s.id).sort().join('/')).join('|');
+  if(total>=2&&groupRowsOut.some(g=>g.length===1))notices.push('This desk layout requires a single-seat group. Use more multi-seat desk clusters to keep every student with a partner.');
+  return {placements,groupRows:groupRowsOut,changed:before!==after,notices,spans:new Set()};
 }
 
 function renderQuickSeatingGroups(){
-  const layout=seatingLayout(),result=planQuickSeating(groups,layout);
+  const layout=seatingLayout(),c=current(),result=planQuickSeating(groups,layout,c||{});
   if(result.error){
     const fallback=document.createElement('div');fallback.className='quick-seating-fallback';
     const warning=document.createElement('div');warning.className='quick-mapping-warning';warning.setAttribute('role','status');warning.textContent=result.error;
     fallback.append(warning);return {visual:fallback,fallback:true};
   }
+  // Desk capacity changes the actual temporary groups, never permanent assignments.
+  if(result.changed){
+    groups=groupRoleRows(result.groupRows,c);
+    // A lock is only still valid if the student remained in the same numbered group.
+    const oldLocks=c?.groupLocks||{};
+    let released=0;
+    for(const [studentId,oldIndex] of Object.entries(oldLocks)){
+      const newIndex=groups.findIndex(g=>g.some(s=>s.id===studentId));
+      if(newIndex!==oldIndex){delete oldLocks[studentId];released++;}
+    }
+    if(released)result.notices.push(`${released} group lock${released===1?' was':'s were'} released because the group structure changed. Relock students as needed.`);
+    if(!absentIds.size)saveGroupSnapshot();else save();
+    $('balanceNote').textContent=`Desk-aligned groups: ${groupCounts(groups)}. Each displayed group stays within one desk cluster.`;
+  }else{
+    // Role labels may have changed without regenerating the group roster.
+    groups=groupRoleRows(groups,c);
+  }
+  // Use the authoritative current role assignment for both cards and seats.
+  for(const seats of result.placements.values())for(const position of seats){
+    if(position)position.student=groups[position.index].find(s=>s.id===position.student.id)||position.student;
+  }
   const scroller=document.createElement('div');scroller.className='quick-seating-scroll';
+  if(result.notices?.length){const warning=document.createElement('div');warning.className='quick-mapping-warning';warning.setAttribute('role','status');warning.textContent=result.notices.join(' ');scroller.append(warning);}
   const room=document.createElement('div');room.className='quick-seating-room seating-room';
   room.setAttribute('aria-label','Temporary classroom groups on selected desk layout');
   room.innerHTML='<div class="front-of-class">FRONT OF CLASS</div>';
@@ -2113,7 +2128,7 @@ function renderQuickSeatingGroups(){
     cluster.style.left=`${g.x}px`;cluster.style.top=`${g.y}px`;
     cluster.style.gridTemplateColumns=`repeat(${cols},70px)`;
     const label=document.createElement('div');label.className='quick-desk-label';
-    label.textContent=!groupNumbers.length?'Unused desks':groupNumbers.length===1?`Group ${groupNumbers[0]}${result.spans.has(groupNumbers[0]-1)?' (part)':''}`:`Groups ${groupNumbers.join(' + ')}`;
+    label.textContent=!groupNumbers.length?'Unused desks':groupNumbers.length===1?`Group ${groupNumbers[0]}`:`Groups ${groupNumbers.join(' + ')}`;
     cluster.append(label);
     for(let i=0;i<g.size;i++){
       const placement=assignment[i],student=placement?.student;
@@ -2126,7 +2141,7 @@ function renderQuickSeatingGroups(){
         const name=document.createElement('span');name.className='quick-seat-name';name.textContent=student.name;
         const role=document.createElement('span');role.className='quick-seat-role';role.textContent=student.role||'';
         seat.append(name,role,makeTierLetter(student.tier));
-        if(groupNumbers.length>1||result.spans.has(placement.index)){const tag=document.createElement('span');tag.className='quick-seat-group-tag';tag.textContent=`G${placement.index+1}`;tag.setAttribute('aria-label',`Group ${placement.index+1}`);seat.append(tag);}
+        if(groupNumbers.length>1){const tag=document.createElement('span');tag.className='quick-seat-group-tag';tag.textContent=`G${placement.index+1}`;tag.setAttribute('aria-label',`Group ${placement.index+1}`);seat.append(tag);}
         if(current()?.groupLocks?.[student.id]!==undefined){
           seat.classList.add('group-locked');
           const mark=document.createElement('span');mark.className='group-locked-mark';mark.textContent='🔒';seat.append(mark);
@@ -2149,11 +2164,25 @@ function renderQuickSeatingGroups(){
 function setQuickView(mode){
   const seating=mode==='seating';
   db.groupDisplayMode=seating?'seating':'cards';
+  // Return group cards to the teacher's preferred sizes when desk constraints
+  // had temporarily created smaller physical groups (including single desks).
+  if(!seating&&groups.length){
+    const c=current(),present=c?.students.filter(s=>!absentIds.has(s.id))||[];
+    const target=createGroupSizes(present.length,preferredGroupSize(c)).slice().sort((a,b)=>a-b).join(',');
+    const actual=groups.map(g=>g.length).sort((a,b)=>a-b).join(',');
+    if(target!==actual){
+      const restored=findPresentArrangement(present,c,groups);
+      if(restored.error)toast('Group preferences conflict with existing rules: '+restored.error);
+      else applyPresentArrangement(restored,c);
+      $('balanceNote').textContent=`${present.length} present · ${groupCounts(groups)}. Preferred group sizes restored for cards.`;
+    }
+  }
+
   $('quickSeatingMode').checked=seating;
   $('quickTemplateField').hidden=!seating;
   $('quickViewHint').textContent=seating
-    ?'Daily groups and pairs stay intact. If tables differ in size, nearby seats are used. Permanent seating assignments are unchanged.'
-    :'Switch views without changing the groups. Saved seating assignments and desk positions stay untouched.';
+    ?'Each displayed group stays within one desk cluster. Larger groups may become smaller groups to fit the layout. Permanent seating assignments stay unchanged.'
+    :'Seating mode may adjust temporary group sizes to fit each desk cluster. Saved seating assignments and desk positions stay untouched.';
   save();renderGroups();
 }
 $('quickSeatingMode').addEventListener('change',e=>setQuickView(e.target.checked?'seating':'cards'));
@@ -2166,6 +2195,7 @@ $('quickSeatingTemplateSelect').addEventListener('change',e=>{
 
 function renderGroups() {
   const area = $('groupsArea');
+  $('groupsPage').classList.toggle('roles-off',current()?.showGroupRoles===false);
   $('quickSeatingMode').checked=db.groupDisplayMode==='seating';
   $('quickTemplateField').hidden=db.groupDisplayMode!=='seating';
   area.innerHTML = '';
@@ -2205,8 +2235,8 @@ function renderGroups() {
       m.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openGroupActions();}});
       const avatar = document.createElement('div');
       avatar.className = 'avatar';
-      avatar.textContent = s.role || 'Role';
-      avatar.title = s.role || 'Role';
+      avatar.textContent = s.role || '';
+      avatar.title = s.role || '';
       const info = document.createElement('div');
       info.style.minWidth = '0';
       const name = document.createElement('div');
@@ -2654,7 +2684,7 @@ $('addAvoidGroupBtn').addEventListener('click',()=>{
 $('addTogetherBtn').addEventListener('click',()=>{
   const c=current();if(!c)return;
   const ids=[...$('togetherStudents').querySelectorAll('input[data-together-student]:checked')].map(el=>el.value);
-  if(ids.length<2||ids.length>3){toast('Select two or three students to keep together.');return;}
+  if(ids.length<2||ids.length>Math.max(3,preferredGroupSize(c))){toast('Select two to '+Math.max(3,preferredGroupSize(c))+' students to keep together.');return;}
   if((c.togetherGroups||[]).some(r=>r.length===ids.length&&r.every(id=>ids.includes(id)))){toast('That rule already exists.');return;}
   const proposed=[...(c.togetherGroups||[]),ids];
   const issue=validateTogetherRules(c,proposed);
@@ -3701,7 +3731,7 @@ const guideSteps = [
   {title:'Import and rank automatically', body:'Upload a PowerSchool Final Grades PDF here. Review the extracted records before confirming; existing classes can be updated.', page:'teacher', target:'classPdfUpload'},
   {title:'Review performance tiers', body:'Review High, Middle, and Low rankings and adjust any student individually. These tiers appear as H, M, and L in teacher views, but are hidden in Student View.', page:'teacher', target:'studentList'},
   {title:'Set grouping rules', body:'Keep selected students apart, or choose Keep Together for students who must share a group.', page:'teacher', target:'avoidRuleType'},
-  {title:'Customize group roles', body:'Change the three role titles here. They are shared across all classes; in pairs, the second student covers roles 2 and 3.', page:'teacher', target:'roleList'},
+  {title:'Customize group roles', body:'Change up to four role titles here. They are shared across all classes; in pairs, the second student covers roles 2 and 3.', page:'teacher', target:'roleList'},
   {title:'Generate groups', body:'Select a grouping strategy, then click Randomize groups. The New partners option uses locally saved grouping history.', page:'groups', target:'groupStrategy'},
   {title:'Design your classroom layout', body:'Choose or create a template, add desks, select a grouping strategy, and click Populate desks to assign students.', page:'seating', target:'seatingSetupControls'},
   {title:'Back up and protect your data', body:'Return to Teacher Setup to export a backup. Backups contain student information, so store them securely. Privacy & data controls explains local storage and deletion.', page:'teacher', target:'exportBtn'}
@@ -3764,8 +3794,8 @@ try {
         if(!Array.isArray(c.groupHistory))c.groupHistory=[];
         if(!c.groupLocks||typeof c.groupLocks!=='object'||Array.isArray(c.groupLocks))c.groupLocks={};
         if(!Array.isArray(c.savedGroups))c.savedGroups=[];
-        c.roles = c.roles.slice(0,3);
-        while (c.roles.length < 3) c.roles.push(defaultRoles[c.roles.length]);
+        c.roles = c.roles.slice(0,4);
+        while (c.roles.length < 4) c.roles.push(defaultRoles[c.roles.length]);
         c.students.forEach(s => {
           if (!tiers.includes(s.tier)) s.tier = 'Middle';
         });

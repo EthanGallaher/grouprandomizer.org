@@ -1,26 +1,33 @@
-# BGR Website P05.12 — Flexible seating for Quick Groups
+# Balanced Group Randomizer P05.13 — Group Size, Fourth Role & Desk-Aligned Groups
 
-## Change
-- **Groups → Show groups on seating chart** now uses all available seats, including single desks.
-- Groups of three and pairs are placed within a single desk cluster where possible. When a matching cluster is unavailable, the same logical group uses nearby open seats, sometimes across neighboring desk clusters. Group membership, roles and group locks do not change.
-- A desk cluster can contain students from two different logical groups; labels identify shared clusters and individual seats receive a `G#` tag when needed to show the student's group.
-- Daily seating mode **only** displays an error when the present student count exceeds the total seats in the chosen layout. The message states the shortage and links the remedy to Layout Builder.
-- Existing grouping logic favors groups of three with pairs instead of isolated students; a single student is unavoidable only if fewer than two remain present. Absence repairs and balancing remain separate from permanent seating.
-- The three-tab navigation, Random student picker, Student View/Fullscreen separation, grouping rules, template selector and permanent seating builder remain unchanged.
-- Quick Groups reads saved desk positions, sizes, priorities and orientations **without editing** permanent seating assignments, class data, or templates.
+## New classroom features
+- **Preferred group-size slider** in Groups, with choices 2, 3, or 4 (per class, default 3).
+  - **2:** groups of two. With an odd number of present students, exactly one trio.
+  - **3:** groups of three first, then pairs. No isolated student for rosters of 2+.
+  - **4:** maximize fours, then threes, then pairs. No isolated student for rosters of 2+.
+- **Fourth shared role** in Teacher Setup, default “Checker”. The other three existing titles are preserved. Four-person groups use all four roles; pair members cover roles 1 and 2+3 respectively.
+- **Roles checkbox** in Groups turns assignment/visible role labels off and back on; preference persists per class. Student View continues to hide teacher-only tiers and locks.
+- **Desk-aligned Quick Groups:** Each displayed group occupies exactly one physical desk cluster; the planner can split a logical four-person group into new smaller groups, merge classmates when needed, or place two small groups in one large cluster. It never scatters one displayed group across two clusters.
+- Switching to cards restores the chosen group-size priorities if desk constraints forced smaller groups. This may change temporary partner assignments; it never modifies permanent seating assignments or desk layouts.
 
-## Safe upgrade
-1. Export and verify a JSON backup of your existing data; back up the current GitHub repository.
-2. Replace the published files with the contents of this ZIP at the repository root. Keep any trusted PDF.js files currently deployed; they are **not** included here.
-3. Hard refresh the website (and relaunch installed shortcuts if applicable). Do **not** clear local browser storage during installation.
-4. Test with a **fictional** roster: 5 students at two 3-seat tables, 9 students at three 4-seat tables, a mixed layout with individual desks, then one fewer seat than students.
+## Physical trade-offs and rule conflicts
+- A one-seat desk cluster can only hold a group of one. When no valid pairing is possible in the physical layout, the app uses that seat and shows a teacher-facing explanation; **only insufficient total seat count blocks seating display**.
+- The planner attempts to preserve **Keep Together**, **Keep Apart**, and group locks. Where the physical cluster capacities make one or more impossible, it shows a teacher-facing notice; an affected group lock may be released. Those exceptional conflicts cannot all be satisfied simultaneously without changing desk layout or rules.
+- A group-size-2 setting may need more than one trio in seating mode if, for example, two 3-seat clusters are the only tables available for six students. Card mode restores three pairs.
+- Layout Builder’s permanent Populate algorithm is unchanged.
 
-## Local checks performed
-- Planner: 350 randomized layout/capacity checks plus 13 targeted scenarios; no dropped, duplicated or re-grouped students.
-- Chromium UI: website, offline manual version, standalone fictional PowerSchool preview and fictional plugin page; all passed tests covering seat placement, pair priority after an absence, shortage warnings, unchanged saved seating assignments and Student View.
-- Absence sequences from starting class sizes 2–26: no single-person group when two or more students remained present.
-- Fictional PowerSchool shared-engine tests: 17 data service, 10 grouping, 26 roster adapter, 9 seating engine, 109 Quick Groups assertions passed.
-- No authorized live PowerSchool, district SIS, production security assessment or real student data tested.
+## Upgrade safely
+1. Export and verify a BGR JSON backup and keep a copy of your current GitHub files.
+2. Extract this ZIP and upload the root files to your existing GitHub Pages repository. Replace `index.html`, images where needed, and `BGR-Manual-Local-Edition.zip`.
+3. Preserve any trusted, existing local PDF.js assets as needed; they are not provided in this package.
+4. Hard-refresh the website and re-open installed shortcuts. Do not clear browser storage or overwrite a cloud vault during upgrade.
+5. In a fictional class, try sizes 2/3/4, four role labels, Roles on/off, and 11 students at 4-seat, 3-seat, then 2-seat pods.
 
-## Important boundary
-Only the **temporary Quick Groups seating display** has this flexible capacity-only fallback. **Layout Builder → Populate** remains the existing permanent seating planner and still enforces its own seat locks and Keep Apart / Keep Together constraints. This update deliberately avoids changing that feature.
+## Verified locally
+- Browser tests with fictional classes: website, offline manual, mock PowerSchool plugin page, and standalone mock preview all passed (slider, roles, 11 students, four role inputs, desk-aligned placement, attendance, no-teacher-controls Student View, and return to preferred card sizes).
+- 350 randomized seat-planning cases and 361 PowerSchool-compatibility no-split tests passed without losing or duplicating students.
+- 1,020 browser attendance removal and restoration checks, across group-size preferences 2/3/4 and rosters 2–18, produced no unnecessary singletons.
+- Existing and new reusable mock PowerSchool engine tests passed (data services, grouping, roster, permanent seating, Quick Groups).
+- A browser test using a real hosted origin was blocked by local container browser policy; persistence was evaluated through source and mocked browser execution, not an authorized district deployment.
+
+**Not tested:** live school data, authorized PowerSchool, district security requirements or SIS permissions.

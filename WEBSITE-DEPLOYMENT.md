@@ -1,11 +1,10 @@
-# Website deployment / manual offline release
+# Deploy BGR P05.13 via GitHub Pages
 
-1. Make a secure copy of your current GitHub repository and `index.html` before overwriting. Export and verify a manual JSON backup of each classroom you intend to keep.
-2. The website upload files are at the ROOT of BGR-Website-Update-For-GitHub.zip. Upload `index.html`, the four PNG icons and `BGR-Manual-Local-Edition.zip` to the SAME directory as your current website index. Remove or replace outdated deployed `cloud-sync.js`, `firebase-config.js`, `sw.js`, and related Firebase resources only after confirming they are no longer needed by another site. Removing them from GitHub does not delete Firestore vaults.
-3. Do not delete the existing website storage or cloud account data until you have verified a manual backup. A browser profile that was previously account-bound gets a migration warning and should use an isolated fresh browser profile for restoring. The old app's cloud-bound cache will intentionally not load automatically.
-4. The header's `Download local edition` link downloads `BGR-Manual-Local-Edition.zip`, containing a self-contained `BGR-Manual-Local-Edition.html`. Download, unzip and open the HTML in a supported browser. Use one device/profile and manual backup transfer rather than cross-device sync.
-5. **PDF IMPORT DEPENDENCY:** The old website referenced two absent files: `pdf.min.js` and `pdf.worker.min.js`. If you already host a trusted, matching local pair, leave them in place; otherwise PDF report import is unavailable until a separately reviewed PDF.js integration is included. The manual HTML in the local download does not include a PDF parser. Paste/import roster text as a fallback.
-6. Hard-refresh and, if needed, close/reopen the old installed PWA shortcut to retire older service-worker content; the new website attempts to unregister old workers and remove app caches.
-7. Test in an isolated fictional-data browser: class CRUD, group randomization and locks, keep apart/together, seating population and locks, JSON export/import, and classroom switching. Do not use real student records until authorized.
+1. Export a verified JSON backup from BGR and save your existing GitHub `index.html` and assets.
+2. Extract **BGR-Website-P05.13-Group-Sizes-GitHub.zip**. Upload its contents to the repository root. The `index.html` and local ZIP should share a directory with PNG icons.
+3. Keep school-approved PDF.js files already deployed if needed. The browser cannot import PDFs without these optional assets.
+4. Hard-refresh grouprandomizer.org. If a prior installed shortcut appears outdated, close and reopen it. Avoid clearing browser storage.
+5. Verify fictional roster of 11, size 4 → 4+4+3, Roles off/on, a 4-seat layout, a layout of two-seat pods, and card-view return. Verify old class data and permanent seating remain available.
+6. Manual offline edition is inside `BGR-Manual-Local-Edition.zip`. This edition uses local browser storage and JSON backups, not cloud sync.
 
-The standalone `BGR-Website-Manual-Only-index.html` can be renamed to `index.html` as an alternative to extracting the website update ZIP, provided all required adjacent icon/ZIP assets are deployed too.
+This GitHub ZIP does not delete any existing Firebase cloud data or migrate older browser profiles. Do not use live student information for unfamiliar or unapproved deployments.
