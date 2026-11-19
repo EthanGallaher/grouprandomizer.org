@@ -713,6 +713,20 @@ body.bgr-student-view .top,body.bgr-student-view .workspace-bar,body.bgr-student
 #groupsPage:is(:fullscreen,.ipad-fullscreen):not(.student-view) .grouping-options-help{display:none}
 #groupsPage.student-view .grouping-options{display:none!important}
 @media print{.grouping-options{display:none!important}}
+
+/* P05.15 contextual strategy help: explanation only when requested. */
+.strategy-label-row{display:flex;align-items:center;justify-content:flex-start;gap:6px;min-height:22px}
+.strategy-label-row label{margin:0}
+.strategy-help-button{width:21px!important;height:21px!important;min-height:21px!important;min-width:21px!important;flex:none;display:inline-grid;place-items:center;padding:0!important;border:1px solid #aebfd7!important;border-radius:50%!important;background:#fff!important;color:#345a86!important;font-size:12px!important;font-weight:800!important;line-height:1!important;cursor:pointer}
+.strategy-help-button:hover,.strategy-help-button:focus-visible,.strategy-help-button[aria-expanded="true"]{background:#e8f1ff!important;border-color:#4d7dba!important;outline-offset:2px}
+.group-strategy-field,.seating-tool-row .strategy-field{position:relative}
+.strategy-help-popover{position:absolute;z-index:100;top:calc(100% + 5px);left:0;width:clamp(210px,32vw,300px);max-width:min(300px,calc(100vw - 28px));box-sizing:border-box;padding:11px 13px;border:1px solid #b7c9e2;border-radius:10px;box-shadow:0 8px 24px rgba(18,38,75,.16);background:#fff;color:#243c5f;font-size:12px;line-height:1.45;text-align:left;white-space:normal}
+.strategy-help-popover[hidden]{display:none!important}
+.strategy-help-popover strong{display:block;font-size:12px;margin-bottom:4px}
+.strategy-help-popover p{font-size:12px;margin:0;color:#435976;line-height:1.45}
+#groupsPage.student-view .strategy-help-popover{display:none!important}
+@media print{.strategy-help-popover,.strategy-help-button{display:none!important}}
+
 </style>
 <style>
 .seating-tool-row #triangleVariantField{flex:0 0 100%;width:100%;min-width:0;max-width:100%;align-self:stretch}
@@ -793,7 +807,7 @@ body.bgr-home-active .workspace-class-bar{display:none!important}
 
 </style>
 <style>.welcome-tutorial-top{margin:10px 0 14px}.welcome-tutorial-top button{max-width:100%}</style>
-<meta name="bgr-build" content="P05.14-manual-only">
+<meta name="bgr-build" content="P05.15-manual-only">
 <style>
 
 /* P05.14: one compact workspace, no duplicated instructional paragraphs. */
@@ -1134,9 +1148,10 @@ body.bgr-home-active .workspace-class-bar{display:none!important}
       </label>
     </div>
     <div class="field group-strategy-field">
-      <label for="groupStrategy">Strategy</label>
-      <select id="groupStrategy" aria-describedby="strategyHelp"><option value="balanced">Balanced abilities (default)</option><option value="random">Random (respect separation rules)</option><option value="similar">Similar abilities</option><option value="variety">New partners (use group history)</option></select>
+      <div class="strategy-label-row"><label for="groupStrategy">Strategy</label><button type="button" class="strategy-help-button" data-help-strategy="groupStrategy" aria-label="Explain the selected grouping strategy" aria-expanded="false" aria-controls="groupStrategyPopover" title="About the selected strategy">?</button></div>
+      <select id="groupStrategy" aria-describedby="strategyHelp"><option value="balanced">Balanced abilities (default)</option><option value="supportive">Supportive pairing</option><option value="random">Random (respect separation rules)</option><option value="similar">Similar abilities</option><option value="variety">New partners (use group history)</option></select>
       <p class="visually-hidden" id="strategyHelp">Prioritizes mixed-ability groups.</p>
+      <div class="strategy-help-popover" id="groupStrategyPopover" role="note" hidden><strong id="groupStrategyHelpTitle"></strong><p id="groupStrategyHelpText"></p></div>
     </div>
   </div>
   <div class="daily-controls-footer">
@@ -1199,7 +1214,7 @@ body.bgr-home-active .workspace-class-bar{display:none!important}
       <section class="seating-tool-section" aria-label="Assign students">
         <div class="seating-tool-heading"><span class="tool-number">3</span><h3>Assign students</h3></div>
         <div class="seating-tool-row">
-          <div class="field strategy-field"><label for="seatingStrategy">Grouping strategy</label><select id="seatingStrategy"><option value="balanced">Balanced abilities</option><option value="random">Fully random</option><option value="similar">Similar abilities</option><option value="variety">New partners</option></select></div>
+          <div class="field strategy-field"><div class="strategy-label-row"><label for="seatingStrategy">Grouping strategy</label><button type="button" class="strategy-help-button" data-help-strategy="seatingStrategy" aria-label="Explain the selected seating strategy" aria-expanded="false" aria-controls="seatingStrategyPopover" title="About the selected strategy">?</button></div><select id="seatingStrategy"><option value="balanced">Balanced abilities</option><option value="supportive">Supportive pairing</option><option value="random">Fully random</option><option value="similar">Similar abilities</option><option value="variety">New partners</option></select><div class="strategy-help-popover" id="seatingStrategyPopover" role="note" hidden><strong id="seatingStrategyHelpTitle"></strong><p id="seatingStrategyHelpText"></p></div></div>
           <button class="primary" id="populateDesksBtn">Populate desks</button>
           <button class="secondary" id="clearStudentsBtn">Clear students</button>
         </div>
@@ -1632,10 +1647,47 @@ function createGroupSizes(n,preferred=3) {
   return [];
 }
 
-const strategyDescriptions={balanced:'Prioritizes mixed-ability groups.',random:'Shuffles without using ability tiers. Separation rules remain mandatory.',similar:'Prioritizes groups of students with similar performance tiers.',variety:'Prefers partners who have not worked together recently, while retaining some ability balance.'};
-function updateStrategyHelp(){ $('strategyHelp').textContent=strategyDescriptions[$('groupStrategy').value] || strategyDescriptions.balanced; }
-$('groupStrategy').addEventListener('change',()=>{const c=current();if(c){c.groupingStrategy=$('groupStrategy').value;$('seatingStrategy').value=c.groupingStrategy;save();}updateStrategyHelp();});
-$('seatingStrategy').addEventListener('change',()=>{const c=current();if(c){c.groupingStrategy=$('seatingStrategy').value;$('groupStrategy').value=c.groupingStrategy;updateStrategyHelp();save();}});
+const strategyDescriptions={
+ balanced:{title:'Balanced abilities',body:'Mix H, M, and L students across groups. Favors H–M–L trios and H–M–M–L fours; H–M, M–L and H–L pairs have equal priority. Adapts to students present.'},
+ supportive:{title:'Supportive pairing',body:'For pairs, prefers H–M or M–L over H–L. For larger groups, favors a middle-tier bridge when possible. Uses the same fixed student tiers and grouping rules.'},
+ random:{title:'Random',body:'Shuffles students without scoring their performance tiers. Keep Apart, Keep Together, and student locks still apply.'},
+ similar:{title:'Similar abilities',body:'Favors students from the same performance tier in a group, subject to your grouping rules and selected group sizes.'},
+ variety:{title:'New partners',body:'Looks at locally saved grouping history to reduce repeated partnerships while retaining some ability balance.'}
+};
+function closeStrategyHelp(){
+ document.querySelectorAll('.strategy-help-popover').forEach(p=>p.hidden=true);
+ document.querySelectorAll('.strategy-help-button').forEach(b=>b.setAttribute('aria-expanded','false'));
+}
+function updateStrategyHelp(){
+ for(const [selectId,prefix] of [['groupStrategy','groupStrategy'],['seatingStrategy','seatingStrategy']]){
+  const select=$(selectId),entry=strategyDescriptions[select?.value]||strategyDescriptions.balanced;
+  if(!select)continue;
+  $(prefix+'HelpTitle').textContent=entry.title;
+  $(prefix+'HelpText').textContent=entry.body;
+  if(selectId==='groupStrategy')$('strategyHelp').textContent=entry.body;
+ }
+}
+document.querySelectorAll('.strategy-help-button').forEach(button=>{
+ button.addEventListener('click',event=>{
+  event.stopPropagation();
+  const panel=$(button.getAttribute('aria-controls'));
+  const wasOpen=!panel.hidden;
+  closeStrategyHelp();updateStrategyHelp();
+  panel.hidden=wasOpen;button.setAttribute('aria-expanded',String(!wasOpen));
+ });
+});
+document.addEventListener('click',event=>{
+ if(!event.target.closest('.strategy-help-button,.strategy-help-popover'))closeStrategyHelp();
+});
+document.addEventListener('keydown',event=>{if(event.key==='Escape')closeStrategyHelp();});
+$('groupStrategy').addEventListener('change',()=>{
+ const c=current();if(c){c.groupingStrategy=$('groupStrategy').value;$('seatingStrategy').value=c.groupingStrategy;save();}
+ closeStrategyHelp();updateStrategyHelp();
+});
+$('seatingStrategy').addEventListener('change',()=>{
+ const c=current();if(c){c.groupingStrategy=$('seatingStrategy').value;$('groupStrategy').value=c.groupingStrategy;save();}
+ closeStrategyHelp();updateStrategyHelp();
+});
 function togetherComponents(c,rules=c.togetherGroups||[],students=c.students){
   const byId=new Map(students.map(s=>[s.id,s]));const parent=new Map(students.map(s=>[s.id,s.id]));
   const root=id=>{while(parent.get(id)!==id)id=parent.get(id);return id;};
@@ -1679,55 +1731,64 @@ function separationViolations(arr,c){let n=0;for(const g of arr){const ids=new S
 function strategyScore(arr,c){
  const strategy=c.groupingStrategy||'balanced';
  if(strategy==='random')return 0;
- if(strategy==='balanced')return arrangementScore(arr,c);
+ if(strategy==='balanced'||strategy==='supportive')return arrangementScore(arr,c,strategy);
  if(strategy==='similar')return arr.reduce((score,g)=>{const counts=tiers.map(t=>g.filter(s=>s.tier===t).length);return score+counts.reduce((sum,n)=>sum+n*n,0)*15;},0);
  const history=(c.groupHistory||[]).slice(-20),counts=new Map();
  for(const session of history)for(const pair of session)counts.set(pair,(counts.get(pair)||0)+1);
  let penalty=0;
- for(const g of arr)for(let i=0;i<g.length;i++)for(let j=i+1;j<g.length;j++){const key=[g[i].id,g[j].id].sort().join(':');penalty+=(counts.get(key)||0)*40;}
+ for(const g of arr)for(let i=0;i<g.length;i++)for(let j=i+1;j<g.length;j++){
+  const key=[g[i].id,g[j].id].sort().join(':');penalty+=(counts.get(key)||0)*40;
+ }
  return arrangementScore(arr,c)*0.4-penalty;
 }
 function recordGroupHistory(c,arr){
  const pairs=[];for(const g of arr)for(let i=0;i<g.length;i++)for(let j=i+1;j<g.length;j++)pairs.push([g[i].id,g[j].id].sort().join(':'));
  c.groupHistory=[...(c.groupHistory||[]),pairs].slice(-20);
 }
-function arrangementScore(arr,c) {
-  let score = 0;
-  const totals = {High:0,Middle:0,Low:0};
-
-  for (const g of arr) {
-    const ids = new Set(g.map(s => s.id));
-    for (const pair of c.avoidPairs) {
-      if (ids.has(pair[0]) && ids.has(pair[1])) score -= 100000;
-    }
-    for (const rule of c.avoidGroups) {
-      if (rule.filter(id => ids.has(id)).length > 1) score -= 100000;
-    }
-    g.forEach(s => totals[s.tier]++);
-    const cnt = {High:0,Middle:0,Low:0};
-    g.forEach(s => cnt[s.tier]++);
-    if (g.length === 4) {
-      if(cnt.High===1&&cnt.Middle===2&&cnt.Low===1)score+=85;
-      else if(cnt.High&&cnt.Middle&&cnt.Low)score+=34;
-      else score+=Object.values(cnt).filter(x=>x>0).length*5;
-    } else if (g.length === 3) {
-      if (cnt.High && cnt.Middle && cnt.Low) score += 32;
-      else if (Object.values(cnt).filter(x => x>0).length === 2) score += 12;
-      else score -= 8;
-      score += Object.values(cnt).filter(x => x===1).length * 2;
-    } else if (Object.values(cnt).filter(x => x>0).length === 2) {
-      score += 13;
-    }
+function arrangementScore(arr,c,mode='balanced') {
+ // Scores fixed group sizes and existing tier labels; never reclassifies students.
+ // Hard grouping rules are checked by the caller before a candidate is scored.
+ const supportive=mode==='supportive';
+ const totals={High:0,Middle:0,Low:0};
+ const groups=[];
+ for(const g of arr){
+  const counts={High:0,Middle:0,Low:0};
+  for(const student of g){
+   const tier=tiers.includes(student.tier)?student.tier:'Middle';
+   counts[tier]++;totals[tier]++;
   }
-
-  const k = arr.length;
-  for (const tier of tiers) {
-    const vals = arr.map(g => g.filter(s => s.tier === tier).length);
-    const mean = totals[tier]/k;
-    const variance = vals.reduce((sum,x) => sum + (x-mean)**2,0)/k;
-    score -= variance*5;
+  groups.push({size:g.length,counts});
+ }
+ const total=arr.reduce((n,g)=>n+g.length,0);
+ let score=0,imbalance=0;
+ for(const {size,counts:cnt} of groups){
+  const h=cnt.High,m=cnt.Middle,l=cnt.Low;
+  if(size===2){
+   // Balanced equally rewards all mixed-tier pairs; Supportive favors adjacent tiers.
+   if((h&&m)||(m&&l))score+=supportive?54:37;
+   else if(h&&l)score+=supportive?18:37;
+   else score+=0;
+  } else if(size===3){
+   if(h&&m&&l)score+=supportive?70:62;
+   else if(m&&(h||l))score+=supportive?48:36;
+   else if(h&&l)score+=supportive?12:23;
+   else score-=8;
+  } else if(size===4){
+   if(h===1&&m===2&&l===1)score+=supportive?118:115;
+   else if(h&&m&&l)score+=supportive?88:90;
+   else if(m&&(h||l))score+=supportive?55:49;
+   else if(h&&l)score+=supportive?23:38;
+   else score-=12;
   }
-  return score;
+  // Compare tier representation against the real, present roster distribution,
+  // so impossible ideal H-M-L / H-M-M-L patterns are not treated as constraints.
+  if(total)for(const tier of tiers){
+   const expected=size*totals[tier]/total;
+   imbalance+=(cnt[tier]-expected)**2/Math.max(1,size);
+  }
+ }
+ // Reward strong patterns and distribute available tier populations across groups.
+ return score-18*imbalance;
 }
 
 
@@ -3671,34 +3732,24 @@ $('clearStudentsBtn').addEventListener('click',() => {
   save(); renderSeating(); toast('Seating assignments cleared.');
 });
 function seatingScore(layout,c,strategy=c.groupingStrategy||'balanced') {
-  const groups=layout.map(g=>(g.students||[]).map(id=>c.students.find(s=>s.id===id)).filter(Boolean));
-  if(strategy==='random') return 0;
-  if(strategy==='similar') return groups.reduce((score,g)=>{
-    const counts=tiers.map(t=>g.filter(s=>s.tier===t).length);
-    return score+counts.reduce((sum,n)=>sum+n*n,0)*15;
-  },0);
-  let score=0;
-  for(const group of groups){
-    const counts={High:0,Middle:0,Low:0};
-    group.forEach(s=>counts[s.tier]++);
-    if(group.length===4){
-      if(counts.High===1&&counts.Middle===2&&counts.Low===1)score+=90;
-      else score+=(counts.High>0?12:0)+(counts.Low>0?12:0)+(counts.Middle>0?12:0);
-    } else if(group.length===3){
-      if(counts.High&&counts.Middle&&counts.Low)score+=55;
-      else if(Object.values(counts).filter(n=>n>0).length===2)score+=15;
-    } else if(group.length===2&&Object.values(counts).filter(n=>n>0).length===2)score+=18;
+ const groups=layout.map(g=>(g.students||[]).map(id=>c.students.find(s=>s.id===id)).filter(Boolean));
+ if(strategy==='random')return 0;
+ if(strategy==='similar')return groups.reduce((score,g)=>{
+  const counts=tiers.map(t=>g.filter(s=>s.tier===t).length);
+  return score+counts.reduce((sum,n)=>sum+n*n,0)*15;
+ },0);
+ // Keep builder group scoring aligned with Groups, including supportive pairs/fours.
+ let score=arrangementScore(groups,c,strategy==='supportive'?'supportive':'balanced');
+ if(strategy==='variety'){
+  const history=(c.groupHistory||[]).slice(-20),counts=new Map();
+  for(const session of history)for(const pair of session)counts.set(pair,(counts.get(pair)||0)+1);
+  let repeated=0;
+  for(const group of groups)for(let i=0;i<group.length;i++)for(let j=i+1;j<group.length;j++){
+   repeated+=(counts.get([group[i].id,group[j].id].sort().join(':'))||0)*40;
   }
-  if(strategy==='variety'){
-    const history=(c.groupHistory||[]).slice(-20),counts=new Map();
-    for(const session of history)for(const pair of session)counts.set(pair,(counts.get(pair)||0)+1);
-    let repeatPenalty=0;
-    for(const g of groups)for(let i=0;i<g.length;i++)for(let j=i+1;j<g.length;j++){
-      repeatPenalty+=(counts.get([g[i].id,g[j].id].sort().join(':'))||0)*40;
-    }
-    return score*.4-repeatPenalty;
-  }
-  return score;
+  score=score*.4-repeated;
+ }
+ return score;
 }
 
 // Never create a one-person group while populating the seating chart.
