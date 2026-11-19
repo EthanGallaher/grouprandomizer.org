@@ -949,6 +949,41 @@ body:not(.bgr-home-active) .workspace-bar + .wrap { padding-top: 2px !important;
   body:not(.bgr-home-active) .workspace-bar + .wrap { padding-top: 4px !important; }
 }
 </style>
+<style>
+/* P05.23: action buttons left, status right; polished compact slider. */
+#groupsPage .daily-controls-footer{justify-content:flex-start}
+#groupsPage .daily-action-buttons{margin-left:0;order:0;flex:0 0 auto}
+#groupsPage .daily-controls #balanceNote{order:1;flex:1 1 190px;text-align:right;min-width:0}
+#groupsPage .daily-controls .group-size-control{width:154px;gap:3px}
+#groupsPage .daily-controls .group-size-control label{line-height:1.25;align-items:baseline}
+#groupsPage .daily-controls #groupSizeValue{font-variant-numeric:tabular-nums;line-height:1.15}
+#groupsPage .daily-controls #groupSizeSlider{
+  --group-size-fill:50%;appearance:none;-webkit-appearance:none;
+  width:100%;height:20px;min-height:20px;margin:0;padding:0;
+  background:transparent;border:0;outline-offset:3px;cursor:pointer;
+}
+#groupsPage .daily-controls #groupSizeSlider::-webkit-slider-runnable-track{
+  height:7px;border:1px solid #b9c8da;border-radius:999px;
+  background:linear-gradient(to right,#2459a9 0%,#2459a9 var(--group-size-fill),#e8edf4 var(--group-size-fill),#e8edf4 100%);
+}
+#groupsPage .daily-controls #groupSizeSlider::-moz-range-track{
+  height:7px;border:1px solid #b9c8da;border-radius:999px;background:#e8edf4;
+}
+#groupsPage .daily-controls #groupSizeSlider::-moz-range-progress{
+  height:7px;border-radius:999px;background:#2459a9;
+}
+#groupsPage .daily-controls #groupSizeSlider::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:19px;height:19px;margin-top:-7px;
+  border:3px solid #fff;border-radius:50%;background:#2459a9;
+  box-shadow:0 0 0 1px #2459a9,0 1px 3px #102b54aa;
+}
+#groupsPage .daily-controls #groupSizeSlider::-moz-range-thumb{
+  width:13px;height:13px;border:3px solid #fff;border-radius:50%;background:#2459a9;
+  box-shadow:0 0 0 1px #2459a9,0 1px 3px #102b54aa;
+}
+#groupsPage .daily-controls .group-size-labels{margin:-2px 8px 0;line-height:1.1;font-size:11px;font-weight:600;color:#5f6e85}
+@media(max-width:680px){#groupsPage .daily-controls .daily-action-buttons{width:100%;flex:1 1 100%}#groupsPage .daily-controls #balanceNote{text-align:left;flex-basis:100%}}
+</style>
 </head>
 <body>
 <header class="top">
@@ -1235,8 +1270,8 @@ body:not(.bgr-home-active) .workspace-bar + .wrap { padding-top: 2px !important;
     </div>
   </div>
   <div class="daily-controls-footer">
-    <div class="notice" id="balanceNote" role="status" aria-live="polite">Ready to create groups</div>
     <div class="daily-action-buttons"><button class="primary" id="generateBtn" type="button">⤨ Randomize Groups</button><button type="button" class="secondary" id="rebalancePresentBtn" title="Regroup only students who are present">↻ Rebalance Present</button></div>
+    <div class="notice" id="balanceNote" role="status" aria-live="polite">Ready to create groups</div>
   </div>
 </div>
 <div id="groupsArea">
@@ -1938,7 +1973,7 @@ function groupCounts(rows){
 }
 function updateGroupSizeControls(c=current()){
   const size=preferredGroupSize(c),slider=$('groupSizeSlider'),label=$('groupSizeValue'),roles=$('showRolesCheckbox');
-  if(slider)slider.value=String(size);
+  if(slider)if(slider){slider.value=String(size);slider.style.setProperty('--group-size-fill',((size-2)/2*100)+'%');}
   if(label)label.textContent=String(size);
   if(roles)roles.checked=c?.showGroupRoles!==false;
 }
@@ -2076,7 +2111,7 @@ function rebalancePresentStudents(){
   toast('Present students rebalanced.');
 }
 $('rebalancePresentBtn').addEventListener('click',rebalancePresentStudents);
-$('groupSizeSlider').addEventListener('input',e=>{ $('groupSizeValue').textContent=e.target.value; $('groupSizeSlider').setAttribute('aria-valuetext',e.target.value+' students'); });
+$('groupSizeSlider').addEventListener('input',e=>{ $('groupSizeValue').textContent=e.target.value; $('groupSizeSlider').setAttribute('aria-valuetext',e.target.value+' students'); e.target.style.setProperty('--group-size-fill',((Number(e.target.value)-2)/2*100)+'%'); });
 $('groupSizeSlider').addEventListener('change',e=>{
   const c=current();if(!c)return;
   const next=Number(e.target.value);if(![2,3,4].includes(next))return;
