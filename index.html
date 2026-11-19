@@ -1114,7 +1114,7 @@ body.bgr-home-active .workspace-class-bar{display:none!important}
     <div class="legacy-class-picker"><label for="displayClassSelect">Class</label><select id="displayClassSelect"></select></div>
     
     <button class="secondary" id="printBtn">Print</button>
-    <button type="button" class="secondary" id="openRandomPickerBtn" title="Pick one student without leaving Groups">🎲 Pick student</button>
+    <button type="button" class="secondary" id="openRandomPickerBtn" title="Pick one student without leaving Groups">Random Student</button>
     <button class="secondary" id="studentViewBtn" type="button" aria-pressed="false" title="Hide teacher-only indicators and controls">◉ Student view</button>
     <button class="secondary" id="fullscreenBtn" type="button" title="Expand the current teacher or student view">⛶ Fullscreen</button>
     <button class="primary" id="generateBtn">⤨ Randomize</button>
@@ -1149,7 +1149,7 @@ body.bgr-home-active .workspace-class-bar{display:none!important}
     </div>
     <div class="field group-strategy-field">
       <div class="strategy-label-row"><label for="groupStrategy">Strategy</label><button type="button" class="strategy-help-button" data-help-strategy="groupStrategy" aria-label="Explain the selected grouping strategy" aria-expanded="false" aria-controls="groupStrategyPopover" title="About the selected strategy">?</button></div>
-      <select id="groupStrategy" aria-describedby="strategyHelp"><option value="balanced">Balanced abilities (default)</option><option value="supportive">Supportive pairing</option><option value="random">Random (respect separation rules)</option><option value="similar">Similar abilities</option><option value="variety">New partners (use group history)</option></select>
+      <select id="groupStrategy" aria-describedby="strategyHelp"><option value="balanced">Balanced Abilities</option><option value="random">Random</option><option value="similar">Similar Abilities</option><option value="variety">New Partners</option></select>
       <p class="visually-hidden" id="strategyHelp">Prioritizes mixed-ability groups.</p>
       <div class="strategy-help-popover" id="groupStrategyPopover" role="note" hidden><strong id="groupStrategyHelpTitle"></strong><p id="groupStrategyHelpText"></p></div>
     </div>
@@ -1214,7 +1214,7 @@ body.bgr-home-active .workspace-class-bar{display:none!important}
       <section class="seating-tool-section" aria-label="Assign students">
         <div class="seating-tool-heading"><span class="tool-number">3</span><h3>Assign students</h3></div>
         <div class="seating-tool-row">
-          <div class="field strategy-field"><div class="strategy-label-row"><label for="seatingStrategy">Grouping strategy</label><button type="button" class="strategy-help-button" data-help-strategy="seatingStrategy" aria-label="Explain the selected seating strategy" aria-expanded="false" aria-controls="seatingStrategyPopover" title="About the selected strategy">?</button></div><select id="seatingStrategy"><option value="balanced">Balanced abilities</option><option value="supportive">Supportive pairing</option><option value="random">Fully random</option><option value="similar">Similar abilities</option><option value="variety">New partners</option></select><div class="strategy-help-popover" id="seatingStrategyPopover" role="note" hidden><strong id="seatingStrategyHelpTitle"></strong><p id="seatingStrategyHelpText"></p></div></div>
+          <div class="field strategy-field"><div class="strategy-label-row"><label for="seatingStrategy">Grouping strategy</label><button type="button" class="strategy-help-button" data-help-strategy="seatingStrategy" aria-label="Explain the selected seating strategy" aria-expanded="false" aria-controls="seatingStrategyPopover" title="About the selected strategy">?</button></div><select id="seatingStrategy"><option value="balanced">Balanced Abilities</option><option value="random">Random</option><option value="similar">Similar Abilities</option><option value="variety">New Partners</option></select><div class="strategy-help-popover" id="seatingStrategyPopover" role="note" hidden><strong id="seatingStrategyHelpTitle"></strong><p id="seatingStrategyHelpText"></p></div></div>
           <button class="primary" id="populateDesksBtn">Populate desks</button>
           <button class="secondary" id="clearStudentsBtn">Clear students</button>
         </div>
@@ -1622,8 +1622,8 @@ function render() {
   $('generateBtn').disabled = !c || c.students.length < 2;
   renderGroups();
   const strategy=$('groupStrategy');
-  if(strategy) {strategy.value=c?.groupingStrategy || 'balanced'; updateStrategyHelp();}
-  if($('seatingStrategy')) $('seatingStrategy').value=c?.groupingStrategy || 'balanced';
+  if(strategy) {strategy.value=(c?.groupingStrategy==='supportive'?'balanced':c?.groupingStrategy) || 'balanced'; updateStrategyHelp();}
+  if($('seatingStrategy')) $('seatingStrategy').value=(c?.groupingStrategy==='supportive'?'balanced':c?.groupingStrategy) || 'balanced';
   renderSeating();
 }
 
@@ -1649,7 +1649,6 @@ function createGroupSizes(n,preferred=3) {
 
 const strategyDescriptions={
  balanced:{title:'Balanced abilities',body:'Mix H, M, and L students across groups. Favors H–M–L trios and H–M–M–L fours; H–M, M–L and H–L pairs have equal priority. Adapts to students present.'},
- supportive:{title:'Supportive pairing',body:'For pairs, prefers H–M or M–L over H–L. For larger groups, favors a middle-tier bridge when possible. Uses the same fixed student tiers and grouping rules.'},
  random:{title:'Random',body:'Shuffles students without scoring their performance tiers. Keep Apart, Keep Together, and student locks still apply.'},
  similar:{title:'Similar abilities',body:'Favors students from the same performance tier in a group, subject to your grouping rules and selected group sizes.'},
  variety:{title:'New partners',body:'Looks at locally saved grouping history to reduce repeated partnerships while retaining some ability balance.'}
@@ -1729,9 +1728,9 @@ function togetherViolations(arr,c){
 }
 function separationViolations(arr,c){let n=0;for(const g of arr){const ids=new Set(g.map(s=>s.id));n+=c.avoidPairs.filter(p=>p.every(id=>ids.has(id))).length;n+=c.avoidGroups.filter(rule=>rule.filter(id=>ids.has(id)).length>1).length;}return n;}
 function strategyScore(arr,c){
- const strategy=c.groupingStrategy||'balanced';
+ const strategy=(c.groupingStrategy==='supportive'?'balanced':c.groupingStrategy)||'balanced';
  if(strategy==='random')return 0;
- if(strategy==='balanced'||strategy==='supportive')return arrangementScore(arr,c,strategy);
+ if(strategy==='balanced')return arrangementScore(arr,c,'balanced');
  if(strategy==='similar')return arr.reduce((score,g)=>{const counts=tiers.map(t=>g.filter(s=>s.tier===t).length);return score+counts.reduce((sum,n)=>sum+n*n,0)*15;},0);
  const history=(c.groupHistory||[]).slice(-20),counts=new Map();
  for(const session of history)for(const pair of session)counts.set(pair,(counts.get(pair)||0)+1);
@@ -1748,7 +1747,7 @@ function recordGroupHistory(c,arr){
 function arrangementScore(arr,c,mode='balanced') {
  // Scores fixed group sizes and existing tier labels; never reclassifies students.
  // Hard grouping rules are checked by the caller before a candidate is scored.
- const supportive=mode==='supportive';
+ 
  const totals={High:0,Middle:0,Low:0};
  const groups=[];
  for(const g of arr){
@@ -1764,20 +1763,19 @@ function arrangementScore(arr,c,mode='balanced') {
  for(const {size,counts:cnt} of groups){
   const h=cnt.High,m=cnt.Middle,l=cnt.Low;
   if(size===2){
-   // Balanced equally rewards all mixed-tier pairs; Supportive favors adjacent tiers.
-   if((h&&m)||(m&&l))score+=supportive?54:37;
-   else if(h&&l)score+=supportive?18:37;
+   // All mixed-tier pairs receive the same score.
+   if((h&&m)||(m&&l)||(h&&l))score+=37;
    else score+=0;
   } else if(size===3){
-   if(h&&m&&l)score+=supportive?70:62;
-   else if(m&&(h||l))score+=supportive?48:36;
-   else if(h&&l)score+=supportive?12:23;
+   if(h&&m&&l)score+=62;
+   else if(m&&(h||l))score+=36;
+   else if(h&&l)score+=23;
    else score-=8;
   } else if(size===4){
-   if(h===1&&m===2&&l===1)score+=supportive?118:115;
-   else if(h&&m&&l)score+=supportive?88:90;
-   else if(m&&(h||l))score+=supportive?55:49;
-   else if(h&&l)score+=supportive?23:38;
+   if(h===1&&m===2&&l===1)score+=115;
+   else if(h&&m&&l)score+=90;
+   else if(m&&(h||l))score+=49;
+   else if(h&&l)score+=38;
    else score-=12;
   }
   // Compare tier representation against the real, present roster distribution,
@@ -3731,15 +3729,15 @@ $('clearStudentsBtn').addEventListener('click',() => {
   current().seatingLocksByTemplate && (current().seatingLocksByTemplate[db.activeSeatingTemplateId]={});
   save(); renderSeating(); toast('Seating assignments cleared.');
 });
-function seatingScore(layout,c,strategy=c.groupingStrategy||'balanced') {
+function seatingScore(layout,c,strategy=(c.groupingStrategy==='supportive'?'balanced':c.groupingStrategy)||'balanced') {
  const groups=layout.map(g=>(g.students||[]).map(id=>c.students.find(s=>s.id===id)).filter(Boolean));
  if(strategy==='random')return 0;
  if(strategy==='similar')return groups.reduce((score,g)=>{
   const counts=tiers.map(t=>g.filter(s=>s.tier===t).length);
   return score+counts.reduce((sum,n)=>sum+n*n,0)*15;
  },0);
- // Keep builder group scoring aligned with Groups, including supportive pairs/fours.
- let score=arrangementScore(groups,c,strategy==='supportive'?'supportive':'balanced');
+ // Keep builder group scoring aligned with Groups, using balanced pair/four scoring.
+ let score=arrangementScore(groups,c,'balanced');
  if(strategy==='variety'){
   const history=(c.groupHistory||[]).slice(-20),counts=new Map();
   for(const session of history)for(const pair of session)counts.set(pair,(counts.get(pair)||0)+1);
